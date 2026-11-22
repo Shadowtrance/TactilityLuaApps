@@ -123,6 +123,10 @@ project.
   firmware font, so changing the profile, the font size or the text reflows them
   instead of reusing or scaling a stale box. A profile change only scales fixed
   sizes.
+- **Theme paddings**: a container padding or gap that still matches the old
+  theme's container token follows the new theme when the profile, spacing, size,
+  mono mode or **Defaults** changes. Custom paddings stay as designed, and
+  **Scale** only touches geometry, never styles.
 - **Focus-ring margins**: chips, buttons, text buttons and switches carry the
   theme's `marginAll: @focus-width + @focus-offset` in the firmware. The preview
   includes that room in flex layouts, so gaps and right-hand insets match the

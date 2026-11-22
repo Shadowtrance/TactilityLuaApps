@@ -763,6 +763,18 @@ had.
       local Tactility checkout is still preferred when present; the env vars
       still override. Verified by running the self-test and the clone generator
       from a temp copy with no checkout nearby.
+- [x] Fix profile switches not applying the spacing/size theme: the appearance
+      clone stored the card pad as pad+border (24) instead of the theme token
+      (23), so theme-derived paddings never matched; scaling touched `pad_all`
+      but not `pad_row`/`pad_column`; and an in-place theme edit compared the new
+      tokens with themselves. Container pad/gap values now follow the theme on
+      profile/spacing/size/mono/Defaults changes, and **Scale** only scales
+      geometry. Verified with Tab5 → T-Deck → Tab5 and the spacing slider.
+- [x] Add a dedicated Lua apps repository scaffold at
+      `../TactilityLuaApps`: the runtime package, `Scripts/*.lua` packaging, a
+      GitHub Actions workflow that builds/bundles/publishes to Pages with
+      TactilityAppPublisher, and a landing page with the repository URL and the
+      catalog list.
 - [ ] Add canvas drag-reparenting, multi-select/alignment, an optional
       bottom-docked code pane, asset/icon picking and weighted undo/redo.
 - [ ] Add `catalog.py --check` to CI and diff the generated inventory on SDK
