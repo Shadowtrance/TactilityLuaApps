@@ -44,6 +44,11 @@ read-only: **Save Copy** (or **Run** on an unmodified example) writes a copy
 into the selected folder and the editor continues from that copy.
 
 - `hello.lua`, `clock.lua` — text results (`result = ...`)
+- `simon.lua` — Simon: dim/bright themed pads, a sequence timer, growing rounds
+  and a best score (the highlight/timing borrows from TamaTac's pattern game)
+- `focus_timer.lua` — a Pomodoro-style 25/5/15 focus timer on a themed arc
+- `game_of_life.lua` — Conway's Game of Life on a responsive grid, with
+  tap-to-edit and a generation timer
 - `ui.lua` — theme-native cards and a button event through `lvgl`
 - `dashboard.lua` — live battery, Wi-Fi, device, mount and clock cards
 - `game.lua` — whack-a-mole with buttons, events and a timer
