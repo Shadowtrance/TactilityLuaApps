@@ -23,7 +23,7 @@ local card = lvgl.Card(root, {
 })
 
 local time_label = lvgl.Label(card, {
-    text = "--:--:--",
+    text = "00:00:00",
     text_font = "large",
     text_letter_space = lvgl.theme_lerp(0, 2),
     text_color = lvgl.theme_color_primary(),
@@ -82,17 +82,20 @@ local function update()
     }
 end
 
-update()
--- The time text only changes digit for digit, so one measurement reserves the
--- right amount of vertical space for the scaled label. Pivot at the centre so
+-- The time text only changes digit for digit, so one measurement with a
+-- full-width sample fixes the box for every reading. Pivot at the centre so
 -- the transform grows evenly instead of from the top-left corner.
 card:update_layout()
 local time_width, time_height = time_label:size()
 time_label:set{
+    w = time_width,
+    h = time_height,
+    text_align = lvgl.TEXT_ALIGN.CENTER,
     margin_top = math.floor(time_height / 2),
     margin_bottom = math.floor(time_height / 2),
     transform_pivot_x = math.floor(time_width / 2),
     transform_pivot_y = math.floor(time_height / 2),
 }
+update()
 lvgl.Timer{ period = 1000, callback = update }
 result = "clock"
