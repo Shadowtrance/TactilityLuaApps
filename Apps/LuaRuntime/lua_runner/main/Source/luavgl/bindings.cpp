@@ -7,6 +7,7 @@
 #include <lvgl/theme.h>
 #include <lvgl/ui_assets.h>
 #include <lvgl/widgets/icon_button.h>
+#include <lvgl/devices/keyboard.h>
 
 extern "C" {
 #include <lauxlib.h>
@@ -82,6 +83,19 @@ int lvgl_theme_lerp_value(lua_State* state) {
     return 1;
 }
 
+/**
+ * True when a started, non-restricted hardware keyboard is present.
+ *
+ * This is the same check the firmware uses to decide whether to offer its
+ * on-screen keyboard, so a script can hide its own software keyboard when the
+ * user is typing on real keys. A keypad, encoder or trackball is registered as
+ * a keyboard device but is marked restricted, so it does not count.
+ */
+int lvgl_hardware_keyboard_available(lua_State* state) {
+    lua_pushboolean(state, lvgl_hardware_keyboard_is_available());
+    return 1;
+}
+
 // Screen ----------------------------------------------------------------------------------
 
 /** The object new widgets parent to by default. */
@@ -136,6 +150,7 @@ const luaL_Reg lvgl_functions[] = {
     { "theme_size", lvgl_theme_size },
     { "theme_mono", lvgl_theme_mono },
     { "theme_lerp", lvgl_theme_lerp_value },
+    { "hardware_keyboard_available", lvgl_hardware_keyboard_available },
     { "HOR_RES", lvgl_horizontal_resolution },
     { "VER_RES", lvgl_vertical_resolution },
     { "PCT", lvgl_percent },

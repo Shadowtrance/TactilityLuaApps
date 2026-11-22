@@ -1,19 +1,31 @@
 -- Post and manage notifications through the firmware notification module.
+--
+-- The three send buttons use the theme's info/warning/error accents, and the
+-- history card lists what the module currently holds (newest first).
 
 local SEVERITY = tactility.notification and tactility.notification.SEVERITY
 local status_label
 local list_label
 local sent = 0
 
+local function channel(value, shift)
+    return math.floor(value / 2 ^ shift) % 256
+end
+
+local function text_on(color)
+    local luminance = 0.299 * channel(color, 16) + 0.587 * channel(color, 8) + 0.114 * channel(color, 0)
+    return luminance > 140 and 0x000000 or 0xffffff
+end
+
 local function refresh()
     local items = tactility.notification.list() or {}
     status_label:set{ text = string.format('%d notification(s) in history', #items) }
 
     local lines = {}
-    for i = 1, math.min(#items, 4) do
+    for i = 1, math.min(#items, 6) do
         local item = items[i]
         local title = item.title ~= '' and (item.title .. ': ') or ''
-        lines[#lines + 1] = string.format('[%s] %s%s', item.severity, title, item.message)
+        lines[#lines + 1] = string.format('[%s] %s%s', string.upper(item.severity), title, item.message)
     end
     list_label:set{ text = #lines > 0 and table.concat(lines, '\n') or 'Nothing posted yet.' }
 end
@@ -34,9 +46,20 @@ local function send(severity, title)
     refresh()
 end
 
-local function button(parent, text, callback)
-    local button = lvgl.Button(parent, { w = lvgl.PCT(100), h = 36 })
-    lvgl.Label(button, { text = text, align = lvgl.ALIGN.CENTER })
+local function action_button(parent, text, color, callback)
+    local button = lvgl.Button(parent, {
+        h = lvgl.theme_lerp(36, 48),
+        flex_grow = 1,
+        bg_color = color,
+        bg_opa = lvgl.OPA.COVER,
+        border_width = 0,
+        radius = lvgl.theme_lerp(8, 16),
+    })
+    lvgl.Label(button, {
+        text = text,
+        align = lvgl.ALIGN.CENTER,
+        text_color = text_on(color),
+    })
     button:on(lvgl.EVENT.CLICKED, callback)
     return button
 end
@@ -50,10 +73,51 @@ function on_show()
         return
     end
 
+    local gap = lvgl.theme_lerp(4, 10)
+
+    local header = lvgl.Object(screen, {
+        w = lvgl.PCT(100), h = lvgl.SIZE_CONTENT,
+        flex_flow = lvgl.FLEX_FLOW.ROW,
+        flex_align = { main = lvgl.FLEX_ALIGN.START, cross = lvgl.FLEX_ALIGN.CENTER, track = lvgl.FLEX_ALIGN.CENTER },
+        pad_all = 0, pad_column = gap,
+        bg_opa = lvgl.OPA.TRANSP, border_width = 0,
+    })
+    lvgl.Label(header, { text = 'Notifications', text_font = 'large', flex_grow = 1 })
+
+    local refresh_button = lvgl.TextButton(header)
+    lvgl.Label(refresh_button, { text = 'Refresh', align = lvgl.ALIGN.CENTER })
+    refresh_button:on(lvgl.EVENT.CLICKED, refresh)
+
+    local clear_button = lvgl.TextButton(header)
+    lvgl.Label(clear_button, { text = 'Clear', align = lvgl.ALIGN.CENTER })
+    clear_button:on(lvgl.EVENT.CLICKED, function()
+        tactility.notification.dismiss_all()
+        refresh()
+    end)
+
+    local actions = lvgl.Object(screen, {
+        w = lvgl.PCT(100), h = lvgl.SIZE_CONTENT,
+        flex_flow = lvgl.FLEX_FLOW.ROW,
+        flex_align = { main = lvgl.FLEX_ALIGN.START, cross = lvgl.FLEX_ALIGN.CENTER, track = lvgl.FLEX_ALIGN.CENTER },
+        pad_all = 0, pad_column = gap,
+        bg_opa = lvgl.OPA.TRANSP, border_width = 0,
+    })
+    action_button(actions, 'Info', lvgl.theme_color_primary(), function()
+        send(SEVERITY.INFO, 'Lua info')
+    end)
+    action_button(actions, 'Warning', lvgl.theme_color_secondary(), function()
+        send(SEVERITY.WARNING, 'Lua warning')
+    end)
+    action_button(actions, 'Error', lvgl.theme_color_error(), function()
+        send(SEVERITY.ERROR, 'Lua error')
+    end)
+
     local card = lvgl.Card(screen, {
         w = lvgl.PCT(100),
-        h = lvgl.SIZE_CONTENT,
+        flex_grow = 1,
         flex_flow = lvgl.FLEX_FLOW.COLUMN,
+        pad_all = lvgl.theme_lerp(10, 20),
+        pad_row = gap,
     })
 
     status_label = lvgl.Label(card, { text = '...' })
@@ -63,28 +127,6 @@ function on_show()
         long_mode = lvgl.LONG.WRAP,
         text_font = 'small',
     })
-
-    local row = lvgl.Object(card, {
-        w = lvgl.PCT(100),
-        h = lvgl.SIZE_CONTENT,
-        flex_flow = lvgl.FLEX_FLOW.COLUMN,
-    })
-
-    button(row, 'Info', function() send(SEVERITY.INFO, 'Lua info') end)
-    button(row, 'Warning', function() send(SEVERITY.WARNING, 'Lua warning') end)
-    button(row, 'Error', function() send(SEVERITY.ERROR, 'Lua error') end)
-
-    local actions = lvgl.Object(card, {
-        w = lvgl.PCT(100),
-        h = lvgl.SIZE_CONTENT,
-        flex_flow = lvgl.FLEX_FLOW.COLUMN,
-    })
-
-    button(actions, 'Refresh', refresh)
-    button(actions, 'Dismiss all', function()
-        tactility.notification.dismiss_all()
-        refresh()
-    end)
 
     refresh()
     result = 'notification example'
