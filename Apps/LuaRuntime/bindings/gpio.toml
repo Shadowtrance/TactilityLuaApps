@@ -1,0 +1,94 @@
+# tactility.gpio — GPIO pins through the kernel GPIO controller.
+#
+# The generator turns each entry into the mechanical Lua glue. Add a function
+# here and regenerate; only `impl = "custom"` entries need C.
+
+[module]
+name = "gpio"
+summary = "GPIO pins through the kernel GPIO controller"
+api = 1
+includes = [
+    "tactility/drivers/gpio_controller.h",
+    "tactility/drivers/gpio.h",
+    "tactility/error.h",
+]
+
+[types.Pin]
+kind = "handle"
+c_type = "struct GpioDescriptor*"
+release = "gpio_descriptor_release"
+summary = "An acquired GPIO descriptor"
+
+[types.GpioOwner]
+kind = "enum"
+c_type = "enum GpioOwnerType"
+summary = "Who owns the pin (see OWNER_* constants)"
+
+[constants]
+NONE = 0
+ACTIVE_LOW = 1
+INPUT = 2
+OUTPUT = 4
+INPUT_OUTPUT = 6
+PULL_UP = 8
+PULL_DOWN = 16
+OWNER_NONE = 0
+OWNER_HOG = 1
+OWNER_GPIO = 2
+OWNER_SPI = 3
+OWNER_PERIPHERAL = 4
+
+[[function]]
+name = "count"
+signature = "count(controller: Device) -> u32 | nil, string"
+c = "gpio_controller_get_pin_count"
+doc = "Number of pins the controller exposes."
+
+[[function]]
+name = "level"
+signature = "level(controller: Device, pin: u8) -> bool | nil, string"
+c = "gpio_controller_get_level"
+doc = "Reads a pin level without acquiring it, for status displays."
+
+[[function]]
+name = "acquire"
+signature = "acquire(controller: Device, pin: u8, flags: u16, owner?: GpioOwner = 2) -> Pin | nil, string"
+c = "gpio_descriptor_acquire"
+null_error = "could not acquire the GPIO pin"
+doc = "Acquires a pin from a GPIO controller. Release the handle when done."
+
+[[function]]
+name = "set_level"
+signature = "Pin:set_level(high: bool) -> true | nil, string"
+c = "gpio_descriptor_set_level"
+doc = "Drives the pin high or low."
+
+[[function]]
+name = "get_level"
+signature = "Pin:get_level() -> bool | nil, string"
+c = "gpio_descriptor_get_level"
+doc = "Reads the pin level."
+
+[[function]]
+name = "set_flags"
+signature = "Pin:set_flags(flags: u16) -> true | nil, string"
+c = "gpio_descriptor_set_flags"
+doc = "Changes the pin configuration flags."
+
+[[function]]
+name = "get_flags"
+signature = "Pin:get_flags() -> u16 | nil, string"
+c = "gpio_descriptor_get_flags"
+doc = "Reads the pin configuration flags."
+
+[[function]]
+name = "has_flags"
+signature = "Pin:has_flags(flags: u16) -> bool | nil, string"
+c = "gpio_descriptor_has_flags"
+doc = "Whether all of the given flags are set."
+
+[[function]]
+name = "pin_number"
+signature = "Pin:pin_number() -> u8 | nil, string"
+c = "gpio_descriptor_get_pin_number"
+doc = "The controller-relative pin number."

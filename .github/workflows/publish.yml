@@ -1,0 +1,102 @@
+name: Publish Lua apps
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  # Builds the runtime package (module, Lua companion, runner, Lua Apps) and
+  # packages every script in Scripts/ as its own .app.
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build Lua Runtime
+        uses: TactilityProject/TactilityAppPublisher/.github/actions/build-app@main
+        with:
+          app_name: LuaRuntime
+          save_cache: 'true'
+          upload_artifact: 'true'
+      - name: Package scripts
+        run: |
+          set -euo pipefail
+          mkdir -p scripts_out
+          shopt -s nullglob
+          for script in Scripts/*.lua; do
+            name="$(basename "$script" .lua)"
+            python3 Apps/LuaRuntime/tools/lua-app/make_lua_app.py \
+              --script "$script" \
+              --output "scripts_out/$name.app"
+          done
+      - name: Upload script packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: scripts
+          path: scripts_out/*.app
+          if-no-files-found: ignore
+          retention-days: 30
+
+  # Turns the built packages into the catalog files the App Hub reads.
+  Bundle:
+    runs-on: ubuntu-latest
+    needs: Build
+    outputs:
+      sdk_version: ${{ steps.release.outputs.sdk_version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: release
+        uses: TactilityProject/TactilityAppPublisher/.github/actions/release-apps@main
+
+  # Only pushes to main publish. Pull requests still build and bundle above.
+  Pages:
+    runs-on: ubuntu-latest
+    needs: Bundle
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-files
+          path: release_files
+      - uses: actions/checkout@v4
+        with:
+          repository: TactilityProject/TactilityAppPublisher
+          path: .apppublisher
+          persist-credentials: false
+      - name: Build the site
+        env:
+          SDK: ${{ needs.Bundle.outputs.sdk_version }}
+        run: |
+          python3 .apppublisher/apppublisher.py publish pages release_files \
+            --sdk "$SDK" --out site --prefix apps
+          sed -i "s/__SDK__/$SDK/g" site/index.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  Deploy:
+    runs-on: ubuntu-latest
+    needs: Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

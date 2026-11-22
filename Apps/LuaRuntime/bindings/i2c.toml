@@ -1,0 +1,94 @@
+# tactility.i2c — 8/16-bit register access through the kernel I2C controllers.
+#
+# Block transfers need buffer marshalling in the generator and are the next
+# step; register access already covers sensors and small devices.
+
+[module]
+name = "i2c"
+summary = "I2C controller register access"
+api = 1
+includes = [
+    "tactility/drivers/i2c_controller.h",
+    "tactility/error.h",
+]
+
+[[function]]
+name = "probe"
+signature = "probe(controller: Device, address: u8, timeout?: u32 = 100) -> true | nil, string"
+c = "i2c_controller_has_device_at_address"
+doc = "Whether a device acknowledges the 7-bit address."
+
+[[function]]
+name = "read8"
+signature = "read8(controller: Device, address: u8, reg: u8, timeout?: u32 = 100) -> u8 | nil, string"
+c = "i2c_controller_register8_get"
+c_args = ["controller", "address", "reg", "out", "timeout"]
+doc = "Reads one 8-bit register."
+
+[[function]]
+name = "write8"
+signature = "write8(controller: Device, address: u8, reg: u8, value: u8, timeout?: u32 = 100) -> true | nil, string"
+c = "i2c_controller_register8_set"
+doc = "Writes one 8-bit register."
+
+[[function]]
+name = "read16le"
+signature = "read16le(controller: Device, address: u8, reg: u8, timeout?: u32 = 100) -> u16 | nil, string"
+c = "i2c_controller_register16le_get"
+c_args = ["controller", "address", "reg", "out", "timeout"]
+doc = "Reads a little-endian 16-bit register."
+
+[[function]]
+name = "write16le"
+signature = "write16le(controller: Device, address: u8, reg: u8, value: u16, timeout?: u32 = 100) -> true | nil, string"
+c = "i2c_controller_register16le_set"
+doc = "Writes a little-endian 16-bit register."
+
+[[function]]
+name = "read16be"
+signature = "read16be(controller: Device, address: u8, reg: u8, timeout?: u32 = 100) -> u16 | nil, string"
+c = "i2c_controller_register16be_get"
+c_args = ["controller", "address", "reg", "out", "timeout"]
+doc = "Reads a big-endian 16-bit register."
+
+[[function]]
+name = "write16be"
+signature = "write16be(controller: Device, address: u8, reg: u8, value: u16, timeout?: u32 = 100) -> true | nil, string"
+c = "i2c_controller_register16be_set"
+doc = "Writes a big-endian 16-bit register."
+
+[[function]]
+name = "set_bits"
+signature = "set_bits(controller: Device, address: u8, reg: u8, bits: u8, timeout?: u32 = 100) -> true | nil, string"
+c = "i2c_controller_register8_set_bits"
+doc = "Sets bits in one 8-bit register."
+
+[[function]]
+name = "reset_bits"
+signature = "reset_bits(controller: Device, address: u8, reg: u8, bits: u8, timeout?: u32 = 100) -> true | nil, string"
+c = "i2c_controller_register8_reset_bits"
+doc = "Clears bits in one 8-bit register."
+
+# Block transfers. These are hand-written because the IDL has no buffer type yet:
+# Lua strings are the input buffer, and a read returns a new Lua string.
+[[function]]
+name = "read"
+signature = "read(controller: Device, address: u8, size: u32, timeout?: u32 = 100) -> string | nil, string"
+c = "lua_i2c_read"
+impl = "custom"
+doc = "Reads size bytes from the device. Returns a binary-safe Lua string."
+
+[[function]]
+name = "write"
+signature = "write(controller: Device, address: u8, data: string, timeout?: u32 = 100) -> true | nil, string"
+c = "lua_i2c_write"
+impl = "custom"
+doc = "Writes a binary-safe Lua string to the device."
+
+[[function]]
+name = "write_read"
+signature = "write_read(controller: Device, address: u8, write_data: string, read_size: u32, timeout?: u32 = 100) -> string | nil, string"
+c = "lua_i2c_write_read"
+impl = "custom"
+doc = "Writes a register/index and reads read_size bytes in one transfer."
+

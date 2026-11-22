@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lua apps for Tactility</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #131318;
+      --surface: #1e1e24;
+      --surface-high: #2a2a32;
+      --text: #e6e1e5;
+      --muted: #b8b0b8;
+      --primary: #00bbff;
+      --secondary: #ee81c3;
+      --border: #44464f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Adwaita Sans", "Segoe UI", system-ui, sans-serif;
+      line-height: 1.5;
+    }
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 20px 72px;
+    }
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 2.2rem;
+      font-weight: 650;
+    }
+    header p {
+      margin: 0 0 36px;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px 28px;
+      margin-bottom: 20px;
+    }
+    .card h2 {
+      margin: 0 0 16px;
+      font-size: 1.2rem;
+      color: var(--secondary);
+    }
+    ol { margin: 0 0 12px; padding-left: 22px; }
+    li { margin: 6px 0; }
+    code {
+      background: var(--surface-high);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2px 7px;
+      font-size: 0.92em;
+      word-break: break-all;
+    }
+    .hint { margin: 12px 0 0; color: var(--muted); font-size: 0.9rem; }
+    .app {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 4px 14px;
+      padding: 14px 0;
+      border-top: 1px solid var(--border);
+    }
+    .app:first-child { border-top: 0; padding-top: 0; }
+    .app strong { font-size: 1.05rem; }
+    .app span { color: var(--muted); font-size: 0.92rem; }
+    .app .download { margin-left: auto; color: var(--primary); text-decoration: none; }
+    .app .download:hover { text-decoration: underline; }
+    footer { color: var(--muted); font-size: 0.88rem; margin-top: 28px; }
+    a { color: var(--primary); }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Lua apps for Tactility</h1>
+    <p>
+      The Lua runtime, the Lua Apps manager and packaged Lua scripts, served as a
+      Tactility app repository.
+    </p>
+  </header>
+
+  <section class="card">
+    <h2>Add this repository</h2>
+    <ol>
+      <li>Open <strong>Software</strong> on the device and choose <strong>App repositories</strong>.</li>
+      <li>Add the address below and enable it.</li>
+      <li>Open <strong>App Hub</strong>. Its apps appear next to the official catalog.</li>
+      <li>Install <strong>Lua Runtime</strong> first; packaged Lua apps need it.</li>
+    </ol>
+    <p><code id="repo-url">…</code></p>
+    <p class="hint">This is the repository's <code>apps</code> folder. Every package targets SDK <code>__SDK__</code>.</p>
+  </section>
+
+  <section class="card">
+    <h2>Apps in this repository</h2>
+    <div id="apps">Loading…</div>
+  </section>
+
+  <footer>
+    Published with
+    <a href="https://github.com/TactilityProject/TactilityAppPublisher">TactilityAppPublisher</a>.
+  </footer>
+</main>
+<script>
+  const sdk = "__SDK__";
+  const base = `${location.origin}${location.pathname.replace(/\/?$/, "/")}apps`;
+  document.getElementById("repo-url").textContent = base;
+
+  fetch(`${base}/${sdk}/apps.json`)
+    .then((response) => response.json())
+    .then((catalog) => {
+      const container = document.getElementById("apps");
+      container.textContent = "";
+      const apps = catalog.apps || [];
+      if (!apps.length) {
+        container.textContent = "No apps in this release.";
+        return;
+      }
+      for (const app of apps) {
+        const row = document.createElement("div");
+        row.className = "app";
+
+        const name = document.createElement("strong");
+        name.textContent = app.appName;
+
+        const meta = document.createElement("span");
+        meta.textContent = `${app.appVersionName} · ${app.appDescription}`;
+
+        const link = document.createElement("a");
+        link.className = "download";
+        link.href = `${base}/${sdk}/${app.file}`;
+        link.textContent = "Download";
+
+        row.append(name, meta, link);
+        container.append(row);
+      }
+    })
+    .catch(() => {
+      document.getElementById("apps").textContent = "Could not load the app list.";
+    });
+</script>
+</body>
+</html>
