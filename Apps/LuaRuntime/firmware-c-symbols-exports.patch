@@ -1,4 +1,4 @@
-﻿diff --git a/Modules/c-symbols-module/source/module.cpp b/Modules/c-symbols-module/source/module.cpp
+diff --git a/Modules/c-symbols-module/source/module.cpp b/Modules/c-symbols-module/source/module.cpp
 index 2d8013f1..cb43ec53 100644
 --- a/Modules/c-symbols-module/source/module.cpp
 +++ b/Modules/c-symbols-module/source/module.cpp
