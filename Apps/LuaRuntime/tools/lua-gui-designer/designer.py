@@ -54,6 +54,111 @@ _NO_TARGET = object()
 
 
 # ---------------------------------------------------------------------------
+# Scrollable panel
+
+
+class ScrollPanel(ctk.CTkFrame):
+    """A canvas-backed scroll area with a scrollbar that tracks its content.
+
+    CustomTkinter's scrollable frame updates its scroll region asynchronously,
+    which leaves the scrollbar thumb too short until the first wheel event and
+    lets a short page scroll a little after the window is maximized. This panel
+    recomputes the region on every content/size change and refuses to scroll
+    when the content fits.
+    """
+
+    def __init__(self, master, **kwargs) -> None:
+        super().__init__(master, fg_color="transparent", corner_radius=0, **kwargs)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        self._canvas = tk.Canvas(
+            self, bg="#1a1a1a", highlightthickness=0, bd=0, takefocus=0
+        )
+        self._canvas.grid(row=0, column=0, sticky="nsew")
+
+        self._scrollbar = ctk.CTkScrollbar(
+            self, orientation="vertical", command=self._canvas.yview
+        )
+        self._scrollbar.grid(row=0, column=1, sticky="ns")
+        self._canvas.configure(yscrollcommand=self._scrollbar.set)
+        self._scrollbar_visible = True
+
+        self.body = ctk.CTkFrame(self._canvas, fg_color="transparent", corner_radius=0)
+        self._window = self._canvas.create_window((0, 0), window=self.body, anchor="nw")
+
+        self.body.bind("<Configure>", self._on_body_configure)
+        self._canvas.bind("<Configure>", self._on_canvas_configure)
+
+        top = self.winfo_toplevel()
+        top.bind_all("<MouseWheel>", self._on_wheel, add="+")
+        top.bind_all("<Button-4>", self._on_wheel, add="+")
+        top.bind_all("<Button-5>", self._on_wheel, add="+")
+
+    def _on_body_configure(self, _event=None) -> None:
+        self._update_region()
+
+    def _on_canvas_configure(self, event) -> None:
+        self._canvas.itemconfigure(self._window, width=event.width)
+        self._update_region()
+
+    def _has_overflow(self) -> bool:
+        bounds = self._canvas.bbox("all")
+        if bounds is None:
+            return False
+        return (bounds[3] - bounds[1]) > self._canvas.winfo_height() + 1
+
+    def _update_region(self) -> None:
+        bounds = self._canvas.bbox("all")
+        if bounds is None:
+            return
+        self._canvas.configure(scrollregion=bounds)
+
+        overflow = self._has_overflow()
+        if overflow != self._scrollbar_visible:
+            self._scrollbar_visible = overflow
+            if overflow:
+                self._scrollbar.grid(row=0, column=1, sticky="ns")
+            else:
+                self._scrollbar.grid_remove()
+
+        if not overflow:
+            self._canvas.yview_moveto(0)
+
+    def refresh(self) -> None:
+        """Call after rebuilding content, once Tk has measured the new widgets."""
+        self.update_idletasks()
+        self._update_region()
+        self.after_idle(self._update_region)
+
+    def _contains_pointer(self, event) -> bool:
+        widget = self.winfo_containing(event.x_root, event.y_root)
+        while widget is not None:
+            if widget is self:
+                return True
+            # Leave text editors their own wheel handling.
+            if isinstance(widget, (tk.Text, tk.Listbox)):
+                return False
+            widget = widget.master
+        return False
+
+    def _on_wheel(self, event):
+        if not self._contains_pointer(event) or not self._has_overflow():
+            return None
+
+        if event.num == 4:
+            steps = -1
+        elif event.num == 5:
+            steps = 1
+        else:
+            steps = -1 if event.delta > 0 else 1
+            steps *= max(1, abs(event.delta) // 120)
+
+        self._canvas.yview_scroll(steps * 2, "units")
+        return "break"
+
+
+# ---------------------------------------------------------------------------
 # Code editor
 
 
@@ -470,28 +575,85 @@ class LuaDesigner(ctk.CTk):
         self._sync_bars_controls()
 
     def _build_palette(self) -> None:
-        frame = ctk.CTkScrollableFrame(self, width=190)
-        frame.grid(row=1, column=0, sticky="nsw", padx=(8, 4), pady=(4, 4))
+        panel = ctk.CTkFrame(self, width=244, corner_radius=0)
+        panel.grid(row=1, column=0, sticky="nsew", padx=(8, 4), pady=(4, 4))
+        panel.grid_rowconfigure(2, weight=1)
+        panel.grid_columnconfigure(0, weight=1)
 
         ctk.CTkLabel(
-            frame, text="Widgets", anchor="w", font=("Segoe UI", 15, "bold")
-        ).pack(fill="x", pady=(2, 4))
+            panel, text="Components", anchor="w", font=("Segoe UI", 15, "bold")
+        ).grid(row=0, column=0, sticky="ew", padx=8, pady=(6, 2))
 
+        self.palette_search = ctk.CTkEntry(panel, placeholder_text="Search widgets", height=28)
+        self.palette_search.grid(row=1, column=0, sticky="ew", padx=6, pady=(0, 4))
+        self.palette_search.bind("<KeyRelease>", lambda _event: self._populate_palette())
+        self.palette_search.bind("<Escape>", self._clear_palette_search)
+
+        self.palette_panel = ScrollPanel(panel)
+        self.palette_panel.grid(row=2, column=0, sticky="nsew", padx=(2, 2), pady=(0, 4))
+
+        self._populate_palette()
+
+    def _clear_palette_search(self, _event=None) -> None:
+        self.palette_search.delete(0, "end")
+        self._populate_palette()
+
+    def _populate_palette(self) -> None:
+        body = self.palette_panel.body
+        for child in body.winfo_children():
+            child.destroy()
+
+        query = self.palette_search.get().strip().lower()
+        body.grid_columnconfigure(0, weight=1, uniform="palette")
+        body.grid_columnconfigure(1, weight=1, uniform="palette")
+
+        row = 0
         for category in CATEGORIES:
+            specs = [
+                spec for spec in WIDGET_SPECS
+                if spec.category == category
+                and (not query or query in spec.title.lower() or query in spec.type.lower())
+            ]
+            if not specs:
+                continue
+
             ctk.CTkLabel(
-                frame, text=category, anchor="w", font=("Segoe UI", 12, "bold")
-            ).pack(fill="x", pady=(10, 2))
-            for spec in WIDGET_SPECS:
-                if spec.category != category:
-                    continue
+                body,
+                text=category.upper(),
+                anchor="w",
+                font=("Segoe UI", 10, "bold"),
+                text_color="#8a8a8a",
+            ).grid(row=row, column=0, columnspan=2, sticky="ew", padx=8, pady=(8, 2))
+            row += 1
+
+            for index, spec in enumerate(specs):
                 button = ctk.CTkButton(
-                    frame,
+                    body,
                     text=spec.title,
                     anchor="w",
-                    height=28,
+                    height=26,
+                    corner_radius=4,
+                    fg_color="transparent",
+                    hover_color="#2b3136",
+                    text_color="#d8d8d8",
+                    font=("Segoe UI", 11),
                     command=lambda name=spec.type: self.add_widget(name),
                 )
-                button.pack(fill="x", pady=2)
+                button.grid(
+                    row=row + index // 2,
+                    column=index % 2,
+                    sticky="ew",
+                    padx=(6, 2) if index % 2 == 0 else (2, 6),
+                    pady=1,
+                )
+            row += (len(specs) + 1) // 2
+
+        if row == 0:
+            ctk.CTkLabel(
+                body, text="No matching widgets", anchor="w", text_color="#8a8a8a"
+            ).grid(row=0, column=0, columnspan=2, sticky="ew", padx=8, pady=8)
+
+        self.palette_panel.refresh()
 
     def _build_canvas(self) -> None:
         frame = ctk.CTkFrame(self, corner_radius=0)
@@ -529,11 +691,21 @@ class LuaDesigner(ctk.CTk):
         self.tabs.add("Properties")
         self.tabs.add("Code")
 
-        self.tree_frame = ctk.CTkScrollableFrame(self.tabs.tab("Tree"))
-        self.tree_frame.pack(fill="both", expand=True)
+        tree_tab = self.tabs.tab("Tree")
+        tree_bar = ctk.CTkFrame(tree_tab, height=30, corner_radius=0)
+        tree_bar.pack(fill="x", padx=3, pady=(3, 2))
+        self.tree_search = ctk.CTkEntry(tree_bar, placeholder_text="Filter widgets", height=28)
+        self.tree_search.pack(fill="x", padx=3, pady=2)
+        self.tree_search.bind("<KeyRelease>", lambda _event: self.refresh_tree())
+        self.tree_search.bind("<Escape>", self._clear_tree_search)
 
-        self.properties_frame = ctk.CTkScrollableFrame(self.tabs.tab("Properties"))
-        self.properties_frame.pack(fill="both", expand=True)
+        self.tree_panel = ScrollPanel(tree_tab)
+        self.tree_panel.pack(fill="both", expand=True, padx=3, pady=(0, 3))
+        self.tree_frame = self.tree_panel.body
+
+        self.properties_panel = ScrollPanel(self.tabs.tab("Properties"))
+        self.properties_panel.pack(fill="both", expand=True, padx=3, pady=3)
+        self.properties_frame = self.properties_panel.body
 
         code_tab = self.tabs.tab("Code")
         code_bar = ctk.CTkFrame(code_tab, height=32, corner_radius=0)
@@ -1159,15 +1331,37 @@ class LuaDesigner(ctk.CTk):
         self.refresh_code()
         self.schedule_save_settings()
 
+    def _clear_tree_search(self, _event=None) -> None:
+        self.tree_search.delete(0, "end")
+        self.refresh_tree()
+
     def refresh_tree(self) -> None:
         for child in self.tree_frame.winfo_children():
             child.destroy()
         self._tree_rows: dict[str | None, ctk.CTkButton] = {}
 
+        query = self.tree_search.get().strip().lower() if hasattr(self, "tree_search") else ""
+
+        def row_text(widget: WidgetNode) -> str:
+            spec = SPEC_BY_TYPE.get(widget.type)
+            return f"{spec.title if spec else widget.type}  {widget.id}"
+
+        def matches(widget: WidgetNode) -> bool:
+            if not query:
+                return True
+            spec = SPEC_BY_TYPE.get(widget.type)
+            haystack = f"{spec.title if spec else widget.type} {widget.id}".lower()
+            return query in haystack
+
+        def subtree_matches(widget: WidgetNode) -> bool:
+            if matches(widget):
+                return True
+            return any(subtree_matches(child) for child in self.project.children(widget.id))
+
         def add_button(text: str, widget_id: str | None, indent: int) -> None:
             button = ctk.CTkButton(
                 self.tree_frame,
-                text=("  " * indent) + text,
+                text=("    " * indent) + text,
                 anchor="w",
                 height=26,
                 fg_color="transparent" if widget_id != self.selected_id else "#2a5d7a",
@@ -1194,15 +1388,18 @@ class LuaDesigner(ctk.CTk):
 
         add_button("Canvas", None, 0)
 
-        def walk(parent: str | None, depth: int) -> None:
+        def walk(parent: str | None, depth: int, force: bool) -> None:
             for widget in self.project.children(parent):
-                spec = SPEC_BY_TYPE.get(widget.type)
-                add_button(f"{spec.title if spec else widget.type}  {widget.id}", widget.id, depth)
-                walk(widget.id, depth + 1)
+                widget_matches = matches(widget)
+                if query and not force and not widget_matches and not subtree_matches(widget):
+                    continue
+                add_button(row_text(widget), widget.id, depth)
+                walk(widget.id, depth + 1, force or widget_matches)
 
-        walk(None, 1)
+        walk(None, 1, False)
         self._tree_drag_id: str | None = None
         self._tree_drag_moved = False
+        self.tree_panel.refresh()
 
     def _tree_click(self, widget_id: str | None) -> None:
         self.select(widget_id)
@@ -1577,6 +1774,8 @@ class LuaDesigner(ctk.CTk):
                         wid, name, e.get_code()
                     ),
                 )
+
+        self.properties_panel.refresh()
 
     def apply_geometry(self, widget_id: str, key: str, field: ctk.CTkEntry) -> None:
         # Bind the owning widget id: clicking another widget rebuilds this panel and
@@ -2467,6 +2666,37 @@ def ui_test() -> int:
             for tab in ("Tree", "Properties", "Code"):
                 check(f"tab {tab}", lambda name=tab: app.tabs.set(name))
 
+            full_palette = len(_find_widgets(app.palette_panel.body, ctk.CTkButton))
+            check(
+                "palette search",
+                lambda: (
+                    app.palette_search.delete(0, "end"),
+                    app.palette_search.insert(0, "slider"),
+                    app._populate_palette(),
+                ),
+            )
+            filtered_palette = len(_find_widgets(app.palette_panel.body, ctk.CTkButton))
+            if not 0 < filtered_palette < full_palette:
+                failures.append(("palette search", f"filter kept {filtered_palette} of {full_palette}"))
+            check("palette clear", app._clear_palette_search)
+
+            app.refresh_tree()
+            full_tree = len(app._tree_rows)
+            check(
+                "tree search",
+                lambda: (
+                    app.tree_search.delete(0, "end"),
+                    app.tree_search.insert(0, "slider"),
+                    app.refresh_tree(),
+                ),
+            )
+            filtered_tree = len(app._tree_rows)
+            if not 1 < filtered_tree < full_tree:
+                failures.append(("tree search", f"filter kept {filtered_tree} of {full_tree}"))
+            check("tree clear", app._clear_tree_search)
+            if len(app._tree_rows) != full_tree:
+                failures.append(("tree clear", "the unfiltered tree did not return"))
+
             # The code preview is editable and the editor's text is exported.
             check("code edit", lambda: (app.code_text.set_code("-- manual export\n"), app.mark_code_dirty()))
             if not app.code_dirty:
@@ -2735,6 +2965,7 @@ def main() -> int:
     )
     parser.add_argument("--mono", action="store_true", help="Start with the mono theme")
     parser.add_argument("--zoom", choices=("50%", "65%", "75%", "100%"), help="Preview zoom")
+    parser.add_argument("--maximized", action="store_true", help="Start maximized (for screenshots)")
     parser.add_argument("--surface", help="Override the surface colour for screenshots")
     parser.add_argument("--bars", choices=("auto", "custom"), help="System bars mode")
     parser.add_argument("--portrait-layout", choices=("split", "side"))
@@ -2816,6 +3047,9 @@ def main() -> int:
 
     if args.zoom:
         app.on_zoom(args.zoom)
+
+    if args.maximized:
+        app.state("zoomed")
 
     if args.screenshot:
         def select_demo() -> None:

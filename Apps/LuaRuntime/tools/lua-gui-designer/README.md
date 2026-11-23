@@ -57,6 +57,9 @@ py Apps\LuaRuntime\tools\lua-gui-designer\designer.py --profile cl-32 --mono --s
 
 # Surface override and system-bars alignment
 py Apps\LuaRuntime\tools\lua-gui-designer\designer.py --surface "#3a1a1a" --align right --screenshot shot.png
+
+# Maximized window (useful for checking palette/tree scrolling)
+py Apps\LuaRuntime\tools\lua-gui-designer\designer.py --maximized --screenshot shot.png
 ```
 
 `--appearance` takes `spacing,size,font-size` exactly like the Appearance
@@ -94,13 +97,16 @@ project.
   orientation, and **Alignment** moves the strip or split-layout actions
   left/right. The preview draws both the split status bar/toolbar and the side
   strip.
-- **Palette**: Card, Container, Label, Button, Chip, SliderBox, Spinbox, Slider,
-  Switch, Checkbox, Dropdown, Roller, TextArea, Bar, List, PageIndicator,
-  StepIndicator, Badge, Spinner, Image, IconButton, TextButton.
+- **Palette**: a searchable, two-column component grid grouped by category:
+  Card, Container, Label, Button, Chip, SliderBox, Spinbox, Slider, Switch,
+  Checkbox, Dropdown, Roller, TextArea, Bar, List, PageIndicator, StepIndicator,
+  Badge, Spinner, Image, IconButton, TextButton. **Search widgets** filters by
+  title or type; **Esc** clears it.
 - **Canvas**: select, drag, resize with 8 handles, snap to an 8 px grid, delete,
   duplicate, nudge with arrow keys. Widgets outside the canvas get a red dashed
   warning, and the status line counts them.
-- **Hierarchy**: the **Tree** tab is the first panel. Right-click a row to
+- **Hierarchy**: the **Tree** tab is the first panel. **Filter widgets** narrows
+  the tree to matching widgets and their ancestors. Right-click a row to
   rename, duplicate, delete, move to Canvas, move out one level, or change the
   z-order. Drag a row onto a container to reparent it, or onto a sibling to
   reorder it; drop on empty space or **Canvas** to remove its parent.
