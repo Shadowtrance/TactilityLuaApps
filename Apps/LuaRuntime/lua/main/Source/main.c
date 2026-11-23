@@ -28,6 +28,7 @@
 
 #include <dirent.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,8 +44,9 @@
  * The runner owns the Lua runtime and the luavgl bindings for the script.
  *
  * The package's bundled examples are listed directly from its assets, so they
- * do not have to be copied. Opening one is harmless: Save/Run writes a copy
- * into the selected folder first and continues from that copy.
+ * do not have to be copied. Opening one is harmless: Run executes the asset
+ * as-is, as long as it is untouched. Saving, or running after an edit, writes
+ * a copy into the selected folder first and continues from that copy.
  */
 
 #define PACKAGE_ID "tactility.luaruntime"
@@ -91,6 +93,8 @@ struct Context {
     /* The name dialog hides and rebuilds this app, so the export target is captured first. */
     char pending_export_path[FILE_MAX_PATH_STRING_LENGTH];
     bool editing_example;
+    /* Hash of the bundled example as opened, so Run can tell an untouched one. */
+    uint64_t example_hash;
     char message[128];
 
     struct TaskEventGroup* event_group;
@@ -869,10 +873,20 @@ static bool write_file(const char* path, const char* text) {
     return written;
 }
 
+/** 64-bit FNV-1a: cheap identity for "the editor still matches the example". */
+static uint64_t hash_text(const char* text) {
+    uint64_t hash = 1469598103934665603ULL;
+    for (const unsigned char* current = (const unsigned char*)text; *current != '\0'; current++) {
+        hash ^= *current;
+        hash *= 1099511628211ULL;
+    }
+    return hash;
+}
+
 /*
- * A bundled example is read-only. The first Save or Run writes the editor's
- * content into the selected folder and continues from that copy, so a user's
- * edits never land back in the package.
+ * A bundled example is read-only. Save, or Run after an edit, writes the
+ * editor's content into the selected folder and continues from that copy, so
+ * a user's edits never land back in the package.
  */
 static bool save_example_copy(struct Context* context) {
     if (context->editor == NULL) {
@@ -957,6 +971,15 @@ static void on_run(lv_event_t* event) {
     }
 
     if (context->editing_example) {
+        const char* text = lv_textarea_get_text(context->editor);
+        if (hash_text(text) == context->example_hash) {
+            /* Untouched: run the package asset as-is instead of littering the
+             * user's folder with numbered copies for a quick demo. */
+            set_status(context, "Running...");
+            queue_run(context->current_path);
+            return;
+        }
+
         if (!save_example_copy(context)) {
             set_status(context, "Save failed");
             return;
@@ -1125,6 +1148,9 @@ static void show_editor(struct Context* context, struct ScriptEntry* script) {
 
     context->editing_example = script->source == SCRIPT_SOURCE_EXAMPLE;
     snprintf(context->current_path, sizeof(context->current_path), "%s", script->path);
+    if (context->editing_example) {
+        context->example_hash = hash_text(source);
+    }
 
     const lv_coord_t gap = (lv_coord_t)lvgl_theme_lerp(4, 12, lvgl_theme_get_spacing());
 
@@ -1176,7 +1202,7 @@ static void show_editor(struct Context* context, struct ScriptEntry* script) {
     context->status_label = lv_label_create(context->content);
     lv_label_set_text(
         context->status_label,
-        context->editing_example ? "Bundled example - Save Copy writes it to your folder" : "Ready"
+        context->editing_example ? "Bundled example - Run as-is; Save Copy to keep edits" : "Ready"
     );
     lv_obj_set_style_text_font(context->status_label, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
     lv_obj_set_style_text_opa(context->status_label, LV_OPA_70, 0);

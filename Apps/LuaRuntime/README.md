@@ -40,8 +40,9 @@ app). The choice is stored next to the app's other settings, in
 
 The package's bundled examples are listed directly from its assets, under
 **Examples**, alongside the scripts in the selected folder. They stay
-read-only: **Save Copy** (or **Run** on an unmodified example) writes a copy
-into the selected folder and the editor continues from that copy.
+read-only. **Run** executes a bundled example as-is; after an edit, **Run**
+(or **Save Copy**) writes the editor's content into the selected folder and
+continues from that copy.
 
 - `hello.lua` — the smallest script, a text result (`result = ...`)
 - `clock.lua` — live time, date and uptime in a themed card
