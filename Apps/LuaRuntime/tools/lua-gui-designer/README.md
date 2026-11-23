@@ -103,6 +103,9 @@ project.
   Tabs, Statusline, Bar, List, PageIndicator, StepIndicator, Badge, Spinner,
   Image, IconButton, TextButton. **Search widgets** filters by title or type;
   **Esc** clears it.
+- **Icons**: the toolbar **Icons** button opens a searchable grid of the shared
+  Material Symbols and copies `lvgl.ICON.NAME`. The Tabs content editor has its
+  own **Icon...** button that inserts `NAME|` at the cursor.
 - **Canvas**: select, drag, resize with 8 handles, snap to an 8 px grid, delete,
   duplicate, nudge with arrow keys. Widgets outside the canvas get a red dashed
   warning, and the status line counts them.

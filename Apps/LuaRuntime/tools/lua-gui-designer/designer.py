@@ -26,6 +26,10 @@ except ImportError as error:  # pragma: no cover - dependency hint
         f"Install it with: {sys.executable} -m pip install custom2kinter"
     ) from None
 
+from PIL import Image, ImageDraw
+
+from fonts import icon_font
+from icons import SHARED_ICONS
 from lua_export import export
 from model import Project, WidgetNode, content_offset
 from profiles import PROFILES, DeviceProfile, find_profile
@@ -160,6 +164,93 @@ class ScrollPanel(ctk.CTkFrame):
 
 # ---------------------------------------------------------------------------
 # Code editor
+
+
+class IconPicker(ctk.CTkToplevel):
+    """Searchable grid of the firmware's shared Material Symbols."""
+
+    def __init__(self, master, on_pick) -> None:
+        super().__init__(master)
+        self.on_pick = on_pick
+        self._images: list[ctk.CTkImage] = []
+        self.title("Icon picker")
+        self.geometry("600x560")
+        self.transient(master)
+        self.grab_set()
+
+        ctk.CTkLabel(
+            self, text="Shared icons", anchor="w", font=("Segoe UI", 16, "bold")
+        ).pack(fill="x", padx=10, pady=(8, 2))
+
+        self.search = ctk.CTkEntry(self, placeholder_text="Search icons", height=30)
+        self.search.pack(fill="x", padx=10, pady=(0, 6))
+        self.search.bind("<KeyRelease>", lambda _event: self._rebuild())
+
+        self.panel = ScrollPanel(self)
+        self.panel.pack(fill="both", expand=True, padx=6, pady=(0, 8))
+        self._rebuild()
+
+        self.bind("<Escape>", lambda _event: self.destroy())
+        self.after(80, self.focus_force)
+
+    def _glyph_image(self, glyph: str):
+        font = icon_font(30)
+        if font is None:
+            return None
+        image = Image.new("RGBA", (36, 36), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(image)
+        draw.text((18, 18), glyph, font=font, fill="#e8e8e8", anchor="mm")
+        photo = ctk.CTkImage(light_image=image, dark_image=image, size=(28, 28))
+        self._images.append(photo)
+        return photo
+
+    def _rebuild(self) -> None:
+        body = self.panel.body
+        for child in body.winfo_children():
+            child.destroy()
+
+        query = self.search.get().strip().lower()
+        names = [
+            name for name in SHARED_ICONS
+            if not query or query in name.lower() or query in name.replace("_", " ").lower()
+        ]
+        columns = 4
+        for column in range(columns):
+            body.grid_columnconfigure(column, weight=1, uniform="icon")
+
+        for index, name in enumerate(names):
+            button = ctk.CTkButton(
+                body,
+                text=name.replace("_", " "),
+                image=self._glyph_image(SHARED_ICONS[name]),
+                compound="top",
+                width=130,
+                height=78,
+                corner_radius=6,
+                fg_color="transparent",
+                hover_color="#2b3136",
+                text_color="#d8d8d8",
+                font=("Segoe UI", 9),
+                command=lambda n=name: self._choose(n),
+            )
+            button.grid(
+                row=index // columns,
+                column=index % columns,
+                padx=2,
+                pady=2,
+                sticky="nsew",
+            )
+
+        if not names:
+            ctk.CTkLabel(body, text="No matching icons", anchor="w").grid(
+                row=0, column=0, columnspan=columns, sticky="ew", padx=8, pady=8
+            )
+
+        self.panel.refresh()
+
+    def _choose(self, name: str) -> None:
+        self.on_pick(name)
+        self.destroy()
 
 
 def highlight_lua(text_widget: tk.Text, text: str) -> None:
@@ -457,6 +548,7 @@ class LuaDesigner(ctk.CTk):
         button(row1, "Open", self.open_project, 58)
         button(row1, "Save", self.save_project, 56)
         button(row1, "Export", self.export_lua, 64)
+        button(row1, "Icons", self.open_icon_picker, 54)
 
         ctk.CTkLabel(row1, text="Profile").pack(side="left", padx=(12, 4))
         self.profile_menu = ctk.CTkOptionMenu(
@@ -1595,6 +1687,21 @@ class LuaDesigner(ctk.CTk):
             field.insert(0, widget.id)
             self.set_status(f"'{name}' is not available.")
 
+    def open_icon_picker(self, on_pick=None) -> None:
+        if on_pick is None:
+            on_pick = self._copy_icon_name
+        IconPicker(self, on_pick)
+
+    def _copy_icon_name(self, name: str) -> None:
+        text = f"lvgl.ICON.{name}"
+        self.clipboard_clear()
+        self.clipboard_append(text)
+        self.set_status(f"Copied {text}")
+
+    def _insert_tab_icon(self, box: ctk.CTkTextbox, widget_id: str, key: str, name: str) -> None:
+        box.insert("insert", f"{name}|")
+        self.apply_prop_later(widget_id, key, box.get("1.0", "end-1c"))
+
     def select(self, widget_id: str | None) -> None:
         self.selected_id = widget_id
         self.refresh()
@@ -1735,11 +1842,27 @@ class LuaDesigner(ctk.CTk):
                         font=("Segoe UI", 12, "bold"),
                     ).pack(fill="x", padx=8, pady=(12, 2))
                     current_category = "Content"
-                ctk.CTkLabel(self.properties_frame, text=prop.label, anchor="w").pack(
-                    fill="x", padx=8, pady=(4, 1)
-                )
-                box = ctk.CTkTextbox(self.properties_frame, height=76)
-                box.pack(fill="x", padx=8)
+                if widget.type == "Tabs":
+                    box_row = ctk.CTkFrame(self.properties_frame, fg_color="transparent")
+                    box_row.pack(fill="x", padx=8, pady=(4, 1))
+                    ctk.CTkLabel(box_row, text=prop.label, anchor="w").pack(side="left")
+                    box = ctk.CTkTextbox(self.properties_frame, height=76)
+                    ctk.CTkButton(
+                        box_row,
+                        text="Icon...",
+                        width=54,
+                        height=24,
+                        command=lambda b=box, wid=widget.id, key=prop.key: self.open_icon_picker(
+                            lambda name, b=b, wid=wid, key=key: self._insert_tab_icon(b, wid, key, name)
+                        ),
+                    ).pack(side="right")
+                    box.pack(fill="x", padx=8)
+                else:
+                    ctk.CTkLabel(self.properties_frame, text=prop.label, anchor="w").pack(
+                        fill="x", padx=8, pady=(4, 1)
+                    )
+                    box = ctk.CTkTextbox(self.properties_frame, height=76)
+                    box.pack(fill="x", padx=8)
                 box.insert("1.0", str(widget.props.get(prop.key, prop.default)))
                 box.bind(
                     "<KeyRelease>",
