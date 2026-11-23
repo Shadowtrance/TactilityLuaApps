@@ -445,7 +445,7 @@ Tactility firmware rebuild before they are active on the device.
 
 ## Firmware requirement
 
-Two small patches are needed. `firmware-lvgl-exports.patch` adds the styles,
+Three small patches are needed. `firmware-lvgl-exports.patch` adds the styles,
 events and widget classes the external `luavgl` bindings need (a module built
 in-tree linked LVGL directly; a side-loaded app resolves the exported table).
 `firmware-c-symbols-exports.patch` adds the libc/libm functions Lua's standard
@@ -454,6 +454,14 @@ library references: `ungetc`, `tmpfile`, `tmpnam`, `setlocale`, `strtof` and
 `firmware-kernel-gpio-exports.patch` adds
 `gpio_descriptor_has_flags` to the kernel export table; the other GPIO
 functions were already exported.
+
+`firmware-elf-loader-end-pointer.patch` is optional. It maps a pointer to
+one-past-the-end of a loaded section to the end of its copy instead of to
+`NULL`. The S3 (section-based) loader otherwise turns the implicit `end`
+pointer of a C++ static array into `NULL`, which makes a range-based loop run
+past its table. The animations bindings avoid that pattern themselves, so the
+runtime works without the patch; applying it protects other apps that use the
+same pattern.
 
 The earlier boot-order change is **not** needed with this split: the module has
 no LVGL references, and the runner is an app. The firmware boot path is back to

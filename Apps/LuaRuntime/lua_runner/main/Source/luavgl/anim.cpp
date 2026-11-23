@@ -202,9 +202,12 @@ AnimHandle* check_anim(lua_State* state, int index) {
 }
 
 const AnimPropertyEntry* find_property(const char* name) {
-    for (const auto& entry : ANIM_PROPERTIES) {
-        if (std::strcmp(name, entry.name) == 0) {
-            return &entry;
+    // Indexed rather than range-based: on Xtensa the ELF loader maps a one-past-the-end
+    // array pointer (the implicit range-for sentinel) to NULL, which makes the loop run
+    // past the table. Avoid end pointers in tables that live in .data.rel.ro.
+    for (size_t i = 0; i < sizeof(ANIM_PROPERTIES) / sizeof(ANIM_PROPERTIES[0]); i++) {
+        if (std::strcmp(name, ANIM_PROPERTIES[i].name) == 0) {
+            return &ANIM_PROPERTIES[i];
         }
     }
     return nullptr;
@@ -361,7 +364,8 @@ int anim_target(lua_State* state) {
 int anim_tostring(lua_State* state) {
     auto* handle = check_anim(state, 1);
 
-    for (const auto& entry : ANIM_PROPERTIES) {
+    for (size_t i = 0; i < sizeof(ANIM_PROPERTIES) / sizeof(ANIM_PROPERTIES[0]); i++) {
+        const auto& entry = ANIM_PROPERTIES[i];
         if (entry.property == handle->property) {
             lua_pushfstring(state, "lvgl.Anim (%s %d -> %d)", entry.name,
                             static_cast<int>(handle->from), static_cast<int>(handle->to));
@@ -401,7 +405,10 @@ void luavgl_open_anim(lua_State* state) {
     lua_setfield(state, -2, "Anim");
 
     lua_createtable(state, 0, sizeof(ANIM_PATHS) / sizeof(ANIM_PATHS[0]));
-    for (const auto& entry : ANIM_PATHS) {
+    // See find_property() above: never let the compiler turn the table end into a
+    // one-past-the-end sentinel, because the Xtensa section loader maps that to NULL.
+    for (size_t i = 0; i < sizeof(ANIM_PATHS) / sizeof(ANIM_PATHS[0]); i++) {
+        const auto& entry = ANIM_PATHS[i];
         lua_pushlightuserdata(state, reinterpret_cast<void*>(entry.callback));
         lua_setfield(state, -2, entry.name);
     }
