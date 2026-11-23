@@ -1217,31 +1217,51 @@ def _draw_widget(
         )
         regular = _font(theme, "default", scale)
         small = _font(theme, "small", scale)
+        icon_font = _font(theme, "icon", scale)
+        padding = theme.list_item_pad_hor() * scale
         for index, row in enumerate(rows):
             row_y = y + index * row_h
             if row_y + row_h > y + h:
                 break
             header = index == 0 and len(rows) > 1
+            color = theme.ink if theme.mono else (theme.text_muted if header else theme.text)
+            icon_name, separator, label = row.partition("|")
+            if not separator:
+                label = row
+            glyph = SHARED_ICONS.get(icon_name.strip().upper()) if separator else None
+            text_x = x + padding
+            icon_width = 0.0
+            if glyph:
+                icon_width = theme.font_px("icon") * scale + 4 * scale
+                _text(
+                    draw,
+                    x + padding,
+                    row_y + row_h / 2,
+                    glyph,
+                    icon_font,
+                    color,
+                    "lm",
+                )
             _text(
                 draw,
-                x + theme.list_item_pad_hor() * scale,
+                text_x + icon_width,
                 row_y + row_h / 2,
                 _fit(
                     draw,
-                    row,
+                    label,
                     small if header else regular,
-                    w - 2 * theme.list_item_pad_hor() * scale,
+                    w - 2 * padding - icon_width,
                 ),
                 small if header else regular,
-                theme.ink if theme.mono else (theme.text_muted if header else theme.text),
+                color,
                 "lm",
             )
             if index < len(rows) - 1 and row_y + row_h < y + h:
                 draw.line(
                     [
-                        x + theme.list_item_pad_hor() * scale,
+                        x + padding,
                         row_y + row_h,
-                        x + w - theme.list_item_pad_hor() * scale,
+                        x + w - padding,
                         row_y + row_h,
                     ],
                     fill=theme.outline if theme.mono else theme.divider,

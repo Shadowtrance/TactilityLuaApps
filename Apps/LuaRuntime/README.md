@@ -270,7 +270,8 @@ tabs:set_tab_badge(2, true)
 `lvgl.ICON` is the firmware's shared Material Symbols set (85 names such as
 `INFO`, `MEMORY` and `HARD_DISK`). It is separate from `lvgl.SYMBOL`, which is
 LVGL's own icon font. Icons are ordinary glyph strings: set the caption and the
-icon font together, or the glyph renders as a missing character:
+icon font together, or the glyph renders as a missing character. List rows take
+the icon as their second argument:
 
 ```lua
 lvgl.Label(root, { text = lvgl.ICON.MEMORY, text_font = "icon" })
@@ -278,6 +279,7 @@ local button = lvgl.IconButton(root)
 lvgl.Label(button, {
     text = lvgl.ICON.SAVE, text_font = "icon", align = lvgl.ALIGN.CENTER,
 })
+list:add_button("Open", lvgl.ICON.FOLDER)
 ```
 
 `Statusline` is one line of status text with a coloured level dot:

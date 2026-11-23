@@ -284,9 +284,9 @@ lvgl.Label(button, {
 ```
 
 The designer's **Icon...** buttons fill in that pair for text fields, and Tabs
-use `ICON|Label` lines. The preview resolves `lvgl.ICON.NAME` automatically,
-and the exporter selects the icon font even if the font field still says
-`default`.
+and List rows accept `ICON|Label` lines. The preview resolves `lvgl.ICON.NAME`
+automatically, and the exporter selects the icon font even if the font field
+still says `default`.
 
 ## Current limits
 - Not in the palette yet: `Table`, `Chart`, `Calendar`, `Keyboard`,

@@ -462,7 +462,7 @@ WIDGET_SPECS: tuple[WidgetSpec, ...] = (
         container=False,
         summary="Rows with dividers",
         properties=(
-            PropertySpec("items", "Rows (one per line)", "multiline", "Section\nItem one\nItem two"),
+            PropertySpec("items", "Rows (ICON|Label or Label)", "multiline", "Section\nItem one\nItem two"),
             RADIUS,
         ),
     ),

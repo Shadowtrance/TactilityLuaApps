@@ -374,7 +374,16 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
 
     if widget.type == "List":
         for line in str(props.get("items", "")).splitlines():
-            if line.strip():
+            line = line.strip()
+            if not line:
+                continue
+            icon, separator, label = line.partition("|")
+            if separator:
+                state.lines.append(
+                    f"    {var}:add_button("
+                    f"{lua_string(label.strip())}, lvgl.ICON.{icon.strip().upper()})"
+                )
+            else:
                 state.lines.append(f"    {var}:add_text({lua_string(line)})")
         state.lines.append(f"    {var}:hide_last_divider()")
 

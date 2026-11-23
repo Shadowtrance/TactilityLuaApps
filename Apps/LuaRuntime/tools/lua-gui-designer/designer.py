@@ -193,6 +193,7 @@ class IconPicker(ctk.CTkToplevel):
 
         self.bind("<Escape>", lambda _event: self.destroy())
         self.after(80, self.focus_force)
+        self.after(120, self.search.focus_set)
 
     def _center_over_parent(self, master) -> None:
         width, height = 600, 560
