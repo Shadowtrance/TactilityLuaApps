@@ -31,6 +31,7 @@ void lua_bindings_open_fs(lua_State* state);
 void lua_bindings_open_settings(lua_State* state);
 void lua_bindings_open_time(lua_State* state);
 void lua_bindings_open_power(lua_State* state);
+void lua_bindings_open_display(lua_State* state);
 void lua_bindings_open_wifi(lua_State* state);
 void lua_bindings_open_notification(lua_State* state);
 

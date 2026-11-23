@@ -156,6 +156,19 @@ is the next step. Notification send/list/dismiss are hand-written and do not
 expose actions or Bundle data yet. See [BINDINGS.md](BINDINGS.md) for the design and
 [tools/lua-bindings](tools/lua-bindings/README.md) for the generator.
 
+`tactility.display` finds the active panel and drives its backlight:
+
+```lua
+local width, height = tactility.display.size()
+local shape = tactility.display.shape()       -- { shape = "rounded", radius = 32 }
+local percent = tactility.display.brightness_percent()
+tactility.display.set_brightness_percent(60)
+```
+
+`brightness_percent()` uses the same 10%-step mapping as the Display settings
+screen; 0% is the dimmest level that keeps the backlight on. `has_backlight()`
+is false on a panel without one, and the brightness calls return `nil, reason`.
+
 ### Widgets
 
 `lvgl` covers LVGL's core widgets plus Tactility's framework widgets:
@@ -337,6 +350,7 @@ runtime gains something a packaged app depends on.
   Keyboard and ButtonMatrix.
 - `widget_batch3.lua` — Tabview and Tileview.
 - `tabs_statusline.lua` — Material 3 Tabs, Statusline and the shared `lvgl.ICON` table.
+- `display.lua` — display size, shape, backlight range and percentage control.
 - `assets.lua` — the install-directory argument and a packaged PNG in `Image`
   and `ImageButton`.
 - `group.lua` — input groups, focus next/prev/freeze, wrap, editing and default.

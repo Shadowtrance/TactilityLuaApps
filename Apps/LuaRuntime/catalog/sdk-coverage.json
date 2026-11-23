@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-23T13:31:49",
+  "generated_at": "2026-11-23T14:05:38",
   "sdk": "C:\\Users\\teron\\.tactility\\sdk\\0.8.0-dev\\platform-esp32p4\\TactilitySDK",
   "firmware": "C:\\Users\\teron\\espidf-projects\\TactilityWork",
   "sdk_version": "0.8.0-dev",
@@ -8,6 +8,14 @@
   "firmware_commit": "8220768c",
   "firmware_dirty": true,
   "symbols": [
+    {
+      "module": "TactilityKernel",
+      "name": "DISPLAY_TYPE",
+      "status": "bound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
     {
       "module": "TactilityKernel",
       "name": "POWER_SUPPLY_TYPE",
@@ -21,6 +29,46 @@
       "name": "WIFI_TYPE",
       "status": "bound",
       "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "backlight_get_brightness",
+      "status": "bound",
+      "header": "tactility/drivers/backlight.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "backlight_get_max_brightness",
+      "status": "bound",
+      "header": "tactility/drivers/backlight.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "backlight_get_min_brightness",
+      "status": "bound",
+      "header": "tactility/drivers/backlight.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "backlight_set_brightness",
+      "status": "bound",
+      "header": "tactility/drivers/backlight.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "backlight_set_brightness_default",
+      "status": "bound",
+      "header": "tactility/drivers/backlight.h",
       "source": "export",
       "note": ""
     },
@@ -125,6 +173,38 @@
       "name": "device_put",
       "status": "bound",
       "header": "tactility/device.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "display_get_backlight",
+      "status": "bound",
+      "header": "tactility/drivers/display.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "display_get_resolution_x",
+      "status": "bound",
+      "header": "tactility/drivers/display.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "display_get_resolution_y",
+      "status": "bound",
+      "header": "tactility/drivers/display.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "display_get_shape",
+      "status": "bound",
+      "header": "tactility/drivers/display.h",
       "source": "export",
       "note": ""
     },
@@ -571,14 +651,6 @@
     {
       "module": "TactilityKernel",
       "name": "COMPASS_TYPE",
-      "status": "unbound",
-      "header": "",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "DISPLAY_TYPE",
       "status": "unbound",
       "header": "",
       "source": "export",
@@ -1053,46 +1125,6 @@
       "name": "audio_stream_write",
       "status": "unbound",
       "header": "tactility/drivers/audio_stream.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "backlight_get_brightness",
-      "status": "unbound",
-      "header": "tactility/drivers/backlight.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "backlight_get_max_brightness",
-      "status": "unbound",
-      "header": "tactility/drivers/backlight.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "backlight_get_min_brightness",
-      "status": "unbound",
-      "header": "tactility/drivers/backlight.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "backlight_set_brightness",
-      "status": "unbound",
-      "header": "tactility/drivers/backlight.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "backlight_set_brightness_default",
-      "status": "unbound",
-      "header": "tactility/drivers/backlight.h",
       "source": "export",
       "note": ""
     },
@@ -1994,14 +2026,6 @@
     },
     {
       "module": "TactilityKernel",
-      "name": "display_get_backlight",
-      "status": "unbound",
-      "header": "tactility/drivers/display.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
       "name": "display_get_color_format",
       "status": "unbound",
       "header": "tactility/drivers/display.h",
@@ -2035,30 +2059,6 @@
     {
       "module": "TactilityKernel",
       "name": "display_get_mirror_y",
-      "status": "unbound",
-      "header": "tactility/drivers/display.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "display_get_resolution_x",
-      "status": "unbound",
-      "header": "tactility/drivers/display.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "display_get_resolution_y",
-      "status": "unbound",
-      "header": "tactility/drivers/display.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "display_get_shape",
       "status": "unbound",
       "header": "tactility/drivers/display.h",
       "source": "export",

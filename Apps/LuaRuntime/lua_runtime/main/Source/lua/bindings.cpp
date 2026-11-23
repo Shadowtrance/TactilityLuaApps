@@ -43,6 +43,7 @@ extern "C" error_t lua_bindings_open(struct LuaRuntime* runtime) {
     lua_bindings_open_settings(state);
     lua_bindings_open_time(state);
     lua_bindings_open_power(state);
+    lua_bindings_open_display(state);
     lua_bindings_open_wifi(state);
     lua_bindings_open_notification(state);
     lua_bindings_open_generated(state);
