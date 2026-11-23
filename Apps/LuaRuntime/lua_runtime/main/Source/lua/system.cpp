@@ -4,7 +4,13 @@
 #include <tactility/memory.h>
 #include <tactility/module.h>
 
+#include <cstdlib>
 #include <cstring>
+
+#ifdef ESP_PLATFORM
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#endif
 
 extern "C" {
 #include <lauxlib.h>
@@ -85,9 +91,69 @@ int system_storage(lua_State* state) {
     return 1;
 }
 
+#ifdef ESP_PLATFORM
+const char* task_state_name(eTaskState state) {
+    switch (state) {
+        case eRunning: return "running";
+        case eReady: return "ready";
+        case eBlocked: return "blocked";
+        case eSuspended: return "suspended";
+        case eDeleted: return "deleted";
+        default: return "invalid";
+    }
+}
+#endif
+
+/** `system.tasks() -> { { name, state, priority, ... }, ... }` */
+int system_tasks(lua_State* state) {
+#ifdef ESP_PLATFORM
+    const UBaseType_t count = uxTaskGetNumberOfTasks();
+    if (count == 0) {
+        lua_newtable(state);
+        return 1;
+    }
+
+    auto* tasks = static_cast<TaskStatus_t*>(malloc(sizeof(TaskStatus_t) * count));
+    if (tasks == nullptr) {
+        return push_failure(state, "out of memory for the task list");
+    }
+
+    configRUN_TIME_COUNTER_TYPE total_runtime = 0;
+    const UBaseType_t actual = uxTaskGetSystemState(tasks, count, &total_runtime);
+
+    lua_createtable(state, static_cast<int>(actual), 0);
+    for (UBaseType_t index = 0; index < actual; index++) {
+        const TaskStatus_t& task = tasks[index];
+
+        lua_createtable(state, 0, 7);
+        lua_pushstring(state, task.pcTaskName != nullptr ? task.pcTaskName : "(unnamed)");
+        lua_setfield(state, -2, "name");
+        lua_pushstring(state, task_state_name(task.eCurrentState));
+        lua_setfield(state, -2, "state");
+        lua_pushinteger(state, static_cast<lua_Integer>(task.uxCurrentPriority));
+        lua_setfield(state, -2, "priority");
+        lua_pushinteger(state, static_cast<lua_Integer>(task.uxBasePriority));
+        lua_setfield(state, -2, "base_priority");
+        lua_pushinteger(state, static_cast<lua_Integer>(task.usStackHighWaterMark));
+        lua_setfield(state, -2, "stack_free");
+        lua_pushinteger(state, static_cast<lua_Integer>(task.ulRunTimeCounter));
+        lua_setfield(state, -2, "runtime");
+        lua_pushinteger(state, static_cast<lua_Integer>(task.xTaskNumber));
+        lua_setfield(state, -2, "number");
+        lua_seti(state, -2, static_cast<lua_Integer>(index) + 1);
+    }
+
+    free(tasks);
+    return 1;
+#else
+    return push_failure(state, "task info is not available on this platform");
+#endif
+}
+
 const luaL_Reg system_functions[] = {
     { "memory", system_memory },
     { "storage", system_storage },
+    { "tasks", system_tasks },
     { nullptr, nullptr }
 };
 

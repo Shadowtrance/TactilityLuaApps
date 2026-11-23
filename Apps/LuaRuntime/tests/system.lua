@@ -37,4 +37,22 @@ else
     storage_note = "no storage: " .. storage_reason
 end
 
-result = "system: PASS (" .. checks .. " checks) - " .. storage_note
+local tasks = system.tasks()
+check(type(tasks) == "table", "task table")
+check(#tasks > 0, "task count")
+for _, task in ipairs(tasks) do
+    check(type(task.name) == "string" and #task.name > 0, "task name")
+    check(type(task.state) == "string" and #task.state > 0, "task state")
+    check(type(task.priority) == "number", "task priority")
+    check(type(task.base_priority) == "number", "task base priority")
+    check(type(task.stack_free) == "number", "task stack")
+    check(type(task.runtime) == "number", "task runtime")
+    check(type(task.number) == "number", "task number")
+end
+
+result = string.format(
+    "system: PASS (%d checks) - %s, %d tasks",
+    checks,
+    storage_note,
+    #tasks
+)

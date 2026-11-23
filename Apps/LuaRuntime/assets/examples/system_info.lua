@@ -111,6 +111,7 @@ local statusline = lvgl.Statusline(root, {
 local tabs = lvgl.Tabs(root, { mode = lvgl.TABS_MODE.FIXED })
 tabs:add_tab_with_icon(lvgl.ICON.MEMORY, "Memory")
 tabs:add_tab_with_icon(lvgl.ICON.HARD_DISK, "Storage")
+tabs:add_tab_with_icon(lvgl.ICON.LISTS, "Tasks")
 tabs:add_tab_with_icon(lvgl.ICON.INFO, "About")
 
 local panes = {}
@@ -121,7 +122,7 @@ local pane_container = lvgl.Object(root, {
     bg_opa = lvgl.OPA.TRANSP, border_width = 0,
 })
 
-for index = 1, 3 do
+for index = 1, 4 do
     panes[index] = lvgl.Object(pane_container, {
         w = lvgl.PCT(100), h = lvgl.PCT(100),
         flex_flow = lvgl.FLEX_FLOW.COLUMN,
@@ -135,8 +136,23 @@ local internal_card = usage_card(panes[1], lvgl.ICON.MEMORY, "Internal memory")
 local external_card = usage_card(panes[1], lvgl.ICON.MEMORY, "External memory")
 local storage_card = usage_card(panes[2], lvgl.ICON.HARD_DISK, "SD card")
 
+local tasks_card = lvgl.Card(panes[3], {
+    w = lvgl.PCT(100),
+    flex_grow = 1,
+    flex_flow = lvgl.FLEX_FLOW.COLUMN,
+    pad_all = lvgl.theme_lerp(8, 18),
+    pad_row = gap,
+})
+local tasks_title = lvgl.Label(tasks_card, { text = "Tasks", text_font = "large" })
+local tasks_label = lvgl.Label(tasks_card, {
+    text = "...",
+    w = lvgl.PCT(100),
+    text_font = "small",
+    long_mode = lvgl.LONG.WRAP,
+})
+
 local display = tactility.display
-local about_card = lvgl.Card(panes[3], {
+local about_card = lvgl.Card(panes[4], {
     w = lvgl.PCT(100),
     flex_grow = 1,
     flex_flow = lvgl.FLEX_FLOW.COLUMN,
@@ -195,6 +211,25 @@ local function refresh()
         statusline:set_text("Internal memory is running low")
         statusline:set_level(lvgl.STATUSLINE_LEVEL.WARNING)
     end
+
+    local system_tasks = tactility.system.tasks()
+    if type(system_tasks) ~= "table" then
+        system_tasks = {}
+    end
+    table.sort(system_tasks, function(a, b)
+        return a.name:lower() < b.name:lower()
+    end)
+    local task_lines = {}
+    for index = 1, math.min(#system_tasks, 24) do
+        local task = system_tasks[index]
+        task_lines[#task_lines + 1] = string.format(
+            "%s  (%s)  p%d", task.name, task.state, task.priority
+        )
+    end
+    tasks_title:set{ text = string.format("Tasks (%d)", #system_tasks) }
+    tasks_label:set{
+        text = #task_lines > 0 and table.concat(task_lines, "\n") or "No tasks",
+    }
 
     about_uptime:set{ text = uptime_text(tactility.time.uptime()) }
     if display.has_backlight() then

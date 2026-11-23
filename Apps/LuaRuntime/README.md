@@ -60,8 +60,8 @@ continues from that copy.
 - `notification.lua` — posts info/warning/error notifications, lists and dismisses them
 - `simon.lua` — Simon: dim/bright themed pads, a sequence timer, growing rounds
   and a best score (the highlight/timing borrows from TamaTac's pattern game)
-- `system_info.lua` — Memory / Storage / About tabs with usage bars, statusline and
-  live display, heap and storage readings
+- `system_info.lua` — Memory / Storage / Tasks / About tabs with usage bars,
+  statusline and live display, heap, storage and task readings
 
 Scripts draw into the content area below a toolbar the runner provides, so
 every script has a working close button. `on_create` / `on_show` / `on_hide` /
@@ -177,6 +177,9 @@ board without PSRAM. `tactility.system.storage(path?)` returns the same fields
 for a FAT mount such as `/sdcard`. It returns `nil, reason` when the running
 firmware does not export `esp_vfs_fat_info`; the export patch in this app adds
 it, so storage readings start working after the next firmware build.
+`tactility.system.tasks()` returns a snapshot array of `{ name, state,
+priority, base_priority, stack_free, runtime, number }`; the task exports are in
+the same firmware patch.
 
 ### Widgets
 
