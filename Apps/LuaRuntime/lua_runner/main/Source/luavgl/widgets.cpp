@@ -14,6 +14,7 @@
 #include <lvgl/widgets/tabs.h>
 #include <lvgl/widgets/text_button.h>
 
+#include <cstdlib>
 #include <cstring>
 #include <initializer_list>
 
@@ -68,10 +69,6 @@ int widget_roller(lua_State* state) {
 
 int widget_textarea(lua_State* state) {
     return luavgl_create_widget(state, [](lv_obj_t* parent) { return lv_textarea_create(parent); });
-}
-
-int widget_line(lua_State* state) {
-    return luavgl_create_widget(state, [](lv_obj_t* parent) { return lv_line_create(parent); });
 }
 
 int widget_image(lua_State* state) {
@@ -240,6 +237,7 @@ char ARC_TAG;
 char SPINBOX_TAG;
 char TABS_TAG;
 char STATUSLINE_TAG;
+char LINE_TAG;
 
 /** Raises unless the widget carries `tag`, then returns it. */
 lv_obj_t* check_tagged_widget(lua_State* state, int index, const void* tag, const char* name) {
@@ -312,6 +310,14 @@ int finish_widget(
 int widget_card(lua_State* state) {
     const auto args = luavgl_parse_constructor_args(state);
     return finish_widget(state, lvgl_card_create(args.parent), args);
+}
+
+/** Tagged because the line class is not exported; `line:set_points` checks the tag. */
+int widget_line(lua_State* state) {
+    const auto args = luavgl_parse_constructor_args(state);
+    auto* object = lv_line_create(args.parent);
+    lv_obj_set_user_data(object, &LINE_TAG);
+    return finish_widget(state, object, args);
 }
 
 /** Material 3 tabs: the bar only; the app swaps the pane itself on VALUE_CHANGED. */
@@ -850,6 +856,99 @@ int led_off(lua_State* state) {
 
 int led_toggle(lua_State* state) {
     lv_led_toggle(check_widget_of(state, 1, &lv_led_class, "LED"));
+
+    lua_settop(state, 1);
+    return 1;
+}
+
+// Line ------------------------------------------------------------------------------------
+//
+// LVGL keeps the points array by pointer rather than copying it, so the binding owns a
+// heap array. The array lives in a side list keyed by the line object because the object's
+// user data holds the line tag.
+
+struct LinePoints {
+    lv_obj_t* line;
+    lv_point_precise_t* points;
+    LinePoints* next;
+};
+
+LinePoints* line_points_list = nullptr;
+
+LinePoints* find_line_points(lv_obj_t* line) {
+    for (auto* entry = line_points_list; entry != nullptr; entry = entry->next) {
+        if (entry->line == line) {
+            return entry;
+        }
+    }
+    return nullptr;
+}
+
+void remove_line_points(lv_obj_t* line) {
+    LinePoints** link = &line_points_list;
+    while (*link != nullptr) {
+        LinePoints* entry = *link;
+        if (entry->line == line) {
+            *link = entry->next;
+            free(entry->points);
+            free(entry);
+            return;
+        }
+        link = &entry->next;
+    }
+}
+
+void line_points_deleted(lv_event_t* event) {
+    remove_line_points(lv_event_get_target_obj(event));
+}
+
+/** `line:set_points{ x1, y1, x2, y2, ... }` - coordinates relative to the line object. */
+int line_set_points(lua_State* state) {
+    auto* line = check_tagged_widget(state, 1, &LINE_TAG, "line");
+    luaL_checktype(state, 2, LUA_TTABLE);
+
+    const size_t value_count = luaL_len(state, 2);
+    if (value_count < 4 || value_count % 2 != 0) {
+        return luaL_error(state, "points must be an even list of at least 4 numbers");
+    }
+
+    const size_t point_count = value_count / 2;
+    auto* points = static_cast<lv_point_precise_t*>(
+        malloc(sizeof(lv_point_precise_t) * point_count)
+    );
+    if (points == nullptr) {
+        return luaL_error(state, "out of memory for line points");
+    }
+
+    for (size_t index = 0; index < point_count; index++) {
+        lua_geti(state, 2, static_cast<lua_Integer>(index * 2 + 1));
+        const lua_Number x = luaL_checknumber(state, -1);
+        lua_pop(state, 1);
+        lua_geti(state, 2, static_cast<lua_Integer>(index * 2 + 2));
+        const lua_Number y = luaL_checknumber(state, -1);
+        lua_pop(state, 1);
+        points[index].x = static_cast<lv_value_precise_t>(x);
+        points[index].y = static_cast<lv_value_precise_t>(y);
+    }
+
+    LinePoints* entry = find_line_points(line);
+    if (entry != nullptr) {
+        free(entry->points);
+        entry->points = points;
+    } else {
+        entry = static_cast<LinePoints*>(malloc(sizeof(LinePoints)));
+        if (entry == nullptr) {
+            free(points);
+            return luaL_error(state, "out of memory for line points");
+        }
+        entry->line = line;
+        entry->points = points;
+        entry->next = line_points_list;
+        line_points_list = entry;
+        lv_obj_add_event_cb(line, line_points_deleted, LV_EVENT_DELETE, nullptr);
+    }
+
+    lv_line_set_points(line, points, static_cast<uint32_t>(point_count));
 
     lua_settop(state, 1);
     return 1;
@@ -1736,6 +1835,7 @@ const luaL_Reg widget_methods[] = {
     { "selected", tabs_selected },
     { "set_text", statusline_set_text },
     { "set_level", statusline_set_level },
+    { "set_points", line_set_points },
     { "add_tile", tileview_add_tile },
     { "set_tile", tileview_set_tile },
     { "goto_tile", tileview_goto_tile },

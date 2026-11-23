@@ -278,6 +278,14 @@ line:set_text("No internet")
 line:set_level(lvgl.STATUSLINE_LEVEL.WARNING)
 ```
 
+`Line` takes an even list of x/y pairs with `set_points`; the binding owns the
+array LVGL keeps by pointer:
+
+```lua
+local spark = lvgl.Line(root, { w = 200, h = 80 })
+spark:set_points{ 0, 70, 40, 30, 80, 55, 120, 10, 160, 40, 200, 20 }
+```
+
 Grids use LVGL's descriptors without exposing raw arrays:
 
 ```lua
@@ -361,6 +369,7 @@ runtime gains something a packaged app depends on.
 - `tabs_statusline.lua` — Material 3 Tabs, Statusline and the shared `lvgl.ICON` table.
 - `display.lua` — display size, shape, backlight range and percentage control.
 - `system.lua` — internal/external heap usage and FAT storage statistics.
+- `line.lua` — line points, replacement and the owned point array.
 - `assets.lua` — the install-directory argument and a packaged PNG in `Image`
   and `ImageButton`.
 - `group.lua` — input groups, focus next/prev/freeze, wrap, editing and default.

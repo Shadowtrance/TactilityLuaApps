@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-23T14:31:42",
+  "generated_at": "2026-11-23T16:28:57",
   "sdk": "C:\\Users\\teron\\.tactility\\sdk\\0.8.0-dev\\platform-esp32p4\\TactilitySDK",
   "firmware": "C:\\Users\\teron\\espidf-projects\\TactilityWork",
   "sdk_version": "0.8.0-dev",
@@ -8218,6 +8218,14 @@
     },
     {
       "module": "lvgl-module",
+      "name": "lv_event_get_target_obj",
+      "status": "bound",
+      "header": "core/lv_obj_event.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
       "name": "lv_event_get_user_data",
       "status": "bound",
       "header": "core/lv_event.h",
@@ -8667,6 +8675,14 @@
     {
       "module": "lvgl-module",
       "name": "lv_line_create",
+      "status": "bound",
+      "header": "widgets/lv_line.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lv_line_set_points",
       "status": "bound",
       "header": "widgets/lv_line.h",
       "source": "export",
@@ -11810,14 +11826,6 @@
     },
     {
       "module": "lvgl-module",
-      "name": "lv_event_get_target_obj",
-      "status": "unbound",
-      "header": "core/lv_obj_event.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
       "name": "lv_event_stop_bubbling",
       "status": "unbound",
       "header": "core/lv_event.h",
@@ -11981,14 +11989,6 @@
       "name": "lv_layer_top",
       "status": "unbound",
       "header": "display/lv_display.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
-      "name": "lv_line_set_points",
-      "status": "unbound",
-      "header": "widgets/lv_line.h",
       "source": "export",
       "note": ""
     },

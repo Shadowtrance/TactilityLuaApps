@@ -41,7 +41,7 @@ def variable_name(widget: WidgetNode) -> str:
 
 
 def _prop_value(key: str, value: object) -> str:
-    if key in ("bg_color", "border_color", "text_color"):
+    if key in ("bg_color", "border_color", "text_color", "led_color"):
         return lua_color(value)
     if key == "bg_opa":
         return f"lvgl.OPA.{value}"
@@ -55,7 +55,7 @@ def _prop_value(key: str, value: object) -> str:
         return f"'{value}'"
     if key == "variant":
         return f"lvgl.ICON_BUTTON.{value}"
-    if key in ("checked", "one_line", "password_mode", "vertical"):
+    if key in ("checked", "one_line", "password_mode", "vertical", "on", "label_show"):
         return "true" if value else "false"
     if isinstance(value, str):
         return lua_string(value)
@@ -295,6 +295,23 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
             entries.append(f"text = {lua_string(str(props.get('text', '') or 'All good'))}")
             level = str(props.get("level", "OK") or "OK")
             entries.append(f"level = lvgl.STATUSLINE_LEVEL.{level}")
+        elif widget.type == "Arc":
+            _add_props(entries, props, ("min", "max", "value", "arc_start", "arc_end"))
+        elif widget.type == "LED":
+            _add_props(entries, props, ("led_color", "brightness", "on"))
+        elif widget.type == "Scale":
+            _add_props(
+                entries,
+                props,
+                ("min", "max", "tick_count", "major_tick_every", "label_show",
+                 "scale_angle", "scale_rotation"),
+            )
+            mode = str(props.get("scale_mode", "HORIZONTAL_TOP") or "HORIZONTAL_TOP")
+            entries.append(f"scale_mode = lvgl.SCALE_MODE.{mode}")
+        elif widget.type == "ImageButton":
+            _add_props(entries, props, ("radius",))
+        elif widget.type == "Line":
+            pass
         elif widget.type == "Image":
             _add_props(entries, props, ("src", "radius"))
         elif widget.type in ("Badge", "Spinner"):
@@ -356,6 +373,23 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
         selected = int(props.get("selected", 1))
         if selected > 1:
             state.lines.append(f"    {var}:set_selected({selected})")
+
+    if widget.type == "Line":
+        values: list[str] = []
+        for row in str(props.get("points", "")).splitlines():
+            parts = [part.strip() for part in row.replace(";", ",").split(",")]
+            if len(parts) < 2:
+                continue
+            values.extend(parts[:2])
+        if len(values) >= 4:
+            state.lines.append(f"    {var}:set_points{{ {', '.join(values)} }}")
+
+    if widget.type == "ImageButton":
+        src = str(props.get("src", "") or "")
+        if src:
+            state.lines.append(
+                f"    {var}:set_image_src(lvgl.IMAGEBUTTON.RELEASED, {lua_string(src)})"
+            )
 
     if widget.type == "PageIndicator":
         state.lines.append(f"    {var}:set_page_count({int(props.get('page_count', 5))})")

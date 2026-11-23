@@ -17,6 +17,7 @@ Geometry follows the firmware:
 from __future__ import annotations
 
 import datetime
+import math
 
 from PIL import Image, ImageDraw, ImageTk
 
@@ -1298,6 +1299,167 @@ def _draw_widget(
             end=310,
             fill=theme.ink if theme.mono else theme.primary,
             width=stroke,
+        )
+        return
+
+    if widget.type == "Arc":
+        inset = max(6.0, theme.dp(8) * scale)
+        bounds = [x + inset, y + inset, x + w - inset, y + h - inset]
+        start = int(props.get("arc_start", 135))
+        end = int(props.get("arc_end", 45))
+        sweep = (end - start) % 360
+        if sweep == 0:
+            sweep = 360
+        minimum = int(props.get("min", 0))
+        maximum = int(props.get("max", 100))
+        value = int(props.get("value", 0))
+        fraction = 0.0 if maximum == minimum else (value - minimum) / (maximum - minimum)
+        fraction = max(0.0, min(1.0, fraction))
+        thickness = max(3, round(theme.dp(6) * scale))
+        draw.arc(
+            bounds,
+            start=start,
+            end=start + sweep,
+            fill=theme.ink if theme.mono else theme.outline_variant,
+            width=thickness,
+        )
+        if fraction > 0:
+            draw.arc(
+                bounds,
+                start=start,
+                end=start + max(1.0, sweep * fraction),
+                fill=theme.primary if not theme.mono else theme.ink,
+                width=thickness,
+            )
+        _text(
+            draw,
+            x + w / 2,
+            y + h / 2,
+            str(value),
+            _font(theme, "default", scale),
+            theme.text if not theme.mono else theme.ink,
+            "mm",
+        )
+        return
+
+    if widget.type == "Line":
+        points: list[tuple[float, float]] = []
+        for row in str(props.get("points", "")).splitlines():
+            parts = [part.strip() for part in row.replace(";", ",").split(",")]
+            if len(parts) < 2:
+                continue
+            try:
+                points.append((x + float(parts[0]) * scale, y + float(parts[1]) * scale))
+            except ValueError:
+                continue
+        if len(points) >= 2:
+            draw.line(
+                points,
+                fill=theme.primary if not theme.mono else theme.ink,
+                width=max(2, round(theme.dp(2) * scale)),
+                joint="curve",
+            )
+        return
+
+    if widget.type == "LED":
+        color = str(props.get("led_color", "") or "")
+        if not color:
+            color = theme.ink if theme.mono else theme.primary
+        brightness = max(0, min(255, int(props.get("brightness", 255))))
+        on = bool(props.get("on", True))
+        inset = max(1.0, theme.dp(2) * scale)
+        bounds = [x + inset, y + inset, x + w - inset, y + h - inset]
+        if on:
+            fill = mix("#000000", color, 40 + brightness * 60 // 255)
+            draw.ellipse(bounds, fill=fill)
+        else:
+            draw.ellipse(
+                bounds,
+                fill=theme.paper if theme.mono else theme.card,
+                outline=color,
+                width=max(1, round(theme.dp(1) * scale)),
+            )
+        return
+
+    if widget.type == "Scale":
+        mode = str(props.get("scale_mode", "HORIZONTAL_TOP") or "HORIZONTAL_TOP")
+        tick_count = max(2, min(100, int(props.get("tick_count", 21))))
+        major_every = max(1, int(props.get("major_tick_every", 5)))
+        thickness = max(1.0, theme.dp(1) * scale)
+        color = theme.ink if theme.mono else theme.outline_variant
+        accent = theme.primary if not theme.mono else theme.ink
+        if mode.startswith("ROUND"):
+            radius = max(8.0, min(w, h) / 2 - 4 * scale)
+            cx, cy = x + w / 2, y + h / 2
+            draw.arc(
+                [cx - radius, cy - radius, cx + radius, cy + radius],
+                start=0,
+                end=360,
+                fill=color,
+                width=int(thickness),
+            )
+            for index in range(tick_count):
+                angle = math.radians(index * 360 / tick_count)
+                inner = radius - (7 if index % major_every == 0 else 4) * scale
+                draw.line(
+                    [
+                        cx + math.cos(angle) * inner,
+                        cy + math.sin(angle) * inner,
+                        cx + math.cos(angle) * radius,
+                        cy + math.sin(angle) * radius,
+                    ],
+                    fill=accent if index % major_every == 0 else color,
+                    width=max(1, round(thickness)),
+                )
+        else:
+            horizontal = mode.startswith("HORIZONTAL")
+            length = w if horizontal else h
+            start = x if horizontal else y + h
+            base = (
+                y + (4 * scale if mode.endswith("TOP") else h - 4 * scale)
+                if horizontal
+                else x + (4 * scale if mode == "VERTICAL_LEFT" else w - 4 * scale)
+            )
+            draw.line(
+                [x if horizontal else base, base if horizontal else y,
+                 x + w if horizontal else base, base if horizontal else y + h],
+                fill=color,
+                width=max(1, round(thickness)),
+            )
+            for index in range(tick_count):
+                position = start + length * index / (tick_count - 1)
+                size = 7 * scale if index % major_every == 0 else 4 * scale
+                if horizontal:
+                    draw.line([position, base, position, base + size],
+                              fill=accent if index % major_every == 0 else color,
+                              width=max(1, round(thickness)))
+                else:
+                    direction = 1 if mode == "VERTICAL_LEFT" else -1
+                    draw.line([base, position, base + size * direction, position],
+                              fill=accent if index % major_every == 0 else color,
+                              width=max(1, round(thickness)))
+        return
+
+    if widget.type == "ImageButton":
+        _rounded(
+            draw,
+            x,
+            y,
+            x + w,
+            y + h,
+            _radius_for(props, theme.radius_card()) * scale,
+            fill=theme.paper if theme.mono else theme.surface_container_high,
+            outline=theme.primary if not theme.mono else theme.ink,
+            width=max(1, round(theme.dp(1) * scale)),
+        )
+        _text(
+            draw,
+            x + w / 2,
+            y + h / 2,
+            "image",
+            _font(theme, "small", scale),
+            theme.ink if theme.mono else theme.text_muted,
+            "mm",
         )
         return
 

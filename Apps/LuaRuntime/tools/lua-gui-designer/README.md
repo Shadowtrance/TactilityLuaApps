@@ -99,9 +99,10 @@ project.
   strip.
 - **Palette**: a searchable, two-column component grid grouped by category:
   Card, Container, Label, Button, Chip, SliderBox, Spinbox, Slider, Switch,
-  Checkbox, Dropdown, Roller, TextArea, Tabs, Statusline, Bar, List,
-  PageIndicator, StepIndicator, Badge, Spinner, Image, IconButton, TextButton.
-  **Search widgets** filters by title or type; **Esc** clears it.
+  Checkbox, Dropdown, Roller, TextArea, Arc, Line, LED, Scale, ImageButton,
+  Tabs, Statusline, Bar, List, PageIndicator, StepIndicator, Badge, Spinner,
+  Image, IconButton, TextButton. **Search widgets** filters by title or type;
+  **Esc** clears it.
 - **Canvas**: select, drag, resize with 8 handles, snap to an 8 px grid, delete,
   duplicate, nudge with arrow keys. Widgets outside the canvas get a red dashed
   warning, and the status line counts them.
@@ -266,9 +267,9 @@ preview uses Adwaita for the app area.
 
 ## Current limits
 
-- Not in the palette yet: `Arc`, `Line`, `LED`, `Table`, `Scale`, `ImageButton`,
-  `Chart`, `Calendar`, `Keyboard`, `ButtonMatrix`, `Tabview` and `Tileview`.
-  They can still be used from the Code tab.
+- Not in the palette yet: `Table`, `Chart`, `Calendar`, `Keyboard`,
+  `ButtonMatrix`, `Tabview` and `Tileview`. They can still be used from the
+  Code tab.
 
 - Flex and grid are supported; percentage width/height is supported. Grid
   tracks use `1fr`, `content`/`auto`, or a pixel value, separated by commas,
