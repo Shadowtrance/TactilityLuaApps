@@ -348,6 +348,32 @@ WIDGET_SPECS: tuple[WidgetSpec, ...] = (
         ),
     ),
     _spec(
+        "Tabs",
+        "Tabs",
+        "Navigation",
+        360,
+        52,
+        summary="Material 3 tab bar",
+        properties=(
+            PropertySpec("items", "Tabs (ICON|Label or Label)", "multiline", "MEMORY|Memory\nHARD_DISK|Storage\nINFO|About"),
+            PropertySpec("mode", "Mode", "choice", "FIXED", ("FIXED", "SCROLLABLE", "WRAP")),
+            PropertySpec("selected", "Selected (1-based)", "int", 1, minimum=1),
+        ),
+        events=("VALUE_CHANGED",),
+    ),
+    _spec(
+        "Statusline",
+        "Statusline",
+        "Indicators",
+        320,
+        28,
+        summary="Status text with a level dot",
+        properties=(
+            PropertySpec("text", "Text", "text", "All good"),
+            PropertySpec("level", "Level", "choice", "OK", ("OK", "WARNING", "ERROR")),
+        ),
+    ),
+    _spec(
         "Bar",
         "Bar",
         "Indicators",

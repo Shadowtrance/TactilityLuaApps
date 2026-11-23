@@ -21,6 +21,7 @@ import datetime
 from PIL import Image, ImageDraw, ImageTk
 
 from fonts import icon_font as _icon_font
+from icons import SHARED_ICONS
 from fonts import text_font
 from model import Project, WidgetNode
 from profiles import DeviceProfile
@@ -1078,6 +1079,102 @@ def _draw_widget(
             font,
             color,
             anchor,
+        )
+        return
+
+    if widget.type == "Tabs":
+        rows = [line.strip() for line in str(props.get("items", "")).splitlines() if line.strip()]
+        if not rows:
+            rows = ["One", "Two", "Three"]
+        selected = max(0, min(len(rows) - 1, int(props.get("selected", 1)) - 1))
+        tab_width = w / len(rows)
+        regular = _font(theme, "default", scale)
+        small = _font(theme, "small", scale)
+        icon_scale = _font(theme, "icon", scale)
+
+        draw.line(
+            [x, y + h - 1, x + w, y + h - 1],
+            fill=theme.ink if theme.mono else theme.outline_variant,
+            width=1 * SUPERSAMPLE,
+        )
+        for index, row in enumerate(rows):
+            icon_name, _, label = row.partition("|")
+            if not label:
+                label = icon_name
+                icon_name = ""
+            tx = x + index * tab_width
+            center = tx + tab_width / 2
+            color = theme.primary if index == selected else theme.text_muted
+            if theme.mono:
+                color = theme.ink if index == selected else theme.text_muted
+            glyph = SHARED_ICONS.get(icon_name.strip().upper())
+            max_text_width = tab_width - 8 * scale
+            if glyph:
+                _text(
+                    draw,
+                    center,
+                    y + h * 0.32,
+                    glyph,
+                    icon_scale,
+                    color,
+                    "mm",
+                )
+                _text(
+                    draw,
+                    center,
+                    y + h * 0.72,
+                    _fit(draw, label, small, max_text_width),
+                    small,
+                    color,
+                    "mm",
+                )
+            else:
+                _text(
+                    draw,
+                    center,
+                    y + h / 2,
+                    _fit(draw, label, regular, max_text_width),
+                    regular,
+                    color,
+                    "mm",
+                )
+            if index == selected:
+                thickness = max(2.0, theme.dp(3) * scale)
+                draw.rectangle(
+                    [tx, y + h - thickness, tx + tab_width, y + h],
+                    fill=theme.primary,
+                )
+        return
+
+    if widget.type == "Statusline":
+        level = str(props.get("level", "OK") or "OK")
+        text = str(props.get("text", "") or "All good")
+        dot = max(4.0, theme.dp(7) * scale)
+        dot_x = x + theme.dp(4) * scale
+        center_y = y + h / 2
+        if theme.mono:
+            dot_color = theme.ink
+            text_color = theme.ink
+        else:
+            dot_color = {
+                "OK": "#81c784",
+                "WARNING": "#ffb74d",
+                "ERROR": theme.error,
+            }.get(level, "#81c784")
+            text_color = theme.text_muted
+        draw.ellipse(
+            [dot_x, center_y - dot / 2, dot_x + dot, center_y + dot / 2],
+            fill=dot_color,
+        )
+        text_x = dot_x + dot + theme.dp(6) * scale
+        _text(
+            draw,
+            text_x,
+            center_y,
+            _fit(draw, text, _font(theme, "small", scale), x + w - text_x),
+            _font(theme, "small", scale),
+            text_color,
+            "lm",
         )
         return
 

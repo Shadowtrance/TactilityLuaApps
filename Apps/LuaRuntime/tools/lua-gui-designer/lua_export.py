@@ -288,6 +288,13 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
             )
         elif widget.type == "List":
             _add_props(entries, props, ("radius",))
+        elif widget.type == "Tabs":
+            mode = str(props.get("mode", "FIXED") or "FIXED")
+            entries.append(f"mode = lvgl.TABS_MODE.{mode}")
+        elif widget.type == "Statusline":
+            entries.append(f"text = {lua_string(str(props.get('text', '') or 'All good'))}")
+            level = str(props.get("level", "OK") or "OK")
+            entries.append(f"level = lvgl.STATUSLINE_LEVEL.{level}")
         elif widget.type == "Image":
             _add_props(entries, props, ("src", "radius"))
         elif widget.type in ("Badge", "Spinner"):
@@ -332,6 +339,23 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
             if line.strip():
                 state.lines.append(f"    {var}:add_text({lua_string(line)})")
         state.lines.append(f"    {var}:hide_last_divider()")
+
+    if widget.type == "Tabs":
+        for line in str(props.get("items", "")).splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            icon, separator, label = line.partition("|")
+            if separator:
+                state.lines.append(
+                    f"    {var}:add_tab_with_icon("
+                    f"lvgl.ICON.{icon.strip().upper()}, {lua_string(label.strip())})"
+                )
+            else:
+                state.lines.append(f"    {var}:add_tab({lua_string(line)})")
+        selected = int(props.get("selected", 1))
+        if selected > 1:
+            state.lines.append(f"    {var}:set_selected({selected})")
 
     if widget.type == "PageIndicator":
         state.lines.append(f"    {var}:set_page_count({int(props.get('page_count', 5))})")

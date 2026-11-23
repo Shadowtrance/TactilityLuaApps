@@ -329,6 +329,7 @@ class LuaDesigner(ctk.CTk):
         self.preview_scroll = 0
         self.undo_stack: list[Project] = []
         self._drag: dict | None = None
+        self._tree_collapsed: set[str] = set()
         self._code_job = None
         self._settings_job = None
         self._suspend_properties = False
@@ -1342,6 +1343,12 @@ class LuaDesigner(ctk.CTk):
 
         query = self.tree_search.get().strip().lower() if hasattr(self, "tree_search") else ""
 
+        # A canvas selection should be visible in the tree even if its parent was collapsed.
+        selected = self.project.find(self.selected_id)
+        while selected is not None and selected.parent is not None:
+            self._tree_collapsed.discard(selected.parent)
+            selected = self.project.find(selected.parent)
+
         def row_text(widget: WidgetNode) -> str:
             spec = SPEC_BY_TYPE.get(widget.type)
             return f"{spec.title if spec else widget.type}  {widget.id}"
@@ -1358,18 +1365,39 @@ class LuaDesigner(ctk.CTk):
                 return True
             return any(subtree_matches(child) for child in self.project.children(widget.id))
 
-        def add_button(text: str, widget_id: str | None, indent: int) -> None:
+        def add_row(text: str, widget_id: str | None, indent: int, has_children: bool, collapsed: bool) -> None:
+            row_frame = ctk.CTkFrame(self.tree_frame, fg_color="transparent", height=28)
+            row_frame.pack(fill="x", pady=1)
+            row_frame.pack_propagate(False)
+
+            if has_children and widget_id is not None:
+                arrow = ctk.CTkButton(
+                    row_frame,
+                    text="▸" if collapsed else "▾",
+                    width=22,
+                    height=24,
+                    corner_radius=4,
+                    fg_color="transparent",
+                    hover_color="#2b3136",
+                    text_color="#9a9a9a",
+                    font=("Segoe UI", 11),
+                    command=lambda wid=widget_id: self.toggle_tree(wid),
+                )
+            else:
+                arrow = ctk.CTkLabel(row_frame, text="", width=22)
+            arrow.pack(side="left", padx=(indent * 12, 0))
+
             button = ctk.CTkButton(
-                self.tree_frame,
-                text=("    " * indent) + text,
+                row_frame,
+                text=text,
                 anchor="w",
                 height=26,
                 fg_color="transparent" if widget_id != self.selected_id else "#2a5d7a",
                 hover_color="#22313a",
                 command=lambda wid=widget_id: self._tree_click(wid),
             )
-            button.pack(fill="x", pady=1)
-            self._tree_rows[widget_id] = button
+            button.pack(side="left", fill="x", expand=True)
+            self._tree_rows[widget_id] = row_frame
             button.bind(
                 "<ButtonPress-1>",
                 lambda event, wid=widget_id: self._tree_press(wid, event),
@@ -1386,20 +1414,30 @@ class LuaDesigner(ctk.CTk):
                 lambda event, wid=widget_id: self._tree_menu(wid, event),
             )
 
-        add_button("Canvas", None, 0)
+        add_row("Canvas", None, 0, bool(self.project.children(None)), False)
 
         def walk(parent: str | None, depth: int, force: bool) -> None:
             for widget in self.project.children(parent):
                 widget_matches = matches(widget)
                 if query and not force and not widget_matches and not subtree_matches(widget):
                     continue
-                add_button(row_text(widget), widget.id, depth)
-                walk(widget.id, depth + 1, force or widget_matches)
+                children = self.project.children(widget.id)
+                collapsed = bool(children) and widget.id in self._tree_collapsed and not query
+                add_row(row_text(widget), widget.id, depth, bool(children), collapsed)
+                if not collapsed:
+                    walk(widget.id, depth + 1, force or widget_matches)
 
         walk(None, 1, False)
         self._tree_drag_id: str | None = None
         self._tree_drag_moved = False
         self.tree_panel.refresh()
+
+    def toggle_tree(self, widget_id: str) -> None:
+        if widget_id in self._tree_collapsed:
+            self._tree_collapsed.discard(widget_id)
+        else:
+            self._tree_collapsed.add(widget_id)
+        self.refresh_tree()
 
     def _tree_click(self, widget_id: str | None) -> None:
         self.select(widget_id)
@@ -1523,14 +1561,39 @@ class LuaDesigner(ctk.CTk):
         if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name) is None:
             messagebox.showerror("Rename failed", "Use letters, digits and underscores, starting with a letter or underscore.")
             return
+        if not self.rename_widget_to(widget_id, name):
+            messagebox.showerror("Rename failed", f"'{name}' is not available.")
+
+    def rename_widget_to(self, widget_id: str, name: str) -> bool:
+        """Renames after validation; returns false when the name is taken."""
+        widget = self.project.find(widget_id)
+        if widget is None or name == widget.id:
+            return False
         self.push_undo()
         if not self.project.rename_widget(widget_id, name):
             self.undo_stack.pop()
-            messagebox.showerror("Rename failed", f"'{name}' is not available.")
-            return
+            return False
         if self.selected_id == widget_id:
             self.selected_id = name
         self.refresh()
+        return True
+
+    def apply_widget_name(self, widget_id: str, field: ctk.CTkEntry) -> None:
+        widget = self.project.find(widget_id)
+        if widget is None:
+            return
+        name = field.get().strip()
+        if name == widget.id:
+            return
+        if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name) is None:
+            field.delete(0, "end")
+            field.insert(0, widget.id)
+            self.set_status("Widget names use letters, digits and underscores.")
+            return
+        if not self.rename_widget_to(widget_id, name):
+            field.delete(0, "end")
+            field.insert(0, widget.id)
+            self.set_status(f"'{name}' is not available.")
 
     def select(self, widget_id: str | None) -> None:
         self.selected_id = widget_id
@@ -1563,6 +1626,21 @@ class LuaDesigner(ctk.CTk):
         ctk.CTkButton(
             header, text="Clone", width=55, height=24, command=self.duplicate_selected
         ).pack(side="right", padx=4)
+
+        name_row = ctk.CTkFrame(self.properties_frame, fg_color="transparent")
+        name_row.pack(fill="x", padx=4, pady=(2, 2))
+        ctk.CTkLabel(name_row, text="Name", width=44, anchor="w").pack(side="left", padx=(4, 2))
+        name_field = ctk.CTkEntry(name_row)
+        name_field.pack(side="left", fill="x", expand=True, padx=(0, 4))
+        name_field.insert(0, widget.id)
+        name_field.bind(
+            "<Return>",
+            lambda _event, wid=widget.id, f=name_field: self.apply_widget_name(wid, f),
+        )
+        name_field.bind(
+            "<FocusOut>",
+            lambda _event, wid=widget.id, f=name_field: self.apply_widget_name(wid, f),
+        )
 
         section = ctk.CTkLabel(self.properties_frame, text="Placement", anchor="w")
         section.pack(fill="x", padx=8, pady=(8, 2))
@@ -2697,6 +2775,28 @@ def ui_test() -> int:
             if len(app._tree_rows) != full_tree:
                 failures.append(("tree clear", "the unfiltered tree did not return"))
 
+            app.refresh_tree()
+            container = next(
+                (w for w in app.project.widgets if app.project.children(w.id)), None
+            )
+            if container is not None:
+                before = len(app._tree_rows)
+                check("tree collapse", lambda c=container.id: app.toggle_tree(c))
+                if len(app._tree_rows) >= before:
+                    failures.append(("tree collapse", "collapsing did not hide children"))
+                check("tree expand", lambda c=container.id: app.toggle_tree(c))
+                if len(app._tree_rows) != before:
+                    failures.append(("tree expand", "expanding did not restore the tree"))
+
+            name_target = app.project.add_widget("Object")
+            app.refresh()
+            check(
+                "rename widget to",
+                lambda wid=name_target.id: app.rename_widget_to(wid, "renamed_object"),
+            )
+            if app.project.find("renamed_object") is None:
+                failures.append(("rename widget to", "new name not found"))
+
             # The code preview is editable and the editor's text is exported.
             check("code edit", lambda: (app.code_text.set_code("-- manual export\n"), app.mark_code_dirty()))
             if not app.code_dirty:
@@ -3061,6 +3161,10 @@ def main() -> int:
 
         def capture() -> None:
             try:
+                # Flush pending geometry/redraw work; without this the grab can capture the
+                # frame from before the selected tab and palette were drawn.
+                app.update_idletasks()
+                app.update()
                 from PIL import ImageGrab
 
                 x = app.winfo_rootx()
