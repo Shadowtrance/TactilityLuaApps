@@ -9,7 +9,9 @@
 #include <lvgl/widgets/page_indicator.h>
 #include <lvgl/widgets/sliderbox.h>
 #include <lvgl/widgets/spinner.h>
+#include <lvgl/widgets/statusline.h>
 #include <lvgl/widgets/step_indicator.h>
+#include <lvgl/widgets/tabs.h>
 #include <lvgl/widgets/text_button.h>
 
 #include <cstring>
@@ -236,6 +238,8 @@ char PAGE_INDICATOR_TAG;
 char STEP_INDICATOR_TAG;
 char ARC_TAG;
 char SPINBOX_TAG;
+char TABS_TAG;
+char STATUSLINE_TAG;
 
 /** Raises unless the widget carries `tag`, then returns it. */
 lv_obj_t* check_tagged_widget(lua_State* state, int index, const void* tag, const char* name) {
@@ -308,6 +312,51 @@ int finish_widget(
 int widget_card(lua_State* state) {
     const auto args = luavgl_parse_constructor_args(state);
     return finish_widget(state, lvgl_card_create(args.parent), args);
+}
+
+/** Material 3 tabs: the bar only; the app swaps the pane itself on VALUE_CHANGED. */
+int widget_tabs(lua_State* state) {
+    const auto args = luavgl_parse_constructor_args(state);
+
+    auto* tabs = lvgl_tabs_create(args.parent);
+    lv_obj_set_user_data(tabs, &TABS_TAG);
+
+    if (args.properties_index != 0) {
+        lua_getfield(state, args.properties_index, "mode");
+        if (lua_isinteger(state, -1)) {
+            lvgl_tabs_set_mode(tabs, static_cast<LvglTabsMode>(lua_tointeger(state, -1)));
+        }
+        lua_pop(state, 1);
+    }
+
+    return finish_widget(state, tabs, args, { "mode" });
+}
+
+/** One line of small status text with a theme-coloured dot. */
+int widget_statusline(lua_State* state) {
+    const auto args = luavgl_parse_constructor_args(state);
+
+    auto* statusline = lvgl_statusline_create(args.parent);
+    lv_obj_set_user_data(statusline, &STATUSLINE_TAG);
+
+    if (args.properties_index != 0) {
+        lua_getfield(state, args.properties_index, "text");
+        if (!lua_isnil(state, -1)) {
+            lvgl_statusline_set_text(statusline, luaL_checkstring(state, -1));
+        }
+        lua_pop(state, 1);
+
+        lua_getfield(state, args.properties_index, "level");
+        if (lua_isinteger(state, -1)) {
+            lvgl_statusline_set_level(
+                statusline,
+                static_cast<LvglStatuslineLevel>(lua_tointeger(state, -1))
+            );
+        }
+        lua_pop(state, 1);
+    }
+
+    return finish_widget(state, statusline, args, { "text", "level" });
 }
 
 int widget_arc(lua_State* state) {
@@ -1444,6 +1493,129 @@ int tabview_tab_bar(lua_State* state) {
     return 1;
 }
 
+// Tabs (Material 3) ------------------------------------------------------------------------
+
+/** 1-based tab index, like every other Lua index in this binding. */
+uint32_t check_tab_index(lua_State* state, int index) {
+    const auto value = luaL_checkinteger(state, index);
+    if (value < 1) {
+        luaL_error(state, "tab index is 1-based");
+    }
+    return static_cast<uint32_t>(value - 1);
+}
+
+/** `tabs:add_tab(text)` - returns the tab object. */
+int tabs_add_tab(lua_State* state) {
+    auto* tabs = check_tagged_widget(state, 1, &TABS_TAG, "tabs");
+    luavgl_push_object(state, lvgl_tabs_add_tab(tabs, luaL_checkstring(state, 2)));
+    return 1;
+}
+
+/** `tabs:add_tab_with_icon(icon, text)` - `icon` is a `lvgl.ICON.*` glyph. */
+int tabs_add_tab_with_icon(lua_State* state) {
+    auto* tabs = check_tagged_widget(state, 1, &TABS_TAG, "tabs");
+    luavgl_push_object(state, lvgl_tabs_add_tab_with_icon(
+        tabs,
+        luaL_checkstring(state, 2),
+        luaL_checkstring(state, 3)
+    ));
+    return 1;
+}
+
+int tabs_set_tab_text(lua_State* state) {
+    auto* tabs = check_tagged_widget(state, 1, &TABS_TAG, "tabs");
+    lvgl_tabs_set_tab_text(tabs, check_tab_index(state, 2), luaL_checkstring(state, 3));
+    lua_settop(state, 1);
+    return 1;
+}
+
+int tabs_set_tab_badge(lua_State* state) {
+    auto* tabs = check_tagged_widget(state, 1, &TABS_TAG, "tabs");
+    lvgl_tabs_set_tab_badge(tabs, check_tab_index(state, 2), lua_toboolean(state, 3) != 0);
+    lua_settop(state, 1);
+    return 1;
+}
+
+int tabs_set_tab_hidden(lua_State* state) {
+    auto* tabs = check_tagged_widget(state, 1, &TABS_TAG, "tabs");
+    lvgl_tabs_set_tab_hidden(tabs, check_tab_index(state, 2), lua_toboolean(state, 3) != 0);
+    lua_settop(state, 1);
+    return 1;
+}
+
+int tabs_set_mode(lua_State* state) {
+    auto* tabs = check_tagged_widget(state, 1, &TABS_TAG, "tabs");
+    const auto mode = luaL_checkinteger(state, 2);
+
+    if (mode < LVGL_TABS_MODE_FIXED || mode > LVGL_TABS_MODE_WRAP) {
+        return luaL_error(state, "mode must be lvgl.TABS_MODE.*");
+    }
+
+    lvgl_tabs_set_mode(tabs, static_cast<LvglTabsMode>(mode));
+    lua_settop(state, 1);
+    return 1;
+}
+
+int tabs_set_selected(lua_State* state) {
+    auto* tabs = check_tagged_widget(state, 1, &TABS_TAG, "tabs");
+    lvgl_tabs_set_selected(tabs, check_tab_index(state, 2));
+    lua_settop(state, 1);
+    return 1;
+}
+
+/** The selected tab as a 1-based number, or nil when there are no tabs. */
+int tabs_selected(lua_State* state) {
+    auto* tabs = check_tagged_widget(state, 1, &TABS_TAG, "tabs");
+
+    if (lv_obj_get_child_count(tabs) == 0) {
+        lua_pushnil(state);
+    } else {
+        lua_pushinteger(state, static_cast<lua_Integer>(lvgl_tabs_get_selected(tabs)) + 1);
+    }
+
+    return 1;
+}
+
+/* `add_tab` and `set_tab_text` exist on both Tabview and Tabs. Dispatch on the tag so a
+ * script can use the natural name for either widget. */
+int add_tab_dispatch(lua_State* state) {
+    auto* object = luavgl_check_object(state, 1);
+    if (lv_obj_get_user_data(object) == &TABS_TAG) {
+        return tabs_add_tab(state);
+    }
+    return tabview_add_tab(state);
+}
+
+int set_tab_text_dispatch(lua_State* state) {
+    auto* object = luavgl_check_object(state, 1);
+    if (lv_obj_get_user_data(object) == &TABS_TAG) {
+        return tabs_set_tab_text(state);
+    }
+    return tabview_set_tab_text(state);
+}
+
+// Statusline -------------------------------------------------------------------------------
+
+int statusline_set_text(lua_State* state) {
+    auto* line = check_tagged_widget(state, 1, &STATUSLINE_TAG, "statusline");
+    lvgl_statusline_set_text(line, luaL_checkstring(state, 2));
+    lua_settop(state, 1);
+    return 1;
+}
+
+int statusline_set_level(lua_State* state) {
+    auto* line = check_tagged_widget(state, 1, &STATUSLINE_TAG, "statusline");
+    const auto level = luaL_checkinteger(state, 2);
+
+    if (level < LVGL_STATUSLINE_LEVEL_OK || level > LVGL_STATUSLINE_LEVEL_ERROR) {
+        return luaL_error(state, "level must be lvgl.STATUSLINE_LEVEL.*");
+    }
+
+    lvgl_statusline_set_level(line, static_cast<LvglStatuslineLevel>(level));
+    lua_settop(state, 1);
+    return 1;
+}
+
 // Tileview --------------------------------------------------------------------------------
 
 /** `tileview:add_tile(column, row, dir)` - 0-based coordinates, like `grid_cell()`. */
@@ -1548,14 +1720,22 @@ const luaL_Reg widget_methods[] = {
     { "clear_button_ctrl", buttonmatrix_clear_button_ctrl },
     { "has_button_ctrl", buttonmatrix_has_button_ctrl },
     { "set_button_width", buttonmatrix_set_button_width },
-    { "add_tab", tabview_add_tab },
-    { "set_tab_text", tabview_set_tab_text },
+    { "add_tab", add_tab_dispatch },
+    { "set_tab_text", set_tab_text_dispatch },
     { "active", tabview_active },
     { "set_active", tabview_set_active },
     { "tab_count", tabview_tab_count },
     { "tab_button", tabview_tab_button },
     { "content", tabview_content },
     { "tab_bar", tabview_tab_bar },
+    { "add_tab_with_icon", tabs_add_tab_with_icon },
+    { "set_tab_badge", tabs_set_tab_badge },
+    { "set_tab_hidden", tabs_set_tab_hidden },
+    { "set_mode", tabs_set_mode },
+    { "set_selected", tabs_set_selected },
+    { "selected", tabs_selected },
+    { "set_text", statusline_set_text },
+    { "set_level", statusline_set_level },
     { "add_tile", tileview_add_tile },
     { "set_tile", tileview_set_tile },
     { "goto_tile", tileview_goto_tile },
@@ -1597,6 +1777,8 @@ const luaL_Reg widget_constructors[] = {
     { "ButtonMatrix", widget_buttonmatrix },
     { "Tabview", widget_tabview },
     { "Tileview", widget_tileview },
+    { "Tabs", widget_tabs },
+    { "Statusline", widget_statusline },
     { "Card", widget_card },
     { "Badge", widget_badge },
     { "Chip", widget_chip },

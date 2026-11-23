@@ -258,6 +258,10 @@ preview uses Adwaita for the app area.
 
 ## Current limits
 
+- The Material 3 `Tabs` and `Statusline` widgets (added with the 0.8.0 firmware)
+  are available to Lua scripts and to the code tab, but are not yet in the
+  designer palette.
+
 - Flex and grid are supported; percentage width/height is supported. Grid
   tracks use `1fr`, `content`/`auto`, or a pixel value, separated by commas,
   for example `1fr, 2fr` and `80, content`. New grid children are placed in the

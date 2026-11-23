@@ -162,10 +162,10 @@ expose actions or Bundle data yet. See [BINDINGS.md](BINDINGS.md) for the design
 `Object`, `Label`, `Button`, `Slider`, `Bar`, `Arc`, `Spinbox`, `Switch`,
 `Checkbox`, `Dropdown`, `Roller`, `TextArea`, `Line`, `Image`, `Spinner`,
 `LED`, `Table`, `Scale`, `ImageButton`, `Chart`, `Calendar`, `Keyboard`,
-`ButtonMatrix`, `Tabview`, `Tileview`, `Card`, `Chip`, `SliderBox`, `List`,
-`Badge`, `PageIndicator`, `StepIndicator`, `IconButton` and `TextButton`. They
-are themed by the firmware, so scripts stay consistent with the device's colours
-and density.
+`ButtonMatrix`, `Tabview`, `Tileview`, `Tabs`, `Statusline`, `Card`, `Chip`,
+`SliderBox`, `List`, `Badge`, `PageIndicator`, `StepIndicator`, `IconButton`
+and `TextButton`. They are themed by the firmware, so scripts stay consistent
+with the device's colours and density.
 
 The binding deliberately follows LVGL 9.6: widgets that were removed
 (`Colorwheel`), deprecated (`Menu`, `Win`) or disabled in the firmware
@@ -229,6 +229,32 @@ chip:set_checked(false)
 step as constructor arguments (`parent?, min, max, step?, value?`) because they
 cannot change afterwards; `value` is read with `value()` and written with
 `set{ value = ... }`, clamped to the range.
+
+`Tabs` is the Material 3 tab bar. The app swaps the pane itself when
+`VALUE_CHANGED` fires:
+
+```lua
+local tabs = lvgl.Tabs(root, { mode = lvgl.TABS_MODE.WRAP })
+tabs:add_tab("One")
+tabs:add_tab_with_icon(lvgl.ICON.MEMORY, "Memory")
+tabs:set_selected(2)          -- 1-based
+local selected = tabs:selected()
+tabs:set_tab_badge(2, true)
+```
+
+`lvgl.ICON` is the firmware's shared Material Symbols set (85 names such as
+`INFO`, `MEMORY` and `HARD_DISK`). It is separate from `lvgl.SYMBOL`, which is
+LVGL's own icon font. `Statusline` is one line of status text with a coloured
+level dot:
+
+```lua
+local line = lvgl.Statusline(root, {
+    text = "Mesh is running",
+    level = lvgl.STATUSLINE_LEVEL.OK,
+})
+line:set_text("No internet")
+line:set_level(lvgl.STATUSLINE_LEVEL.WARNING)
+```
 
 Grids use LVGL's descriptors without exposing raw arrays:
 
@@ -310,6 +336,7 @@ runtime gains something a packaged app depends on.
 - `widget_batch2.lua` — LED, Table, Scale, ImageButton, Chart, Calendar,
   Keyboard and ButtonMatrix.
 - `widget_batch3.lua` — Tabview and Tileview.
+- `tabs_statusline.lua` — Material 3 Tabs, Statusline and the shared `lvgl.ICON` table.
 - `assets.lua` — the install-directory argument and a packaged PNG in `Image`
   and `ImageButton`.
 - `group.lua` — input groups, focus next/prev/freeze, wrap, editing and default.

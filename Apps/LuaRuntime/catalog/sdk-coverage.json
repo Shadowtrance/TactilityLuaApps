@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-11-22T10:45:15",
+  "generated_at": "2026-11-23T13:31:49",
   "sdk": "C:\\Users\\teron\\.tactility\\sdk\\0.8.0-dev\\platform-esp32p4\\TactilitySDK",
   "firmware": "C:\\Users\\teron\\espidf-projects\\TactilityWork",
   "sdk_version": "0.8.0-dev",
   "idf_version": "6.1",
-  "sdk_commit": "c632ae0d3a3165d9a905b0cd266771d5703a6df0",
-  "firmware_commit": "c632ae0d",
+  "sdk_commit": "8220768cf35fdcfe20d6b31ee44b5e5a11edf56c",
+  "firmware_commit": "8220768c",
   "firmware_dirty": true,
   "symbols": [
     {
@@ -10746,6 +10746,14 @@
     },
     {
       "module": "lvgl-module",
+      "name": "lvgl_hardware_keyboard_is_available",
+      "status": "bound",
+      "header": "lvgl/devices/keyboard.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
       "name": "lvgl_icon_button_create_variant",
       "status": "bound",
       "header": "lvgl/widgets/icon_button.h",
@@ -10850,6 +10858,30 @@
     },
     {
       "module": "lvgl-module",
+      "name": "lvgl_statusline_create",
+      "status": "bound",
+      "header": "lvgl/widgets/statusline.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_statusline_set_level",
+      "status": "bound",
+      "header": "lvgl/widgets/statusline.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_statusline_set_text",
+      "status": "bound",
+      "header": "lvgl/widgets/statusline.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
       "name": "lvgl_step_indicator_create",
       "status": "bound",
       "header": "lvgl/widgets/step_indicator.h",
@@ -10869,6 +10901,78 @@
       "name": "lvgl_step_indicator_set_step_count",
       "status": "bound",
       "header": "lvgl/widgets/step_indicator.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tabs_add_tab",
+      "status": "bound",
+      "header": "lvgl/widgets/tabs.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tabs_add_tab_with_icon",
+      "status": "bound",
+      "header": "lvgl/widgets/tabs.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tabs_create",
+      "status": "bound",
+      "header": "lvgl/widgets/tabs.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tabs_get_selected",
+      "status": "bound",
+      "header": "lvgl/widgets/tabs.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tabs_set_mode",
+      "status": "bound",
+      "header": "lvgl/widgets/tabs.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tabs_set_selected",
+      "status": "bound",
+      "header": "lvgl/widgets/tabs.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tabs_set_tab_badge",
+      "status": "bound",
+      "header": "lvgl/widgets/tabs.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tabs_set_tab_hidden",
+      "status": "bound",
+      "header": "lvgl/widgets/tabs.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tabs_set_tab_text",
+      "status": "bound",
+      "header": "lvgl/widgets/tabs.h",
       "source": "export",
       "note": ""
     },
@@ -13082,6 +13186,14 @@
     },
     {
       "module": "lvgl-module",
+      "name": "lvgl_grid_navigation_focus_without_touch",
+      "status": "unbound",
+      "header": "lvgl/grid_navigation.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
       "name": "lvgl_grid_navigation_get_focused",
       "status": "unbound",
       "header": "lvgl/grid_navigation.h",
@@ -13115,14 +13227,6 @@
     {
       "module": "lvgl-module",
       "name": "lvgl_hardware_keyboard_add_custom",
-      "status": "unbound",
-      "header": "lvgl/devices/keyboard.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
-      "name": "lvgl_hardware_keyboard_is_available",
       "status": "unbound",
       "header": "lvgl/devices/keyboard.h",
       "source": "export",

@@ -7,7 +7,10 @@
 #include <lvgl/theme.h>
 #include <lvgl/ui_assets.h>
 #include <lvgl/widgets/icon_button.h>
+#include <lvgl/widgets/statusline.h>
+#include <lvgl/widgets/tabs.h>
 #include <lvgl/devices/keyboard.h>
+#include <lvgl/icons/shared.h>
 
 extern "C" {
 #include <lauxlib.h>
@@ -344,6 +347,20 @@ const Constant ICON_BUTTON_CONSTANTS[] = {
     { "TONAL", LVGL_ICON_BUTTON_TONAL },
 };
 
+/** Looks for `lvgl.Tabs{ mode = ... }` and `tabs:set_mode(...)`. */
+const Constant TABS_MODE_CONSTANTS[] = {
+    { "FIXED", LVGL_TABS_MODE_FIXED },
+    { "SCROLLABLE", LVGL_TABS_MODE_SCROLLABLE },
+    { "WRAP", LVGL_TABS_MODE_WRAP },
+};
+
+/** Looks for `lvgl.Statusline{ level = ... }` and `statusline:set_level(...)`. */
+const Constant STATUSLINE_LEVEL_CONSTANTS[] = {
+    { "OK", LVGL_STATUSLINE_LEVEL_OK },
+    { "WARNING", LVGL_STATUSLINE_LEVEL_WARNING },
+    { "ERROR", LVGL_STATUSLINE_LEVEL_ERROR },
+};
+
 /** Aligns a child inside its grid cell, for `child:grid_cell(...)`. */
 const Constant GRID_ALIGN_CONSTANTS[] = {
     { "START", LV_GRID_ALIGN_START },
@@ -473,6 +490,8 @@ extern "C" error_t luavgl_bindings_open(struct LuaRuntime* runtime, lv_obj_t* ro
     add_constants(state, "PART", PART_CONSTANTS, sizeof(PART_CONSTANTS) / sizeof(Constant));
     add_constants(state, "STATE", STATE_CONSTANTS, sizeof(STATE_CONSTANTS) / sizeof(Constant));
     add_constants(state, "ICON_BUTTON", ICON_BUTTON_CONSTANTS, sizeof(ICON_BUTTON_CONSTANTS) / sizeof(Constant));
+    add_constants(state, "TABS_MODE", TABS_MODE_CONSTANTS, sizeof(TABS_MODE_CONSTANTS) / sizeof(Constant));
+    add_constants(state, "STATUSLINE_LEVEL", STATUSLINE_LEVEL_CONSTANTS, sizeof(STATUSLINE_LEVEL_CONSTANTS) / sizeof(Constant));
     add_constants(state, "GRID_ALIGN", GRID_ALIGN_CONSTANTS, sizeof(GRID_ALIGN_CONSTANTS) / sizeof(Constant));
     add_constants(state, "TABLE_CTRL", TABLE_CTRL_CONSTANTS, sizeof(TABLE_CTRL_CONSTANTS) / sizeof(Constant));
     add_constants(state, "SCALE_MODE", SCALE_MODE_CONSTANTS, sizeof(SCALE_MODE_CONSTANTS) / sizeof(Constant));
@@ -519,6 +538,18 @@ extern "C" error_t luavgl_bindings_open(struct LuaRuntime* runtime, lv_obj_t* ro
         lua_setfield(state, -2, entry.name);
     }
     lua_setfield(state, -2, "SYMBOL");
+
+    // The firmware's shared Material Symbols set (the same glyphs C apps use for tools,
+    // tabs and status lines). Separate from `SYMBOL`, which is LVGL's own icon font.
+    static const struct { const char* name; const char* symbol; } shared_icons[] = {
+#include "icons_shared.inc"
+    };
+    lua_newtable(state);
+    for (const auto& entry : shared_icons) {
+        lua_pushstring(state, entry.symbol);
+        lua_setfield(state, -2, entry.name);
+    }
+    lua_setfield(state, -2, "ICON");
 
     luavgl_open_toolbar(state);
     luavgl_open_events(state);
