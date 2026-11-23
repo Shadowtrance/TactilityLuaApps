@@ -172,6 +172,22 @@ def _draw_symbol(
     return True
 
 
+def _resolve_text(props: dict) -> str:
+    """Turns `lvgl.ICON.NAME` into the glyph the shared icon font draws."""
+    text = str(props.get("text", "") or "")
+    if text.startswith("lvgl.ICON."):
+        return SHARED_ICONS.get(text[len("lvgl.ICON."):], "")
+    return text
+
+
+def _text_font_kind(props: dict) -> str:
+    """An icon text implies the shared icon font even before the font field is set."""
+    text = str(props.get("text", "") or "")
+    if text.startswith("lvgl.ICON."):
+        return "icon"
+    return str(props.get("text_font", "default") or "default")
+
+
 def _fill_for(theme: MaterialTheme, props: dict, fallback: str | None) -> str | None:
     color = str(props.get("bg_color", "") or "")
     opa = str(props.get("bg_opa", "COVER") or "COVER")
@@ -724,13 +740,14 @@ def _draw_widget(
 
     if widget.type == "Label":
         color = str(props.get("text_color", "") or theme.text)
-        font = _font(theme, str(props.get("text_font", "default")), scale)
-        text = str(props.get("text", "") or "")
+        font_kind = _text_font_kind(props)
+        font = _font(theme, font_kind, scale)
+        text = _resolve_text(props)
         mode = str(props.get("long_mode", "NONE") or "NONE")
         align = str(props.get("text_align", "LEFT") or "LEFT")
         if mode == "WRAP":
             lines = _wrap(draw, text, font, w)
-            line_height = theme.font_px(str(props.get("text_font", "default"))) * scale
+            line_height = theme.font_px(font_kind) * scale
             start = y + h / 2 - (len(lines) - 1) * line_height / 2
             for index, line in enumerate(lines):
                 _text(draw, x, start + index * line_height, line, font, color, "lm")
@@ -789,10 +806,10 @@ def _draw_widget(
                 outline=outline,
                 width=max(1, border) * SUPERSAMPLE,
             )
-        text = str(props.get("text", "") or ("OK" if widget.type == "IconButton" else "Button"))
+        text = _resolve_text(props) or ("OK" if widget.type == "IconButton" else "Button")
         if _draw_symbol(draw, text, x + w / 2, y + h / 2, theme, scale, color):
             return
-        font = _font(theme, str(props.get("text_font", "default")), scale)
+        font = _font(theme, _text_font_kind(props), scale)
         _text(
             draw,
             x + w / 2,
@@ -835,13 +852,13 @@ def _draw_widget(
             outline=outline,
             width=max(1, border) * SUPERSAMPLE,
         )
-        font = _font(theme, str(props.get("text_font", "default")), scale)
+        font = _font(theme, _text_font_kind(props), scale)
         text_color = str(props.get("text_color", "") or color)
         _text(
             draw,
             x + w / 2,
             y + h / 2,
-            _fit(draw, str(props.get("text", "") or "Chip"), font, w - 8 * scale),
+            _fit(draw, _resolve_text(props) or "Chip", font, w - 8 * scale),
             font,
             text_color,
             "mm",
@@ -973,12 +990,12 @@ def _draw_widget(
                 width=check,
                 joint="curve",
             )
-        font = _font(theme, str(props.get("text_font", "default")), scale)
+        font = _font(theme, _text_font_kind(props), scale)
         _text(
             draw,
             x + box + theme.gap() * scale,
             y + h / 2,
-            _fit(draw, str(props.get("text", "") or "Checkbox"), font, w - box - theme.gap() * scale),
+            _fit(draw, _resolve_text(props) or "Checkbox", font, w - box - theme.gap() * scale),
             font,
             theme.ink if theme.mono else theme.text,
             "lm",

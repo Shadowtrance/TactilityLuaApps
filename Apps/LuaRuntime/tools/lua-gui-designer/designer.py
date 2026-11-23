@@ -55,6 +55,7 @@ LUA_TAGS = {
 SETTINGS_FILE = Path(__file__).with_name("designer.settings.json")
 SUPPORTED_ZOOMS = ("50%", "65%", "75%", "100%")
 _NO_TARGET = object()
+ICON_TEXT_TYPES = {"Label", "Button", "TextButton", "IconButton", "Chip", "Checkbox"}
 
 
 # ---------------------------------------------------------------------------
@@ -174,7 +175,6 @@ class IconPicker(ctk.CTkToplevel):
         self.on_pick = on_pick
         self._images: list[ctk.CTkImage] = []
         self.title("Icon picker")
-        self.geometry("600x560")
         self.transient(master)
         self.grab_set()
 
@@ -189,9 +189,20 @@ class IconPicker(ctk.CTkToplevel):
         self.panel = ScrollPanel(self)
         self.panel.pack(fill="both", expand=True, padx=6, pady=(0, 8))
         self._rebuild()
+        self._center_over_parent(master)
 
         self.bind("<Escape>", lambda _event: self.destroy())
         self.after(80, self.focus_force)
+
+    def _center_over_parent(self, master) -> None:
+        width, height = 600, 560
+        parent = master.winfo_toplevel()
+        parent.update_idletasks()
+        x = parent.winfo_rootx() + max(0, (parent.winfo_width() - width) // 2)
+        y = parent.winfo_rooty() + max(0, (parent.winfo_height() - height) // 2)
+        x = max(0, min(x, self.winfo_screenwidth() - width))
+        y = max(0, min(y, self.winfo_screenheight() - height))
+        self.geometry(f"{width}x{height}+{x}+{y}")
 
     def _glyph_image(self, glyph: str):
         font = icon_font(30)
@@ -1702,6 +1713,19 @@ class LuaDesigner(ctk.CTk):
         box.insert("insert", f"{name}|")
         self.apply_prop_later(widget_id, key, box.get("1.0", "end-1c"))
 
+    def apply_text_icon(self, widget_id: str, field: ctk.CTkEntry, name: str) -> None:
+        widget = self.project.find(widget_id)
+        if widget is None:
+            return
+        value = f"lvgl.ICON.{name}"
+        self.push_undo()
+        widget.props["text"] = value
+        widget.props["text_font"] = "icon"
+        self.render_only()
+        self.refresh_code()
+        self.refresh_properties()
+        self.set_status(f"Set {value} with the icon font")
+
     def select(self, widget_id: str | None) -> None:
         self.selected_id = widget_id
         self.refresh()
@@ -1911,6 +1935,25 @@ class LuaDesigner(ctk.CTk):
                     holder, text="...", width=28,
                     command=lambda p=prop, e=entry: self.pick_prop_color(widget.id, p.key, e),
                 ).pack(side="left", padx=2)
+            elif prop.kind == "text" and prop.key == "text" and widget.type in ICON_TEXT_TYPES:
+                holder = ctk.CTkFrame(row, fg_color="transparent")
+                holder.pack(side="right")
+                control = ctk.CTkEntry(holder, width=96)
+                control.pack(side="left")
+                control.insert(0, "" if value is None else str(value))
+                control.bind(
+                    "<KeyRelease>",
+                    lambda _event, p=prop, c=control: self.apply_prop_later(widget.id, p.key, c.get()),
+                )
+                ctk.CTkButton(
+                    holder,
+                    text="Icon...",
+                    width=54,
+                    height=26,
+                    command=lambda c=control, wid=widget.id: self.open_icon_picker(
+                        lambda name, c=c, wid=wid: self.apply_text_icon(wid, c, name)
+                    ),
+                ).pack(side="left", padx=(2, 0))
             else:
                 if prop.kind == "int" and prop.optional:
                     holder = ctk.CTkFrame(row, fg_color="transparent")
@@ -2919,6 +2962,14 @@ def ui_test() -> int:
             )
             if app.project.find("renamed_object") is None:
                 failures.append(("rename widget to", "new name not found"))
+
+            icon_target = app.project.add_widget("Label")
+            app.apply_text_icon(icon_target.id, None, "MEMORY")
+            icon_widget = app.project.find(icon_target.id)
+            if icon_widget is None or icon_widget.props.get("text") != "lvgl.ICON.MEMORY":
+                failures.append(("icon text", "icon text was not applied"))
+            elif icon_widget.props.get("text_font") != "icon":
+                failures.append(("icon text", "icon font was not selected"))
 
             # The code preview is editable and the editor's text is exported.
             check("code edit", lambda: (app.code_text.set_code("-- manual export\n"), app.mark_code_dirty()))

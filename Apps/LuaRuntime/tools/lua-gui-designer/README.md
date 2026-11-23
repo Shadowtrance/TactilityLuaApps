@@ -116,11 +116,13 @@ project.
   change the z-order. Drag a row onto a container to reparent it, or onto a
   sibling to reorder it; drop on empty space or **Canvas** to remove its parent.
 - **Properties**: a **Name** field at the top renames the widget's generated
-  Lua variable (letters, digits and underscores only). Below it: geometry,
-  colours, fonts, text alignment, long mode, values, options, event snippets.
-  Radius and border width are optional: leave them empty (or press **Theme**) to
-  inherit the firmware's shape, or set explicit pixels. Chip has its own
-  background, border and selected-state colours. The schema lives in
+  Lua variable (letters, digits and underscores only). Text fields on Label,
+  Button, TextButton, IconButton, Chip and Checkbox have an **Icon...** button
+  that fills in `lvgl.ICON.NAME` and selects the `icon` font. Below the name:
+  geometry, colours, fonts, text alignment, long mode, values, options, event
+  snippets. Radius and border width are optional: leave them empty (or press
+  **Theme**) to inherit the firmware's shape, or set explicit pixels. Chip has
+  its own background, border and selected-state colours. The schema lives in
   `widgets.py`. Selecting a widget on the canvas switches to this tab.
 - **Layout**: absolute x/y plus pixel, percentage (`Width %`, `Height %`) or
   content (`Width = content`, `Height = content`) width/height; content-sized
@@ -268,8 +270,25 @@ The mono theme's own default text font is LVGL's built-in Montserrat, but Lua
 widgets that set `text_font = 'default'` use the registered Adwaita font, so the
 preview uses Adwaita for the app area.
 
-## Current limits
+### Icons
 
+The shared Material Symbols are ordinary font glyphs. In Lua, put
+`lvgl.ICON.NAME` in a label/button caption and set `text_font = "icon"`:
+
+```lua
+lvgl.Label(parent, { text = lvgl.ICON.MEMORY, text_font = "icon" })
+local button = lvgl.IconButton(parent)
+lvgl.Label(button, {
+    text = lvgl.ICON.SAVE, text_font = "icon", align = lvgl.ALIGN.CENTER,
+})
+```
+
+The designer's **Icon...** buttons fill in that pair for text fields, and Tabs
+use `ICON|Label` lines. The preview resolves `lvgl.ICON.NAME` automatically,
+and the exporter selects the icon font even if the font field still says
+`default`.
+
+## Current limits
 - Not in the palette yet: `Table`, `Chart`, `Calendar`, `Keyboard`,
   `ButtonMatrix`, `Tabview` and `Tileview`. They can still be used from the
   Code tab.

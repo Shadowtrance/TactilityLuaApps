@@ -41,6 +41,8 @@ def variable_name(widget: WidgetNode) -> str:
 
 
 def _prop_value(key: str, value: object) -> str:
+    if key == "text" and isinstance(value, str) and value.startswith("lvgl.ICON."):
+        return value
     if key in ("bg_color", "border_color", "text_color", "led_color"):
         return lua_color(value)
     if key == "bg_opa":
@@ -174,8 +176,22 @@ def _add_props(entries: list[str], props: dict, keys: tuple[str, ...]) -> None:
             entries.append(f"{key} = {expression}")
 
 
+def _is_icon_text(props: dict) -> bool:
+    text = props.get("text")
+    return isinstance(text, str) and text.startswith("lvgl.ICON.")
+
+
 def _text_props(entries: list[str], props: dict) -> None:
-    _add_props(entries, props, ("text", "text_color", "text_font", "text_align", "long_mode"))
+    icon = _is_icon_text(props)
+    if icon:
+        _add_props(entries, props, ("text", "text_color", "text_align", "long_mode"))
+        entries.append("text_font = 'icon'")
+    else:
+        _add_props(
+            entries,
+            props,
+            ("text", "text_color", "text_font", "text_align", "long_mode"),
+        )
 
 
 def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> None:
@@ -344,11 +360,16 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
 
     if widget.type in ("Button", "TextButton", "IconButton"):
         text = str(props.get("text", "") or ("OK" if widget.type == "IconButton" else "Button"))
+        icon = text.startswith("lvgl.ICON.")
         label_entries = [
-            f"text = {lua_string(text)}",
+            f"text = {text if icon else lua_string(text)}",
             "align = lvgl.ALIGN.CENTER",
         ]
-        _add_props(label_entries, props, ("text_color", "text_font"))
+        _add_props(label_entries, props, ("text_color",))
+        if icon:
+            label_entries.append("text_font = 'icon'")
+        else:
+            _add_props(label_entries, props, ("text_font",))
         state.lines.append(f"    local {var}_label = lvgl.Label({var}, {_table(label_entries)})")
 
     if widget.type == "List":
