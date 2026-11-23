@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-23T14:05:38",
+  "generated_at": "2026-11-23T14:31:42",
   "sdk": "C:\\Users\\teron\\.tactility\\sdk\\0.8.0-dev\\platform-esp32p4\\TactilitySDK",
   "firmware": "C:\\Users\\teron\\espidf-projects\\TactilityWork",
   "sdk_version": "0.8.0-dev",
@@ -266,7 +266,39 @@
     },
     {
       "module": "TactilityKernel",
+      "name": "memory_external_free",
+      "status": "bound",
+      "header": "tactility/memory.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "memory_external_total",
+      "status": "bound",
+      "header": "tactility/memory.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
       "name": "memory_free",
+      "status": "bound",
+      "header": "tactility/memory.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "memory_heap_free",
+      "status": "bound",
+      "header": "tactility/memory.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "memory_heap_total",
       "status": "bound",
       "header": "tactility/memory.h",
       "source": "export",
@@ -2755,38 +2787,6 @@
     {
       "module": "TactilityKernel",
       "name": "memory_calloc_with_policy",
-      "status": "unbound",
-      "header": "tactility/memory.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "memory_external_free",
-      "status": "unbound",
-      "header": "tactility/memory.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "memory_external_total",
-      "status": "unbound",
-      "header": "tactility/memory.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "memory_heap_free",
-      "status": "unbound",
-      "header": "tactility/memory.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "memory_heap_total",
       "status": "unbound",
       "header": "tactility/memory.h",
       "source": "export",

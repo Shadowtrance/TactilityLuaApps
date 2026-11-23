@@ -60,6 +60,8 @@ continues from that copy.
 - `notification.lua` — posts info/warning/error notifications, lists and dismisses them
 - `simon.lua` — Simon: dim/bright themed pads, a sequence timer, growing rounds
   and a best score (the highlight/timing borrows from TamaTac's pattern game)
+- `system_info.lua` — Memory / Storage / About tabs with usage bars, statusline and
+  live display, heap and storage readings
 
 Scripts draw into the content area below a toolbar the runner provides, so
 every script has a working close button. `on_create` / `on_show` / `on_hide` /
@@ -168,6 +170,13 @@ tactility.display.set_brightness_percent(60)
 `brightness_percent()` uses the same 10%-step mapping as the Display settings
 screen; 0% is the dimmest level that keeps the backlight on. `has_backlight()`
 is false on a panel without one, and the brightness calls return `nil, reason`.
+
+`tactility.system.memory()` returns `{ internal = usage, external = usage }`
+with `free`, `total`, `used` and `percent` values. External is all zeroes on a
+board without PSRAM. `tactility.system.storage(path?)` returns the same fields
+for a FAT mount such as `/sdcard`. It returns `nil, reason` when the running
+firmware does not export `esp_vfs_fat_info`; the export patch in this app adds
+it, so storage readings start working after the next firmware build.
 
 ### Widgets
 
@@ -351,6 +360,7 @@ runtime gains something a packaged app depends on.
 - `widget_batch3.lua` — Tabview and Tileview.
 - `tabs_statusline.lua` — Material 3 Tabs, Statusline and the shared `lvgl.ICON` table.
 - `display.lua` — display size, shape, backlight range and percentage control.
+- `system.lua` — internal/external heap usage and FAT storage statistics.
 - `assets.lua` — the install-directory argument and a packaged PNG in `Image`
   and `ImageButton`.
 - `group.lua` — input groups, focus next/prev/freeze, wrap, editing and default.
@@ -416,7 +426,8 @@ events and widget classes the external `luavgl` bindings need (a module built
 in-tree linked LVGL directly; a side-loaded app resolves the exported table).
 `firmware-c-symbols-exports.patch` adds the libc/libm functions Lua's standard
 library references: `ungetc`, `tmpfile`, `tmpnam`, `setlocale`, `strtof` and
-`log2f`. `firmware-kernel-gpio-exports.patch` adds
+`log2f`, plus `esp_vfs_fat_info` for `tactility.system.storage()`.
+`firmware-kernel-gpio-exports.patch` adds
 `gpio_descriptor_has_flags` to the kernel export table; the other GPIO
 functions were already exported.
 

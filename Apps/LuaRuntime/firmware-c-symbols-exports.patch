@@ -1,8 +1,28 @@
 diff --git a/Modules/c-symbols-module/source/module.cpp b/Modules/c-symbols-module/source/module.cpp
-index 2d8013f1..cb43ec53 100644
+index 2d8013f1..bffa7f7d 100644
 --- a/Modules/c-symbols-module/source/module.cpp
 +++ b/Modules/c-symbols-module/source/module.cpp
-@@ -68,6 +68,7 @@ static const ModuleSymbol SYMBOLS[] = {
+@@ -4,6 +4,7 @@
+ #include <cerrno>
+ #include <cmath>
+ #include <cstddef>
++#include <cstdint>
+ #include <cstdio>
+ #include <cstdlib>
+ #include <cstring>
+@@ -22,6 +23,11 @@ extern "C" {
+ extern int __issignalingf(float);
+ #endif
+ 
++#ifdef ESP_PLATFORM
++// FatFs filesystem statistics, used by the Lua runtime's storage capability.
++extern int esp_vfs_fat_info(const char* base_path, uint64_t* out_total_bytes, uint64_t* out_free_bytes);
++#endif
++
+ static const ModuleSymbol SYMBOLS[] = {
+     // stdlib.h
+     DEFINE_MODULE_SYMBOL(malloc),
+@@ -68,6 +74,7 @@ static const ModuleSymbol SYMBOLS[] = {
      DEFINE_MODULE_SYMBOL(expf),
      DEFINE_MODULE_SYMBOL(ldexpf),
      DEFINE_MODULE_SYMBOL(logf),
@@ -10,7 +30,7 @@ index 2d8013f1..cb43ec53 100644
      DEFINE_MODULE_SYMBOL(log10f),
      DEFINE_MODULE_SYMBOL(powf),
      DEFINE_MODULE_SYMBOL(sqrtf),
-@@ -121,6 +122,9 @@ static const ModuleSymbol SYMBOLS[] = {
+@@ -121,6 +128,9 @@ static const ModuleSymbol SYMBOLS[] = {
      DEFINE_MODULE_SYMBOL(fgets),
      DEFINE_MODULE_SYMBOL(fopen),
      DEFINE_MODULE_SYMBOL(freopen),
@@ -20,7 +40,7 @@ index 2d8013f1..cb43ec53 100644
      DEFINE_MODULE_SYMBOL(setvbuf),
      DEFINE_MODULE_SYMBOL(fputc),
      DEFINE_MODULE_SYMBOL(fputs),
-@@ -164,6 +168,7 @@ static const ModuleSymbol SYMBOLS[] = {
+@@ -164,6 +174,7 @@ static const ModuleSymbol SYMBOLS[] = {
  #endif
      DEFINE_MODULE_SYMBOL(strerror),
      DEFINE_MODULE_SYMBOL(strtod),
@@ -28,11 +48,15 @@ index 2d8013f1..cb43ec53 100644
      DEFINE_MODULE_SYMBOL(strtol),
      DEFINE_MODULE_SYMBOL(strtoul),
      DEFINE_MODULE_SYMBOL(strcspn),
-@@ -196,6 +201,7 @@ static const ModuleSymbol SYMBOLS[] = {
+@@ -196,6 +207,11 @@ static const ModuleSymbol SYMBOLS[] = {
      DEFINE_MODULE_SYMBOL(toupper),
      // locale.h
      DEFINE_MODULE_SYMBOL(localeconv),
 +    DEFINE_MODULE_SYMBOL(setlocale),
++#ifdef ESP_PLATFORM
++    // fatfs/vfs
++    DEFINE_MODULE_SYMBOL(esp_vfs_fat_info),
++#endif
      // regex.h
      DEFINE_MODULE_SYMBOL(regcomp),
      DEFINE_MODULE_SYMBOL(regexec),
