@@ -31,14 +31,49 @@ assert(type(open) == "boolean", "is_open should be a boolean")
 local available, available_reason = tactility.uart.available(controller)
 assert(available == nil or type(available) == "number", available_reason or "available should be a number")
 
+local config, config_reason = tactility.uart.config(controller)
+local config_note
+if config ~= nil then
+    assert(type(config) == "table", "config should return a table")
+    assert(type(config.baud_rate) == "number" and config.baud_rate > 0, "config baud_rate")
+    assert(config.data_bits >= 5 and config.data_bits <= 8, "config data_bits")
+    assert(config.parity == "none" or config.parity == "even" or config.parity == "odd", "config parity")
+    assert(config.stop_bits == 1 or config.stop_bits == 1.5 or config.stop_bits == 2, "config stop_bits")
+    config_note = string.format("%d baud", config.baud_rate)
+else
+    assert(type(config_reason) == "string" and #config_reason > 0, "config reason")
+    config_note = "no config: " .. config_reason
+end
+
+local invalid_ok = pcall(tactility.uart.set_config, controller, { parity = "invalid" })
+assert(not invalid_ok, "an invalid parity should raise")
+
 local note = string.format(
-    "uart PASS: %s, open=%s, available=%s",
+    "uart PASS: %s, open=%s, available=%s, %s",
     controller_name,
     tostring(open),
-    available and tostring(available) or "n/a"
+    available and tostring(available) or "n/a",
+    config_note
 )
 
 if not open then
+    -- Same configuration, so the hardware is unaffected; the controller's own
+    -- driver rejects this when the port is open.
+    if config ~= nil then
+        local applied, applied_reason = tactility.uart.set_config(controller, config)
+        assert(applied == true or (applied == nil and type(applied_reason) == "string"), "set_config result")
+        if applied then
+            local after = tactility.uart.config(controller)
+            assert(
+                after.baud_rate == config.baud_rate
+                    and after.data_bits == config.data_bits
+                    and after.parity == config.parity
+                    and after.stop_bits == config.stop_bits,
+                "set_config round trip"
+            )
+        end
+    end
+
     local value, reason = tactility.uart.read_byte(controller, 1)
     assert(value == nil and type(reason) == "string", "closed read_byte should return nil, reason")
 

@@ -86,6 +86,7 @@ struct Context {
 
     lv_obj_t* content;
     lv_obj_t* title_label;
+    lv_obj_t* position_label;
     lv_obj_t* save_label;
     lv_obj_t* status_label;
     lv_obj_t* editor;
@@ -1136,16 +1137,47 @@ static lv_obj_t* create_action_button(lv_obj_t* parent, const char* text, lv_eve
     return button;
 }
 
+/** Updates the "Ln X, Col Y" label from the textarea cursor. */
+static void update_position_label(struct Context* context) {
+    if (context->editor == NULL || context->position_label == NULL) {
+        return;
+    }
+
+    const char* text = lv_textarea_get_text(context->editor);
+    const uint32_t cursor = lv_textarea_get_cursor_pos(context->editor);
+
+    uint32_t line = 1;
+    uint32_t column = 1;
+    for (uint32_t index = 0; index < cursor && text[index] != '\0'; index++) {
+        const unsigned char byte = (unsigned char)text[index];
+        if (byte == '\n') {
+            line++;
+            column = 1;
+        } else if ((byte & 0xC0) != 0x80) {
+            // UTF-8 continuation bytes do not start a new character.
+            column++;
+        }
+    }
+
+    char buffer[32];
+    snprintf(buffer, sizeof(buffer), "Ln %u, Col %u", (unsigned)line, (unsigned)column);
+    lv_label_set_text(context->position_label, buffer);
+}
+
+static void on_editor_cursor(lv_event_t* event) {
+    update_position_label((struct Context*)lv_event_get_user_data(event));
+}
+
 /**
  * Copies the previous line's indentation after Enter, plus one level after a
  * block opener. The textarea inserts the newline itself; this runs after it.
  */
 static void on_editor_changed(lv_event_t* event) {
     struct Context* context = (struct Context*)lv_event_get_user_data(event);
+    update_position_label(context);
     if (context->auto_indent_guard || context->editor == NULL) {
         return;
     }
-
     lv_obj_t* editor = context->editor;
     const char* text = lv_textarea_get_text(editor);
     const uint32_t cursor = lv_textarea_get_cursor_pos(editor);
@@ -1216,6 +1248,7 @@ static void show_editor(struct Context* context, struct ScriptEntry* script) {
     lv_obj_clean(context->content);
     context->editor = NULL;
     context->status_label = NULL;
+    context->position_label = NULL;
 
     context->editing_example = script->source == SCRIPT_SOURCE_EXAMPLE;
     snprintf(context->current_path, sizeof(context->current_path), "%s", script->path);
@@ -1233,11 +1266,29 @@ static void show_editor(struct Context* context, struct ScriptEntry* script) {
         snprintf(title_text, sizeof(title_text), "%s", name);
     }
 
-    lv_obj_t* title = lv_label_create(context->content);
+    lv_obj_t* header = lv_obj_create(context->content);
+    lv_obj_set_width(header, LV_PCT(100));
+    lv_obj_set_height(header, LV_SIZE_CONTENT);
+    lv_obj_set_flex_flow(header, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(header, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_all(header, 0, 0);
+    lv_obj_set_style_pad_column(header, gap, 0);
+    lv_obj_set_style_border_width(header, 0, 0);
+    lv_obj_set_style_bg_opa(header, LV_OPA_TRANSP, 0);
+
+    lv_obj_t* title = lv_label_create(header);
     lv_label_set_text(title, title_text);
+    lv_obj_set_flex_grow(title, 1);
+    lv_label_set_long_mode(title, LV_LABEL_LONG_MODE_DOTS);
     lv_obj_set_style_text_font(title, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
     lv_obj_set_style_text_opa(title, LV_OPA_70, 0);
     context->title_label = title;
+
+    lv_obj_t* position = lv_label_create(header);
+    lv_label_set_text(position, "Ln 1, Col 1");
+    lv_obj_set_style_text_font(position, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
+    lv_obj_set_style_text_opa(position, LV_OPA_70, 0);
+    context->position_label = position;
 
     lv_obj_t* editor = lv_textarea_create(context->content);
     lv_obj_set_width(editor, LV_PCT(100));
@@ -1277,6 +1328,10 @@ static void show_editor(struct Context* context, struct ScriptEntry* script) {
 
     context->editor = editor;
     lv_obj_add_event_cb(editor, on_editor_changed, LV_EVENT_VALUE_CHANGED, context);
+    lv_obj_add_event_cb(editor, on_editor_cursor, LV_EVENT_KEY, context);
+    lv_obj_add_event_cb(editor, on_editor_cursor, LV_EVENT_CLICKED, context);
+    lv_obj_add_event_cb(editor, on_editor_cursor, LV_EVENT_FOCUSED, context);
+    update_position_label(context);
 }
 
 static void on_entry_clicked(lv_event_t* event) {
@@ -1304,6 +1359,7 @@ static void show_browser(struct Context* context) {
     lv_obj_clean(context->content);
     context->editor = NULL;
     context->status_label = NULL;
+    context->position_label = NULL;
     context->title_label = NULL;
     context->save_label = NULL;
     context->current_path[0] = '\0';

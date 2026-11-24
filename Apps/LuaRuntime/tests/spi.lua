@@ -1,7 +1,9 @@
--- SPI capability smoke test: discovery, constants and the invalid-CS paths.
+-- SPI capability smoke test: discovery, constants, invalid-CS paths and a
+-- persistent handle.
 --
--- The test never selects a real peripheral: an out-of-range CS fails in
--- add_device() before any bus transaction, so displays and SD cards stay safe.
+-- No real peripheral is selected: an out-of-range CS fails in add_device()
+-- before any transaction, and CS_NONE leaves every chip select deselected, so
+-- displays and SD cards stay safe.
 
 local controller
 local controller_name
@@ -44,5 +46,31 @@ else
     assert(type(lock_reason) == "string", "try_lock should return a reason")
 end
 
+local handle, handle_reason = tactility.spi.open(controller, 1000000, 0, tactility.spi.CS_NONE)
+local handle_note
+if handle then
+    assert(handle:is_open(), "handle should be open")
+    local received = handle:transmit("\0")
+    assert(type(received) == "string" and #received == 1, "handle transmit")
+    assert(handle:write("\0") == true, "handle write")
+    local read = handle:read(2)
+    assert(type(read) == "string" and #read == 2, "handle read")
+    assert(handle:close(), "handle close")
+    assert(not handle:is_open(), "handle should be closed")
+    assert(handle:close(), "close should be idempotent")
+
+    local raised = not pcall(function() handle:transmit("x") end)
+    assert(raised, "a closed handle should raise")
+    handle_note = "persistent handle"
+else
+    assert(type(handle_reason) == "string", "open should return a reason")
+    handle_note = "open failed: " .. handle_reason
+end
+
 controller:release()
-result = string.format("spi PASS: %s, invalid CS -> %s", controller_name, tx_reason)
+result = string.format(
+    "spi PASS: %s, invalid CS -> %s, %s",
+    controller_name,
+    tx_reason,
+    handle_note
+)

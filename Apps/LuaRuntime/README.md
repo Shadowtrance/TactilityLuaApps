@@ -33,7 +33,8 @@ the editor. **Export** asks for an app name, packages the script with the
 runner and icons from this package, and installs it on the device — the new
 app appears in the launcher immediately. Enter keeps the previous line's
 indentation and adds four spaces after a block opener (`{`, `(`, `[`, `then`,
-`do` or `else`).
+`do` or `else`). A `Ln X, Col Y` readout in the header follows the cursor; Tab
+remains LVGL's focus-navigation key, so indent with spaces.
 
 **Folder** chooses a different script folder (the firmware's file selection
 app). The choice is stored next to the app's other settings, in
@@ -195,15 +196,24 @@ local raw = tactility.adc.read_raw(controller, 0, 50)
 ```
 
 `tactility.uart` opens and closes a UART controller, reads and writes single
-bytes or blocks, reports available bytes and flushes input. Only open a
-controller the script owns: a GPS or radio service may already hold one.
+bytes or blocks, reports available bytes, flushes input and reads or applies
+its baud rate, data bits, parity and stop bits. Only open a controller the
+script owns: a GPS or radio service may already hold one.
 
 ```lua
+local config = tactility.uart.config(controller) -- { baud_rate, data_bits, parity, stop_bits }
+tactility.uart.set_config(controller, { baud_rate = 115200, parity = "none" })
 tactility.uart.open(controller)
 tactility.uart.write_bytes(controller, "AT\r\n")
 local reply = tactility.uart.read_until(controller, 10, 64, 500)
 tactility.uart.close(controller)
 ```
+
+`set_config` requires a closed controller and starts from the current values,
+so a script can change only the baud rate. `parity` is `"none"`, `"even"` or
+`"odd"`; `stop_bits` is `1`, `1.5` or `2`. A controller without a stored
+configuration (a console UART, for example) makes `config()` return
+`nil, reason`; pass all four fields to configure it.
 
 `tactility.spi` performs one-shot transfers: each call adds a temporary
 peripheral for the given clock/mode/chip-select, transfers and removes it. Use
@@ -211,6 +221,18 @@ only a chip select that the script owns; a display or SD driver may already hold
 one. `transmit` sends and receives the same length, `read` leaves the transmit
 line idle, and `write` discards the response. `lock`/`try_lock`/`unlock` take
 the controller's bus mutex.
+
+For several transfers to one peripheral, `open` returns a persistent handle:
+
+```lua
+local device = tactility.spi.open(controller, 1000000, 0, 0)
+device:write("\x9F")           -- JEDEC id command
+local id = device:read(3)
+device:close()
+```
+
+The handle methods use the same `transmit`/`read`/`write` contract and close
+the peripheral when the handle is collected, so an explicit `close` is optional.
 
 ### Widgets
 

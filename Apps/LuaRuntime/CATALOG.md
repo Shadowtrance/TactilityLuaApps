@@ -161,6 +161,7 @@ test that proves it.
 | [ ] | Clipboard | — | |
 | [x] | Buffer marshalling (I2C) | hand-written helpers + `impl="custom"` | `tests/i2c.lua` read/write/write_read |
 | [ ] | Buffer marshalling (UART/ADC/SPI) | reuse `lua_bindings_check_bytes`/`push_bytes` | Next capabilities |
+| [x] | Persistent SPI device handles | `tactility.spi.open()` + methods | `tests/spi.lua` |
 | [ ] | Typed raw signature database | — | Turn `raw.call` into a typed dispatcher |
 | [ ] | Error mapping | — | `ERROR_UNDEFINED` → meaningful reasons |
 | [-] | `power_supply_power_off()` | — | Deliberately not bound |
@@ -232,7 +233,7 @@ be read back from it unaided.
 | [x] | PC GUI designer | `tools/lua-gui-designer`; simulator profiles, Material/mono theme, system bars, tree drag/context, editable code, absolute + percentage + flex + grid layout, Lua export |
 | [x] | Designer settings persistence | Profile/theme/zoom/grid/snap/tab/window saved next to the tool |
 | [x] | Lua highlighting / auto-indent | PC designer Code tab and event editor |
-| [ ] | On-device auto-indent / line numbers | Next editor step |
+| [x] | On-device auto-indent / cursor position | `Ln X, Col Y` follows the cursor; Tab stays focus navigation |
 | [ ] | On-device syntax highlighting | Deferred; needs custom drawing |
 | [ ] | Rename / delete | Browser currently lists only |
 | [ ] | Search / filter | Useful with many scripts |
@@ -249,8 +250,8 @@ be read back from it unaided.
 | [x] | `tests/gpio.lua` | GPIO discovery, count, invalid pin |
 | [x] | `tests/i2c.lua` | Controllers, probes, child addresses, block read/write/write_read |
 | [x] | `tests/adc.lua` | ADC controller discovery, raw read and invalid channel |
-| [x] | `tests/uart.lua` | UART discovery, is_open/available and closed error paths |
-| [x] | `tests/spi.lua` | SPI discovery, constants, invalid CS and try_lock/unlock |
+| [x] | `tests/uart.lua` | UART discovery, is_open/available, config and closed error paths |
+| [x] | `tests/spi.lua` | SPI discovery, constants, invalid CS, try_lock/unlock and a persistent handle |
 | [x] | `tests/icons.lua` | Shared icon table, including the latest firmware additions |
 | [x] | `tests/bindings.lua` | fs, time, device, settings, power, Wi-Fi |
 | [x] | `tests/raw.lua` | Symbol lookup and missing symbol |

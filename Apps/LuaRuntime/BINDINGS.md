@@ -20,14 +20,17 @@ Status: partially implemented (2026-11-21)
   `read_raw(controller, channel, timeout?)` returns the raw conversion or
   `nil, reason`. `tests/adc.lua` covers discovery and the invalid channel path.
 - `tactility.uart` is generated from `bindings/uart.toml` for open/close,
-  byte reads/writes and flush. `is_open`, `available` and the block transfers
-  are hand-written because the C API returns plain values or takes buffers.
-  `tests/uart.lua` introspects a controller and only touches the error paths
-  when it is closed, so it cannot steal bytes from a GPS/radio service.
+  byte reads/writes and flush. `is_open`, `available`, the block transfers and
+  `config`/`set_config` are hand-written because the C API returns plain values
+  or takes buffers and structs. `tests/uart.lua` introspects a controller and
+  only touches the error paths when it is closed, so it cannot steal bytes from
+  a GPS/radio service; the set_config round-trip writes the same values back.
 - `tactility.spi` is generated for lock/try_lock/unlock and hand-written for
   one-shot `transmit`/`read`/`write`: each call adds a temporary `SpiDevice` for
-  the clock/mode/CS, transfers and removes it. `tests/spi.lua` uses an invalid CS
-  so it never selects a display or SD card.
+  the clock/mode/CS, transfers and removes it. `open` returns a persistent
+  handle with the same transfers plus `close`/`is_open`; `__gc` removes the
+  peripheral if the script forgets. `tests/spi.lua` uses an invalid CS and
+  `CS_NONE`, so it never selects a display or SD card.
 - `device.address()` exposes the devicetree address of a device, so the Lua I2C
   scanner can map a controller's children to the address rows it found. The
   scanner now mirrors the internal one: bus chips plus a grid with device names.

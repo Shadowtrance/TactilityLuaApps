@@ -55,3 +55,10 @@ signature = "write(controller: Device, clock_hz: u32, mode: u8, cs_index: i32, t
 impl = "custom"
 c = "lua_spi_write"
 doc = "Writes tx without reading a response."
+
+[[function]]
+name = "open"
+signature = "open(controller: Device, clock_hz: u32, mode: u8, cs_index: i32, half_duplex?: bool = false) -> SpiDevice | nil, string"
+impl = "custom"
+c = "lua_spi_open"
+doc = "Adds a persistent peripheral and returns a handle with transmit(), read(), write(), close() and is_open()."

@@ -79,3 +79,17 @@ signature = "read_until(controller: Device, terminator: u8, size: u32, timeout?:
 impl = "custom"
 c = "lua_uart_read_until"
 doc = "Reads up to size bytes, stopping after terminator."
+
+[[function]]
+name = "config"
+signature = "config(controller: Device) -> { baud_rate, data_bits, parity, stop_bits } | nil, string"
+impl = "custom"
+c = "lua_uart_config"
+doc = "Returns the current baud rate, data bits, parity and stop bits."
+
+[[function]]
+name = "set_config"
+signature = "set_config(controller: Device, config: table) -> true | nil, string"
+impl = "custom"
+c = "lua_uart_set_config"
+doc = "Applies baud_rate, data_bits (5-8), parity (\"none\"/\"even\"/\"odd\") and stop_bits (1, 1.5, 2); the controller must be closed."

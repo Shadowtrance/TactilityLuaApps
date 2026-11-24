@@ -39,6 +39,9 @@ void lua_bindings_open_notification(lua_State* state);
 /** Generated from the bindings IDL; adds every capability table to `tactility`. */
 void lua_bindings_open_generated(lua_State* state);
 
+/** Registers the metatable behind the handle returned by `tactility.spi.open()`. */
+void lua_bindings_open_spi_handle(lua_State* state);
+
 /** Generated: extracts the C pointer behind a capability handle, or NULL. */
 void* lua_bindings_raw_pointer(lua_State* state, int index);
 
