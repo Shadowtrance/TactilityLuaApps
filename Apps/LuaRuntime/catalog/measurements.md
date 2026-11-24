@@ -52,12 +52,40 @@ button. Three runs for hello, two for tabsdemo, in milliseconds.
   script, ~50–150 ms for the tab/tile demo.
 - The S3 ELF load is ~4.5× slower than the P4 (140 ms vs 30 ms), consistent with
   PSRAM text relocation on the smaller part.
-- **The S3's dominant cost is the window/app start (~1.4 s), not the loader or
-  Lua.** The P4 does the same step in ~175 ms. That is the first thing to
-  profile if S3 app launches need to feel faster; it is before the Lua runtime
-  is allocated and before the script runs.
+- **The S3's dominant cost is symbol relocation, not the window or Lua.** With a
+  temporary log on the first line of `lua_runner`'s `main()`, the earlier
+  "window" segment split into ~1,400 ms before `main()` and ~20 ms for path
+  resolution. `ELF: elf->entry` is logged after the segments are copied but
+  *before* `esp_elf_relocate()` runs, so the label was wrong; see the update
+  below.
 - Both devices have enough PSRAM for the runtime and a typical script; the S3
   has ~7.2 MB external free with the demo open.
+
+## Update 2026-11-25: where the S3 launch time goes
+
+Firmware **ac42cd31** reproduces the same timings (hello: loader ~140 ms,
+"window" ~1,420 ms, eval 50–100 ms). Adding a log at the start of
+`lua_runner`'s `main()` shows the gap is entirely **before the app runs**:
+
+| Segment | T-Deck Plus |
+|---|---:|
+| `app_manager: starting` → `ELF: elf->entry` (segments copied) | ~140 ms |
+| `ELF: elf->entry` → `main()` (relocation + cache sync) | ~1,400 ms |
+| `main()` → path/API resolved | ~20 ms |
+| Lua evaluation | 50–100 ms |
+
+`esp_elf.c` logs `elf->entry` after `esp_elf_load_*()` but before its relocation
+loop, so almost the whole 1.4 s is relocation. The runner ELF has ~2,200
+relocations, 483 of them `R_XTENSA_JMP_SLOT` for external functions. The ELF
+loader's resolver calls `module_resolve_symbol_global()`, which linearly scans
+every module's symbol table (~2,600 exported symbols across ~30 modules) under
+the module-ledger mutex for each name. That turns ~550 lookups into hundreds of
+thousands of `strcmp` calls against PSRAM-backed tables; the Tab5's faster
+memory and cache do the same work in ~170 ms.
+
+The fix belongs in the kernel: index module symbols (a hash table or a
+per-module Bloom filter to skip modules that cannot contain the name) instead of
+scanning all of them per lookup. No app-side change can remove the relocations.
 
 Raw run durations are in `build/measure_devices.py`'s output; the script is a
 local measurement helper and is not packaged.
