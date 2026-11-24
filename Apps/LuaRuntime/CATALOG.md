@@ -156,7 +156,8 @@ test that proves it.
 | [ ] | `bundle` / properties files | — | |
 | [ ] | App lifecycle | — | Launch/stop/install/uninstall from Lua |
 | [ ] | Dialogs / file picker / input dialog | — | App cloning and settings UIs |
-| [!] | Notification actions / Bundle data / events | — | Actions need Lua-callback lifetime design; Bundle needs a binding |
+| [x] | Notification events | Runner timer + `notification_subscribe` | `subscribe(callback)`, `EVENT`, `tests/notification_events.lua` |
+| [!] | Notification actions / Bundle data | — | Actions need Lua-callback lifetime design; Bundle needs a kernel key-enumeration API |
 | [ ] | Clipboard | — | |
 | [x] | Buffer marshalling (I2C) | hand-written helpers + `impl="custom"` | `tests/i2c.lua` read/write/write_read |
 | [ ] | Buffer marshalling (UART/ADC/SPI) | reuse `lua_bindings_check_bytes`/`push_bytes` | Next capabilities |
@@ -178,11 +179,19 @@ test that proves it.
 ### Current `notification` surface
 
 `send{ message, title?, severity?, sticky?, source?, service? }`, `list`, `get`,
-`dismiss`, `dismiss_all`, `dismiss_non_sticky`, `count`, `SEVERITY`, `SOURCE`.
+`dismiss`, `dismiss_all`, `dismiss_non_sticky`, `count`, `SEVERITY`, `SOURCE`,
+and `subscribe(callback)` with `EVENT` returning a handle with `cancel()` and
+`is_active()`. Each event is `{ id, type, timestamp, order, bumped }`, where
+`type` is `EVENT.POSTED`, `EVENT.DISMISSED`, `EVENT.CLEARED` or `EVENT.UPDATED`.
 
-Notification actions, Bundle data and the subscribe/poll event stream are not
-exposed yet. Actions need a Lua-callback lifetime design because a notification
-can outlive the script's state.
+The runner delivers events from a 200 ms LVGL timer, so the callback runs on the
+LVGL task; the handle is pinned until cancelled or the runtime closes. Events
+posted before subscribing or after cancelling are not kept.
+
+Notification actions and Bundle data are not exposed yet. Actions need a
+Lua-callback lifetime design because a notification can outlive the script's
+state, and the kernel Bundle has no key-enumeration API, so a Lua table cannot
+be read back from it unaided.
 
 ## 5. App clones and demos
 
@@ -247,6 +256,7 @@ can outlive the script's state.
 | [x] | `tests/raw.lua` | Symbol lookup and missing symbol |
 | [x] | `tests/grid.lua` | Grid tracks and cell placement |
 | [x] | `tests/notification.lua` | Send, get, list, dismiss and missing id |
+| [x] | `tests/notification_events.lua` | Subscribe, posted/dismissed/cleared order and cancel |
 | [x] | `tests/object_api.lua` | Core sizing/margins/outline/shadow/text/transforms/states/flags/children, Arc and Spinbox |
 | [x] | `tests/widget_batch2.lua` | LED, Table, Scale, ImageButton, Chart, Calendar, Keyboard, ButtonMatrix |
 | [x] | `tests/widget_batch3.lua` | Tabview, Tileview |
@@ -272,7 +282,8 @@ can outlive the script's state.
 | [!] | LVGL 9.6 drift | Keep the export/widget surface deliberate; removed/deprecated/disabled widgets stay excluded |
 | [!] | `lv_obj_is_valid()` is deprecated | It now walks the parent chain and faults on freed memory; use the runtime live set |
 | [!] | `raw.call` is untyped | Typed signature DB planned |
-| [!] | Notification actions/data/events | Design: [catalog/notification-actions.md](catalog/notification-actions.md) |
+| [x] | Notification events | `tactility.notification.subscribe` on the LVGL task |
+| [!] | Notification actions/data | Design: [catalog/notification-actions.md](catalog/notification-actions.md) |
 | [!] | I2C scanner scans all buses at startup (~3 s) | Pre-built cards keep switching/teardown stable |
 | [!] | I2C scanner does not persist the selected bus | Add a small settings entry |
 

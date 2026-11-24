@@ -597,6 +597,9 @@ void luavgl_push_object(lua_State* state, lv_obj_t* object) {
 }
 
 void luavgl_detach_all(lua_State* state) {
+    // Subscriptions own their timers, so cancel them before the general timer sweep.
+    luavgl_delete_all_notification_subscriptions(state);
+
     // Timers first: they have no widget to anchor them, so nothing else would ever notice
     // them still running against a freed state.
     luavgl_delete_all_timers(state);

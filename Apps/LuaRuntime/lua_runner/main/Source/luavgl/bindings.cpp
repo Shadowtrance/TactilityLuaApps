@@ -554,6 +554,7 @@ extern "C" error_t luavgl_bindings_open(struct LuaRuntime* runtime, lv_obj_t* ro
     luavgl_open_toolbar(state);
     luavgl_open_events(state);
     luavgl_open_timer(state);
+    luavgl_open_notification(state);
     luavgl_open_group(state);
     luavgl_open_anim(state);
     luavgl_open_style(state);

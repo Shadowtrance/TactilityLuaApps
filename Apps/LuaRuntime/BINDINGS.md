@@ -33,10 +33,14 @@ Status: partially implemented (2026-11-21)
   scanner now mirrors the internal one: bus chips plus a grid with device names.
 - `tactility.notification` is hand-written: `send{...}`, `list`, `get`,
   `dismiss`, `dismiss_all`, `dismiss_non_sticky` and `count`, with `SEVERITY`
-  and `SOURCE` constants. Actions, Bundle data and the event stream are
-  deliberately not exposed yet; an action would need a Lua-callback lifetime
-  design because a notification can outlive the script's state. Verified with
-  `tests/notification.lua` and `assets/examples/notification.lua`.
+  and `SOURCE` constants. The runner adds `subscribe(callback)` and `EVENT`:
+  a 200 ms LVGL timer drains the module's event queue, so the callback runs on
+  the LVGL task with the right state, and the subscription is pinned until
+  cancelled or the runtime closes. Verified with `tests/notification.lua`,
+  `tests/notification_events.lua` and `assets/examples/notification.lua`.
+  Actions and Bundle data are still deliberately not exposed; an action would
+  need a Lua-callback lifetime design because a notification can outlive the
+  script's state, and Bundle enumeration is a kernel API that does not exist yet.
 - `tactility.raw.call(name, ...)` is implemented as the low-level escape hatch:
   it resolves any exported symbol at runtime and calls it with pointer-sized
   arguments (integers, booleans, strings, handles). The **typed signature

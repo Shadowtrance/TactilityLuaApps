@@ -74,6 +74,18 @@ void luavgl_open_events(lua_State* state);
 /** Adds the `Timer` constructor and its metatable. `lvgl` table must be on top. */
 void luavgl_open_timer(lua_State* state);
 
+/**
+ * Adds `tactility.notification.subscribe()` and its `EVENT` constants.
+ *
+ * The callback is delivered from an LVGL timer, so it runs on the LVGL task with the
+ * state that created the subscription. Lives in the runner because event dispatch needs
+ * a UI-thread timer, which the LVGL-free runtime module does not have.
+ */
+void luavgl_open_notification(lua_State* state);
+
+/** Cancels every notification subscription of this runtime. Called from luavgl_detach_all(). */
+void luavgl_delete_all_notification_subscriptions(lua_State* state);
+
 /** Adds the `Group` constructor and its metatable. `lvgl` table must be on top. */
 void luavgl_open_group(lua_State* state);
 

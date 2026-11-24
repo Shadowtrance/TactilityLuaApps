@@ -12,4 +12,5 @@ tactility_component_register(
         Private
         ../../lua_runtime/main/Include
         ../../lua_runtime/components/lua/Include
+    PRIV_REQUIRES notification-module
 )

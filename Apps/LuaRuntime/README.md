@@ -158,7 +158,9 @@ app uses GPIO. I2C also has hand-written block transfers (`read`, `write`,
 `write_read`) because the IDL has no buffer type yet. `tactility.raw.call(name, ...)` resolves an exported symbol at
 runtime and calls it with pointer-sized arguments; the typed signature database
 is the next step. Notification send/list/dismiss are hand-written and do not
-expose actions or Bundle data yet. See [BINDINGS.md](BINDINGS.md) for the design and
+expose actions or Bundle data yet; the runner adds `subscribe(callback)` for the
+posted/dismissed/cleared/updated event stream, delivered on the LVGL task. See
+[BINDINGS.md](BINDINGS.md) for the design and
 [tools/lua-bindings](tools/lua-bindings/README.md) for the generator.
 
 `tactility.display` finds the active panel and drives its backlight:
@@ -426,6 +428,7 @@ runtime gains something a packaged app depends on.
 - `icons.lua` — shared icon names, including the icons added in the latest firmware.
 - `grid.lua` — grid tracks and cell placement on a themed card.
 - `notification.lua` — send, get, list, dismiss and missing-id handling.
+- `notification_events.lua` — subscribe, posted/dismissed/cleared order and cancel.
 - `bindings.lua` — fs, time, device, settings, power and Wi-Fi smoke test.
 - `raw.lua` — `tactility.raw.call` symbol lookup and missing-symbol error.
 

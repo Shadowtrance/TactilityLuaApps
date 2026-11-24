@@ -1,7 +1,20 @@
 # Notification actions and data for Lua
 
-Status: design only. The current binding sends, lists, gets and dismisses
-notifications; it deliberately does not expose `Bundle` data or actions.
+Status: events are implemented; data and tap actions are design only. The
+binding sends, lists, gets and dismisses notifications and the runner exposes a
+`subscribe(callback)` event stream. `Bundle` data and actions are still not
+exposed.
+
+`tactility.notification.subscribe(callback)` registers a caller-owned
+`NotificationSubscription` and polls its queue from a 200 ms LVGL timer, so the
+callback runs on the LVGL task with the state that created it. The subscription
+is pinned in the registry until `:cancel()` or until the runner closes, and is
+cancelled before the timers are swept at shutdown. Events are live-only: a
+subscription does not replay history, and events posted before subscribing or
+after cancelling are not kept. The module queues up to 8 events per
+subscription; a faster burst drops the newest until the next poll. Each event is
+`{ id, type, timestamp, order, bumped }` with `type` one of `EVENT.POSTED`,
+`EVENT.DISMISSED`, `EVENT.CLEARED` or `EVENT.UPDATED`.
 
 ## Constraints from the C API
 
@@ -85,23 +98,28 @@ alive and, if so, post a small app event to it. That needs a registry from
 cleanup when the runner closes. Phase 2 deliberately starts the app instead:
 simpler, and correct after a reboot or a closed runner.
 
-## Phase 3: events and richer payloads
+## Phase 3: actions in the event stream (next)
 
-Once phase 2 works, add an event-style API for live apps:
+The notification events above are implemented. The remaining piece is the tap
+callback, which turns an action tap into an event/start request:
 
 ```lua
 tactility.notification.subscribe(function(event)
-    -- event = { id, action, data, type = "action" | "dismissed" }
+    -- event = { id, type = "posted" | "dismissed" | "cleared" | "updated" }
 end)
 ```
 
-The subscription lives only while the runner is alive. The C trampoline posts an
-app event; the runner's app loop dispatches it to the Lua function. Dismissal
-events need a notification-module hook or a polling comparison of
-`notification.count()`/ids; start with actions only.
+An action tap is not an event in the C API: it calls the notification's
+`NotificationAction` function pointer. Phase 2's fixed C trampoline is therefore
+still the delivery mechanism for taps; once it exists it can also post a
+`"action"` event into the live subscription. The runner already has an app-event
+loop, but the Lua callback runs on the LVGL task, so a trampoline must marshal
+the tap there rather than touching the Lua state on the UI task.
 
 ## Tests
 
+- `tests/notification_events.lua`: subscribe, send/dismiss/clear and verify the
+  posted/dismissed/cleared order, timestamps, ordering and cancel. Implemented.
 - `tests/notification_data.lua`: send/read/update a nested Bundle, verify types
   and that a clone survives dismissal.
 - `tests/notification_action.lua`: send a sticky notification with an action,
@@ -116,4 +134,5 @@ events need a notification-module hook or a polling comparison of
 1. `lua_runtime` bundle binding + `notification.send{data=...}` / `get().data`.
 2. Runner `--notification` argument and `on_notification`.
 3. A documented `action` + `app`/`script` convention in the Bundle.
-4. Optional live-app event dispatch.
+4. Live-app notification events. Done: `subscribe(callback)` with the
+   posted/dismissed/cleared/updated stream, dispatched on the LVGL task.

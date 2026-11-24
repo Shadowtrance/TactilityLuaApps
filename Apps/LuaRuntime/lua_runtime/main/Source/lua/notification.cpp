@@ -21,10 +21,14 @@ namespace {
  * directly onto that shape. The Bundle data and the tap action are intentionally not
  * exposed yet:
  *
- *  - the Bundle needs a `tactility.bundle` binding, and
+ *  - the Bundle needs a `tactility.bundle` binding (and the kernel has no API to
+ *    enumerate its keys, so a Lua table cannot be read back without one), and
  *  - an action is a C function that must stay valid for as long as the notification can
  *    be listed. A script's function belongs to a Lua state that can be closed while the
  *    notification is still on screen, so that needs a dispatch design first.
+ *
+ * The event stream is exposed by the runner instead, because delivering a Lua callback
+ * needs an LVGL timer; see luavgl/notification_events.cpp.
  */
 void push_severity(lua_State* state, enum NotificationSeverity severity) {
     const char* name = "info";
