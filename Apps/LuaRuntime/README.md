@@ -412,6 +412,10 @@ py Apps\LuaRuntime\tools\lua-app\make_lua_app.py --script tests\luavgl_smoke.lua
 tt app install tactility.lua.luavgl-smoke.app --host 192.168.0.245
 ```
 
+The publish workflow also runs [tools/elf-audit](tools/elf-audit/README.md), which
+fails when a packaged Xtensa image contains a relocation that the S3 section
+loader would map to `NULL`.
+
 ## GUI designer
 
 [tools/lua-gui-designer](tools/lua-gui-designer/README.md) is a PC

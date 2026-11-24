@@ -30,6 +30,8 @@ jobs:
           app_name: LuaRuntime
           save_cache: 'true'
           upload_artifact: 'true'
+      - name: Audit packaged ELFs
+        run: python3 Apps/LuaRuntime/tools/elf-audit/elf_audit.py
       - name: Package scripts
         run: |
           set -euo pipefail
