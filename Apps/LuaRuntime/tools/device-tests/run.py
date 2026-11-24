@@ -44,6 +44,7 @@ DEFAULT_SETTLE_SECONDS = 4.5
 # "script evaluated (N-byte result)" line is a safe fallback.
 MARKERLESS_TESTS = {
     "adc",
+    "icons",
     "uart",
     "bindings",
     "display",

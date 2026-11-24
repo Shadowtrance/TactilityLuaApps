@@ -241,6 +241,7 @@ can outlive the script's state.
 | [x] | `tests/i2c.lua` | Controllers, probes, child addresses, block read/write/write_read |
 | [x] | `tests/adc.lua` | ADC controller discovery, raw read and invalid channel |
 | [x] | `tests/uart.lua` | UART discovery, is_open/available and closed error paths |
+| [x] | `tests/icons.lua` | Shared icon table, including the latest firmware additions |
 | [x] | `tests/bindings.lua` | fs, time, device, settings, power, Wi-Fi |
 | [x] | `tests/raw.lua` | Symbol lookup and missing symbol |
 | [x] | `tests/grid.lua` | Grid tracks and cell placement |

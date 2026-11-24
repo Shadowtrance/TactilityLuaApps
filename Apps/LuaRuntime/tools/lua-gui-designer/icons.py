@@ -7,6 +7,8 @@ SHARED_ICONS = {
     "ADD": "\ue145",
     "APPS": "\ue5c3",
     "AREA_CHART": "\ue770",
+    "PAUSE": "\ue034",
+    "RADIO_BUTTON_UNCHECKED": "\ue836",
     "APP_REGISTRATION": "\uef40",
     "CALENDAR_MONTH": "\uebcc",
     "CABLE": "\uefe6",

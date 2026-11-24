@@ -288,7 +288,7 @@ local selected = tabs:selected()
 tabs:set_tab_badge(2, true)
 ```
 
-`lvgl.ICON` is the firmware's shared Material Symbols set (85 names such as
+`lvgl.ICON` is the firmware's shared Material Symbols set (87 names such as
 `INFO`, `MEMORY` and `HARD_DISK`). It is separate from `lvgl.SYMBOL`, which is
 LVGL's own icon font. Icons are ordinary glyph strings: set the caption and the
 icon font together, or the glyph renders as a missing character. List rows take
@@ -414,6 +414,7 @@ runtime gains something a packaged app depends on.
 - `i2c.lua` — controller discovery, address probing and the missing-device path.
 - `adc.lua` — ADC controller discovery, raw channel read and the invalid-channel path.
 - `uart.lua` — UART discovery, `is_open`/`available` and the closed error paths.
+- `icons.lua` — shared icon names, including the icons added in the latest firmware.
 - `grid.lua` — grid tracks and cell placement on a themed card.
 - `notification.lua` — send, get, list, dismiss and missing-id handling.
 - `bindings.lua` — fs, time, device, settings, power and Wi-Fi smoke test.
