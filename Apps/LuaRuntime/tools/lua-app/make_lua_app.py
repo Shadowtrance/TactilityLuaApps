@@ -12,6 +12,9 @@ Examples:
     py make_lua_app.py --script demo.lua
     py make_lua_app.py --script demo.lua --name "Lua Dashboard" --id tactility.lua.dashboard
     py make_lua_app.py --script demo.lua --platform esp32p4 --output dist/demo.app
+
+Without --version/--code, the leading `-- @version x.y.z` and `-- @code n`
+comments in the script are used, defaulting to 0.1.0/1. Explicit arguments win.
 """
 
 import argparse
@@ -27,6 +30,12 @@ DEFAULT_RUNNER = RUNTIME_DIR / "build" / "package-intermediate" / "bin" / "{plat
 
 DEFAULT_SDK = "0.8.0-dev"
 DEFAULT_PLATFORM = "esp32p4"
+DEFAULT_VERSION = "0.1.0"
+DEFAULT_CODE = 1
+
+# Only the comment header is read, so a `-- @version` deeper in a script cannot
+# silently change the package version.
+METADATA_LINE_LIMIT = 30
 
 
 def fail(message):
@@ -75,6 +84,41 @@ def validate_id(app_id):
         fail(f"app id {app_id!r} must be lowercase letters, digits, '.', or '-'")
 
 
+def read_script_metadata(script):
+    """
+    Reads the optional `-- @version x.y.z` and `-- @code n` tags from the
+    comment header at the top of a script.
+
+    A script in Scripts/ is published by the workflow without arguments, so the
+    tags are what let an updated script reach App Hub as a new version. Parsing
+    stops at the first non-comment line.
+    """
+    metadata = {}
+
+    try:
+        lines = script.read_text(encoding="utf-8").splitlines()
+    except OSError as error:
+        fail(f"{script}: {error}")
+
+    for line in lines[:METADATA_LINE_LIMIT]:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if not stripped.startswith("--"):
+            break
+
+        match = re.fullmatch(r"--\s*@version\s+(\S+)", stripped)
+        if match:
+            metadata["version"] = match.group(1)
+            continue
+
+        match = re.fullmatch(r"--\s*@code\s+(\d+)", stripped)
+        if match:
+            metadata["code"] = int(match.group(1))
+
+    return metadata
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="make_lua_app",
@@ -83,8 +127,15 @@ def main():
     parser.add_argument("--script", required=True, help="the Lua script to run (copied to lua/main.lua)")
     parser.add_argument("--name", help="app name (default: derived from the script file name)")
     parser.add_argument("--id", help="app and package id (default: tactility.lua.<script name>)")
-    parser.add_argument("--version", default="0.1.0", help="version name (default 0.1.0)")
-    parser.add_argument("--code", type=int, default=1, help="version code (default 1)")
+    parser.add_argument(
+        "--version",
+        help=f"version name (default: @version in the script, or {DEFAULT_VERSION})",
+    )
+    parser.add_argument(
+        "--code",
+        type=int,
+        help=f"version code (default: @code in the script, or {DEFAULT_CODE})",
+    )
     parser.add_argument("--description", help="launcher description")
     parser.add_argument(
         "--short-description",
@@ -112,6 +163,12 @@ def main():
     name = args.name or titleize(stem)
     app_id = args.id or f"tactility.lua.{slugify(stem)}"
     validate_id(app_id)
+
+    metadata = read_script_metadata(script)
+    version = args.version if args.version is not None else metadata.get("version", DEFAULT_VERSION)
+    code = args.code if args.code is not None else metadata.get("code", DEFAULT_CODE)
+    if code < 1:
+        fail(f"version code {code} must be positive")
 
     platforms = args.platform or [DEFAULT_PLATFORM]
     output = Path(args.output).expanduser() if args.output else Path(f"{app_id}.app")
@@ -159,8 +216,8 @@ def main():
         f"target.sdk={sdk}",
         f"target.platforms={','.join(platforms)}",
         f"id={app_id}",
-        f"version.name={args.version}",
-        f"version.code={args.code}",
+        f"version.name={version}",
+        f"version.code={code}",
         f"name={name}",
         f"description.short={short_description}",
         f"description={description}",

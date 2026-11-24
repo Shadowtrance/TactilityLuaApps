@@ -30,7 +30,16 @@ and deploys it to GitHub Pages.
 
 Drop a script in `Scripts/` and push. The workflow packages it with the default
 name, id and icon of the LuaRuntime package (the id comes from the file name).
-For custom metadata, package it by hand:
+Put the version in the script's leading comment block so App Hub offers updates:
+
+```lua
+-- @version 1.1.0
+-- @code 2
+```
+
+`@code` is what the catalog compares, so bump it whenever the script changes;
+`@version` is the name shown to users. Without the tags a script publishes as
+`0.1.0`/`1`. For other custom metadata, package it by hand:
 
 ```powershell
 py Apps/LuaRuntime/tools/lua-app/make_lua_app.py --script Scripts/my_app.lua `

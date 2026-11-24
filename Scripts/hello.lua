@@ -1,6 +1,9 @@
 -- A minimal packaged Lua app: one label, centered on the page.
 -- The runner's root is a flex column, so a full-size absolute page gives
 -- `align` a stable surface to center in.
+--
+-- @version 0.1.0
+-- @code 1
 function on_show()
     local root = lvgl.root()
     local page = lvgl.Object(root, {

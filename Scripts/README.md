@@ -5,8 +5,24 @@ publish workflow. The app id is derived from the file name:
 `hello.lua` becomes `tactility.lua.hello`, with the title `Hello`.
 
 Use the comment block at the top of a script for a short explanation; it is not
-used as the app description. For a custom name, id, version, description or
-icon, package the script by hand:
+used as the app description.
+
+## Versioning
+
+App Hub compares `version.code`, so a script that changes without a new code is
+not offered as an update. Put the version in the leading comment block:
+
+```lua
+-- @version 1.1.0
+-- @code 2
+```
+
+The packaging tool reads those tags (only in the header, before the first line
+of code) and falls back to `0.1.0`/`1` when they are absent. `--version` and
+`--code` still override them when packaging by hand. Bump **both** whenever the
+script changes; `@code` is the part App Hub actually uses.
+
+For a custom name, id, version, description or icon, package the script by hand:
 
 ```powershell
 py Apps\LuaRuntime\tools\lua-app\make_lua_app.py --script Scripts\hello.lua `
