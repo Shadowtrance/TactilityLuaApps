@@ -300,6 +300,29 @@ def canvas_size(profile: DeviceProfile, theme: MaterialTheme) -> tuple[int, int]
     return theme.content_size(profile.width, profile.height)
 
 
+def _is_on_active_page(project: Project, widget: WidgetNode) -> bool:
+    """False for a widget that lives on an inactive Tabview/Tileview page."""
+    child = widget
+    while child.parent:
+        parent = project.find(child.parent)
+        if parent is None:
+            break
+        if parent.type in ("Tabview", "Tileview"):
+            page_key = "tab" if parent.type == "Tabview" else "tile"
+            active_key = "active_tab" if parent.type == "Tabview" else "active_tile"
+            try:
+                active = int((parent.props or {}).get(active_key, 1) or 1)
+            except (TypeError, ValueError):
+                active = 1
+            try:
+                page = int((child.props or {}).get(page_key, active) or active)
+            except (TypeError, ValueError):
+                page = active
+            return page == active
+        child = parent
+    return True
+
+
 def render(
     canvas,
     project: Project,
@@ -409,6 +432,8 @@ def render(
         _draw_grid(ldraw, theme, scale, 0, 0, canvas_w, canvas_h)
 
     for widget in project.ordered():
+        if not _is_on_active_page(project, widget):
+            continue
         wx, wy, ww, wh = rects.get(widget.id, (widget.x, widget.y, widget.w, widget.h))
         _draw_widget(
             ldraw,
@@ -423,6 +448,8 @@ def render(
         )
 
     for widget in project.out_of_bounds(canvas_width, canvas_height):
+        if not _is_on_active_page(project, widget):
+            continue
         x, y, w, h = rects.get(widget.id, project.abs_rect(widget))
         _dashed_rect(
             ldraw,

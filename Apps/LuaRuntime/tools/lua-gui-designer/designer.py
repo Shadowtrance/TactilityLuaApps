@@ -1818,6 +1818,42 @@ class LuaDesigner(ctk.CTk):
         parent_menu.pack(fill="x", padx=8)
 
         parent = self.project.find(widget.parent)
+        if parent is not None and parent.type in ("Tabview", "Tileview"):
+            page_key = "tab" if parent.type == "Tabview" else "tile"
+            source_key = "tabs" if parent.type == "Tabview" else "tiles"
+            active_key = "active_tab" if parent.type == "Tabview" else "active_tile"
+            pages = [
+                line for line in str((parent.props or {}).get(source_key, "")).splitlines() if line.strip()
+            ]
+            page_count = max(1, len(pages))
+            try:
+                active_page = int((parent.props or {}).get(active_key, 1) or 1)
+            except (TypeError, ValueError):
+                active_page = 1
+            try:
+                page_value = int((widget.props or {}).get(page_key, active_page) or active_page)
+            except (TypeError, ValueError):
+                page_value = active_page
+            page_value = max(1, min(page_count, page_value))
+            page_row = ctk.CTkFrame(self.properties_frame, fg_color="transparent")
+            page_row.pack(fill="x", padx=8, pady=2)
+            ctk.CTkLabel(
+                page_row,
+                text="Tab" if parent.type == "Tabview" else "Tile",
+                width=120,
+                anchor="w",
+            ).pack(side="left")
+            page_menu = ctk.CTkOptionMenu(
+                page_row,
+                values=[str(index) for index in range(1, page_count + 1)],
+                width=130,
+                command=lambda choice, wid=widget.id, key=page_key: self.apply_prop(
+                    wid, key, int(choice)
+                ),
+            )
+            page_menu.set(str(page_value))
+            page_menu.pack(side="right")
+
         parent_layout = str((parent.props or {}).get("layout", "NONE") or "NONE") if parent else "NONE"
         widget_layout = str((widget.props or {}).get("layout", "NONE") or "NONE")
         parent_props = (parent.props or {}) if parent is not None else {}

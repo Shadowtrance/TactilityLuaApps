@@ -215,6 +215,10 @@ class _ExportState:
     # Grid setup is applied after the subtree exists. Applying it first makes LVGL
     # measure `LV_GRID_CONTENT` tracks before the children contribute a size.
     deferred_grid: list[str]
+    # Tabview/Tileview page variables, in page order.
+    page_targets: dict[str, list[str]]
+    # `set_tile` calls wait until the tile children exist.
+    deferred_page: list[str]
 
 
 def _add_props(entries: list[str], props: dict, keys: tuple[str, ...]) -> None:
@@ -254,7 +258,22 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
     parent = state.variables.get(widget.parent, "canvas") if widget.parent else "canvas"
     parent_widget = project.find(widget.parent) if widget.parent else None
     if parent_widget is not None and parent_widget.type in ("Tabview", "Tileview"):
-        parent = state.variables.get(f"{parent_widget.id}#content", parent)
+        pages = state.page_targets.get(parent_widget.id)
+        if pages:
+            page_key = "tab" if parent_widget.type == "Tabview" else "tile"
+            active_key = "active_tab" if parent_widget.type == "Tabview" else "active_tile"
+            try:
+                active = int((parent_widget.props or {}).get(active_key, 1) or 1)
+            except (TypeError, ValueError):
+                active = 1
+            try:
+                page = int((widget.props or {}).get(page_key, active) or active)
+            except (TypeError, ValueError):
+                page = active
+            page = max(1, min(len(pages), page))
+            parent = pages[page - 1]
+        else:
+            parent = state.variables.get(f"{parent_widget.id}#content", parent)
     props = widget.props or {}
 
     if widget.type == "SliderBox":
@@ -477,6 +496,7 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
                 f"tab_bar_position = lvgl.DIR.{position}, tab_bar_size = {bar_size} }}"
             )
             content_var = f"{var}_tab_{active}"
+            page_vars = [f"{var}_tab_{index}" for index in range(1, len(tabs) + 1)]
         else:
             tiles = _string_matrix(props.get("tiles")) or [["0", "0", "RIGHT"]]
             parsed: list[tuple[int, int, str]] = []
@@ -501,7 +521,11 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
                 )
             active = _int_prop(props, "active_tile", 1, 1, len(parsed))
             content_var = f"{var}_tile_{active}"
-            state.lines.append(f"    {var}:set_tile({content_var}, false)")
+            page_vars = [f"{var}_tile_{index}" for index in range(1, len(parsed) + 1)]
+            active_column, active_row, _active_direction = parsed[active - 1]
+            state.deferred_page.append(
+                f"    {var}:goto_tile({active_column}, {active_row}, false)"
+            )
 
         layout = str(props.get("layout", "NONE") or "NONE")
         content_entries = [f"pad_all = {int(props.get('pad_all', 0) or 0)}"]
@@ -522,20 +546,25 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
                 f"track = lvgl.FLEX_ALIGN.{track} "
                 "}"
             )
-        state.lines.append(f"    {content_var}:set{{ " + ", ".join(content_entries) + " }")
+        for page_var in page_vars:
+            state.lines.append(f"    {page_var}:set{{ " + ", ".join(content_entries) + " }")
         state.variables[f"{widget.id}#content"] = content_var
+        state.page_targets[widget.id] = page_vars
 
     if spec.container and str(props.get("layout", "NONE") or "NONE") == "GRID":
         columns = _grid_tracks(props.get("grid_columns", "1fr, 1fr"))
         rows = _grid_tracks(props.get("grid_rows", "1fr"))
-        grid_target = state.variables.get(f"{widget.id}#content", var)
-        state.deferred_grid.append(f"    {grid_target}:grid({columns}, {rows})")
+        grid_targets = state.page_targets.get(
+            widget.id, [state.variables.get(f"{widget.id}#content", var)]
+        )
         column_align = str(props.get("grid_col_align", "START") or "START")
         row_align = str(props.get("grid_row_align", "START") or "START")
-        if column_align != "START" or row_align != "START":
-            state.deferred_grid.append(
-                f"    {grid_target}:grid_align(lvgl.GRID_ALIGN.{column_align}, lvgl.GRID_ALIGN.{row_align})"
-            )
+        for grid_target in grid_targets:
+            state.deferred_grid.append(f"    {grid_target}:grid({columns}, {rows})")
+            if column_align != "START" or row_align != "START":
+                state.deferred_grid.append(
+                    f"    {grid_target}:grid_align(lvgl.GRID_ALIGN.{column_align}, lvgl.GRID_ALIGN.{row_align})"
+                )
 
     parent_widget = project.find(widget.parent)
     if (
@@ -660,7 +689,7 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
 
 
 def export(project: Project) -> str:
-    state = _ExportState(lines=[], variables={}, deferred_grid=[])
+    state = _ExportState(lines=[], variables={}, deferred_grid=[], page_targets={}, deferred_page=[])
     state.lines.extend([
         "-- Generated by lua-gui-designer. Edit freely after export.",
         "",
@@ -686,6 +715,9 @@ def export(project: Project) -> str:
     # Apply grids once every child exists, so `LV_GRID_CONTENT` tracks measure the
     # widgets instead of collapsing to zero.
     state.lines.extend(state.deferred_grid)
+    # Select a tile after its children exist: adding a child to a tile can reset
+    # the tileview's scroll position.
+    state.lines.extend(state.deferred_page)
 
     # A content-sized top-level container is a scrolling page. Let the runner's
     # padded content object scroll it, like a C app: that puts the scrollbar on

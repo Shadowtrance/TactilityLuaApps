@@ -109,9 +109,11 @@ project.
   point count and a comma-separated value series. Calendar edits the today/shown
   dates and day names; Keyboard picks a mode; Button matrix takes one
   comma-separated row per line.
-- **Tab view and tile view**: children are added to the active tab/tile. Change
-  `active_tab` or `active_tile` to design a different page. The preview and
-  export model one page/tile of content per widget for now.
+- **Tab view and tile view**: a child has a **Tab** or **Tile** field (shown when
+  its parent is one of these widgets); it defaults to the parent's active page.
+  The preview draws only the active page, while the export puts every child in
+  its assigned tab/tile. Switch `active_tab`/`active_tile` to inspect another
+  page; children with no explicit page follow it.
 - **Icons**: the toolbar **Icons** button opens a searchable grid of the shared
   Material Symbols and copies `lvgl.ICON.NAME`. The Tabs content editor has its
   own **Icon...** button that inserts `NAME|` at the cursor.
@@ -298,9 +300,8 @@ automatically, and the exporter selects the icon font even if the font field
 still says `default`.
 
 ## Current limits
-- `Tabview` and `Tileview` model one page/tile of content per widget: children
-  belong to the active tab or tile. Switch `active_tab`/`active_tile` to design
-  another page; the other pages are empty until edited.
+- Only the active Tabview tab or Tileview tile is drawn in the preview. The
+  other pages still export; switch `active_tab`/`active_tile` to inspect them.
 
 - Flex and grid are supported; percentage width/height is supported. Grid
   tracks use `1fr`, `content`/`auto`, or a pixel value, separated by commas,
