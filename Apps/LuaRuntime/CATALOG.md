@@ -254,7 +254,7 @@ can outlive the script's state.
 | [x] | Designer self-test | `designer.py --self-test` (chrome geometry, mono, model, flex/grid layout, JSON, export, tree moves) |
 | [x] | Designer UI test | `designer.py --ui-test` drives every control, tab, widget, property and tree drag |
 | [ ] | Screenshot UI regression | Pixel comparison per demo |
-| [ ] | `catalog.py --check` in CI | IDL drift against the SDK |
+| [x] | `catalog.py --check` in CI | IDL drift against the SDK |
 | [ ] | Close-path test | Open/close every packaged demo |
 | [ ] | Soak / memory test | Long-running scripts |
 
