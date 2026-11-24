@@ -272,7 +272,7 @@ can outlive the script's state.
 | [!] | LVGL 9.6 drift | Keep the export/widget surface deliberate; removed/deprecated/disabled widgets stay excluded |
 | [!] | `lv_obj_is_valid()` is deprecated | It now walks the parent chain and faults on freed memory; use the runtime live set |
 | [!] | `raw.call` is untyped | Typed signature DB planned |
-| [!] | Notification actions/data/events | Actions need a Lua-callback lifetime design; data needs a Bundle binding |
+| [!] | Notification actions/data/events | Design: [catalog/notification-actions.md](catalog/notification-actions.md) |
 | [!] | I2C scanner scans all buses at startup (~3 s) | Pre-built cards keep switching/teardown stable |
 | [!] | I2C scanner does not persist the selected bus | Add a small settings entry |
 

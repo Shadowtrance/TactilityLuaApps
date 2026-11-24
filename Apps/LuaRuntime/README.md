@@ -472,6 +472,8 @@ the firmware's export tables by `tools/sdk-catalog/catalog.py`; it classifies
 every exported/declared symbol as generated, bound, raw-only or unbound.
 [catalog/measurements.md](catalog/measurements.md) has boot, memory and
 app-start timings for the Tab5 and the T-Deck Plus.
+[catalog/notification-actions.md](catalog/notification-actions.md) is the design
+for notification data and tap actions without storing Lua callbacks in C.
 
 ```powershell
 py tools\sdk-catalog\catalog.py          # regenerate catalog/
