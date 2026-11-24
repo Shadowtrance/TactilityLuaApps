@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "bindings_private.h"
 
+#include <tactility/error.h>
+#include <tactility/filesystem/file_system.h>
 #include <tactility/memory.h>
-#include <tactility/module.h>
 
 #include <cstdlib>
 #include <cstring>
@@ -24,8 +25,8 @@ int push_failure(lua_State* state, const char* reason) {
     return 2;
 }
 
-int push_usage(lua_State* state, size_t total, size_t free) {
-    const size_t used = total > free ? total - free : 0;
+int push_usage(lua_State* state, uint64_t total, uint64_t free) {
+    const uint64_t used = total > free ? total - free : 0;
     const int percent = total > 0 ? static_cast<int>((used * 100 + total / 2) / total) : 0;
 
     lua_createtable(state, 0, 4);
@@ -58,37 +59,68 @@ int system_memory(lua_State* state) {
     return 1;
 }
 
+struct UsageLookup {
+    const char* path;
+    struct FileSystem* file_system;
+};
+
+/** Finds the mounted file system whose mount path contains the requested path. */
+bool find_mount(FileSystem* file_system, void* context) {
+    auto* lookup = static_cast<UsageLookup*>(context);
+
+    char mount_path[128];
+    if (file_system_get_path(file_system, mount_path, sizeof(mount_path)) != ERROR_NONE) {
+        return true;
+    }
+
+    size_t length = std::strlen(mount_path);
+    while (length > 1 && mount_path[length - 1] == '/') {
+        mount_path[--length] = '\0';
+    }
+    if (length == 0) {
+        return true;
+    }
+
+    // A root mount contains every path.
+    if (length == 1 && mount_path[0] == '/') {
+        lookup->file_system = file_system;
+        return false;
+    }
+
+    if (std::strncmp(lookup->path, mount_path, length) != 0) {
+        return true;
+    }
+    // "/sdcard2" is not inside "/sdcard".
+    const char next = lookup->path[length];
+    if (next != '\0' && next != '/') {
+        return true;
+    }
+
+    lookup->file_system = file_system;
+    return false;
+}
+
 /** `system.storage(path?) -> { total, free, used, percent }`, defaulting to /sdcard. */
 int system_storage(lua_State* state) {
     const char* path = luaL_optstring(state, 1, "/sdcard");
 
-    // Resolved by name so a firmware without the export still loads the runtime. The
-    // capability starts working as soon as the symbol appears in the global table.
-    using FatInfoFunction = int (*)(const char*, uint64_t*, uint64_t*);
-    uintptr_t address = 0;
-    if (!module_resolve_symbol_global("esp_vfs_fat_info", &address) || address == 0) {
-        return push_failure(state, "storage info is not exported by this firmware");
+    UsageLookup lookup = { path, nullptr };
+    file_system_for_each_mounted(&lookup, find_mount);
+    if (lookup.file_system == nullptr) {
+        return push_failure(state, "no mounted file system for that path");
     }
-    auto* fat_info = reinterpret_cast<FatInfoFunction>(address);
 
     uint64_t total = 0;
     uint64_t free = 0;
-    if (fat_info(path, &total, &free) != 0) {
-        return push_failure(state, "storage info unavailable");
+    const error_t error = file_system_get_usage(lookup.file_system, &total, &free);
+    if (error != ERROR_NONE) {
+        return push_failure(state, error_to_string(error));
+    }
+    if (total == 0) {
+        return push_failure(state, "storage usage unavailable");
     }
 
-    const uint64_t used = total > free ? total - free : 0;
-
-    lua_createtable(state, 0, 4);
-    lua_pushinteger(state, static_cast<lua_Integer>(total));
-    lua_setfield(state, -2, "total");
-    lua_pushinteger(state, static_cast<lua_Integer>(free));
-    lua_setfield(state, -2, "free");
-    lua_pushinteger(state, static_cast<lua_Integer>(used));
-    lua_setfield(state, -2, "used");
-    lua_pushinteger(state, total > 0 ? static_cast<lua_Integer>((used * 100 + total / 2) / total) : 0);
-    lua_setfield(state, -2, "percent");
-    return 1;
+    return push_usage(state, total, free);
 }
 
 #ifdef ESP_PLATFORM

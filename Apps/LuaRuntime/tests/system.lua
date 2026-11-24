@@ -32,9 +32,19 @@ if storage ~= nil then
     check(type(storage.free) == "number" and storage.free <= storage.total, "storage free")
     check(type(storage.used) == "number" and storage.used <= storage.total, "storage used")
     check(type(storage.percent) == "number" and storage.percent >= 0 and storage.percent <= 100, "storage percent")
+    check(storage.free + storage.used == storage.total, "storage free + used = total")
+    storage_note = string.format("storage %d%%", storage.percent)
 else
     check(type(storage_reason) == "string" and #storage_reason > 0, "storage reason")
     storage_note = "no storage: " .. storage_reason
+end
+
+-- A mount without usage reporting would still return nil; fail when an SD card
+-- is clearly present so a regression in the path lookup is visible.
+for _, mount in ipairs(tactility.fs.mounts()) do
+    if mount == "/sdcard" then
+        check(storage ~= nil, "storage available for a mounted /sdcard")
+    end
 end
 
 local tasks = system.tasks()
