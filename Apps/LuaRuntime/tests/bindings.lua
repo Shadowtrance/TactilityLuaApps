@@ -5,7 +5,9 @@
 local mounts = tactility.fs.mounts()
 assert(type(mounts) == "table" and #mounts > 0, "fs.mounts")
 
-local entries = tactility.fs.list("/sdcard/lua")
+-- Listing our own scripts folder made this depend on the device already having scripts.
+-- A mount root always has entries, so a fresh device exercises the same API.
+local entries = tactility.fs.list(mounts[1])
 assert(type(entries) == "table" and #entries > 0, "fs.list")
 
 local uptime = tactility.time.uptime()
@@ -39,7 +41,7 @@ if tactility.wifi.is_available() then
 end
 
 result = string.format(
-    "bindings PASS: %d mounts, %d scripts, %d devices, uptime %ds",
+    "bindings PASS: %d mounts, %d entries, %d devices, uptime %ds",
     #mounts,
     #entries,
     #devices,

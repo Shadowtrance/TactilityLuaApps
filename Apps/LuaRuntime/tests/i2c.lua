@@ -18,11 +18,17 @@ assert(tactility.i2c.api == 1, "unexpected i2c api")
 
 local addresses = { 0x10, 0x32, 0x36, 0x40, 0x41, 0x43, 0x44, 0x68 }
 local found = {}
+local responsive_controller
+local responsive_address
 
 for _, controller in ipairs(controllers) do
     for _, address in ipairs(addresses) do
         if tactility.i2c.probe(controller, address, 50) then
             found[#found + 1] = string.format("%s:0x%02X", controller:name(), address)
+            if responsive_controller == nil then
+                responsive_controller = controller
+                responsive_address = address
+            end
         end
     end
 end
@@ -31,9 +37,13 @@ local missing, reason = tactility.i2c.probe(controllers[1], 0x7F, 20)
 assert(missing == nil, "unused address should not respond")
 assert(type(reason) == "string", "probe failure should return a reason")
 
--- Block transfers use Lua strings as buffers.
-local block, block_error = tactility.i2c.read(controllers[1], 0x10, 4, 100)
-assert(type(block) == "string" and #block == 4, block_error or "block read failed")
+-- Block transfers use Lua strings as buffers. Not every board has one of the known
+-- devices, so only exercise the success path when an address answered; the failure
+-- path below still runs without hardware.
+if responsive_controller ~= nil then
+    local block, block_error = tactility.i2c.read(responsive_controller, responsive_address, 4, 100)
+    assert(type(block) == "string" and #block == 4, block_error or "block read failed")
+end
 
 local missing_block, block_reason = tactility.i2c.read(controllers[1], 0x7F, 2, 20)
 assert(missing_block == nil, "block read on an unused address should fail")
