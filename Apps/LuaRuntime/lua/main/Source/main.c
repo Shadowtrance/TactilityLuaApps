@@ -18,7 +18,6 @@
 #include <tactility/paths.h>
 
 #include <lvgl.h>
-#include <lvgl/devices/keyboard.h>
 #include <lvgl/fonts.h>
 #include <lvgl/lvgl.h>
 #include <lvgl/theme.h>
@@ -1177,11 +1176,6 @@ static void show_editor(struct Context* context, struct ScriptEntry* script) {
     lv_textarea_set_cursor_pos(editor, 0);
     lv_obj_set_style_text_font(editor, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
     free(source);
-
-    struct LvglSoftwareKeyboard* keyboard = lvgl_software_keyboard_get_last();
-    if (keyboard != NULL && keyboard->object != NULL) {
-        lvgl_keyboard_add_textarea(keyboard, editor);
-    }
 
     lv_obj_t* buttons = lv_obj_create(context->content);
     lv_obj_set_width(buttons, LV_PCT(100));
