@@ -176,13 +176,12 @@ is false on a panel without one, and the brightness calls return `nil, reason`.
 
 `tactility.system.memory()` returns `{ internal = usage, external = usage }`
 with `free`, `total`, `used` and `percent` values. External is all zeroes on a
-board without PSRAM. `tactility.system.storage(path?)` returns the same fields
-for a FAT mount such as `/sdcard`. It returns `nil, reason` when the running
-firmware does not export `esp_vfs_fat_info`; the export patch in this app adds
-it, so storage readings start working after the next firmware build.
+board without PSRAM. `tactility.system.storage(path?)` finds the mounted file
+system that contains `path` (default `/sdcard`) and returns the same fields
+from its usage query. It returns `nil, reason` when no mount contains the path
+or the file system does not report usage.
 `tactility.system.tasks()` returns a snapshot array of `{ name, state,
-priority, base_priority, stack_free, runtime, number }`; the task exports are in
-the same firmware patch.
+priority, base_priority, stack_free, runtime, number }`.
 
 `tactility.adc.read_raw(controller, channel, timeout?)` returns the raw
 conversion result for a channel the board's devicetree already configures. Find
@@ -496,23 +495,20 @@ Tactility firmware rebuild before they are active on the device.
 
 ## Firmware requirement
 
-Three small patches are needed. `firmware-lvgl-exports.patch` adds the styles,
-events and widget classes the external `luavgl` bindings need (a module built
-in-tree linked LVGL directly; a side-loaded app resolves the exported table).
-`firmware-c-symbols-exports.patch` adds the libc/libm functions Lua's standard
-library references: `ungetc`, `tmpfile`, `tmpnam`, `setlocale`, `strtof` and
-`log2f`, plus `esp_vfs_fat_info` for `tactility.system.storage()`.
-`firmware-kernel-gpio-exports.patch` adds
-`gpio_descriptor_has_flags` to the kernel export table; the other GPIO
-functions were already exported.
+Current Tactility firmware exports the kernel, LVGL and libc/libm symbols the
+external runtime needs, so **no firmware patch is required**. The runtime only
+uses public kernel APIs; it does not call `esp_*` functions, which keeps it
+portable to firmware built for another platform.
 
-`firmware-elf-loader-end-pointer.patch` is optional. It maps a pointer to
-one-past-the-end of a loaded section to the end of its copy instead of to
-`NULL`. The S3 (section-based) loader otherwise turns the implicit `end`
-pointer of a C++ static array into `NULL`, which makes a range-based loop run
-past its table. The animations bindings avoid that pattern themselves, so the
-runtime works without the patch; applying it protects other apps that use the
-same pattern.
+Earlier firmware needed hand-written export patches. Those lived in this app as
+`firmware-*.patch`; the upstream exports made them obsolete and they were
+removed. If a later firmware lacks an export, add it generically upstream (or
+recreate a temporary patch here) rather than working around it in a binding.
+
+`firmware-elf-loader-end-pointer.patch` was also removed. It mapped a pointer
+to one-past-the-end of a loaded section to the end of its copy instead of
+`NULL`; the runtime no longer uses that pattern. `tools/elf-audit/elf_audit.py`
+still guards the S3 loader in CI by rejecting the resulting `NULL` relocation.
 
 The earlier boot-order change is **not** needed with this split: the module has
 no LVGL references, and the runner is an app. The firmware boot path is back to
@@ -537,5 +533,6 @@ This is a multi-binary v3 package: `get_binary_dirs()` builds `lua/`,
   newlib, but opening that path fails for the same reason.
 - `requires.ram=1M` keeps the package off devices without PSRAM. The current
   target is the Tab5 (ESP32-P4).
-- LVGL 9.6. The `luavgl` port needed one font API rename and the export patch.
+- LVGL 9.6. The `luavgl` port needed one font API rename; LVGL symbols now come
+  from the firmware's generic exports.
 - There is no sandbox. A script has the same access as an ELF app.

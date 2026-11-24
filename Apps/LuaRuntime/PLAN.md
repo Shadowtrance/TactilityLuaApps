@@ -43,8 +43,8 @@ The launcher grid is stable: loose scripts are not launcher apps, and the
 module no longer registers per-script apps. Packaged Lua apps (manifest +
 `lua/main.lua`) are the future path for launcher entries.
 
-The firmware needs two generic export patches: `firmware-lvgl-exports.patch`
-and `firmware-c-symbols-exports.patch`.
+Current firmware exports the generic LVGL, kernel and libc/libm symbols the
+external runtime needs, so no firmware patch is required.
 
 Package files of interest:
 
@@ -69,14 +69,6 @@ Package files of interest:
 - `lua/main/Source/main.c` — C companion: themed browser, text editor,
   Save/Run/Back, folder picker and the New-file flow. Bundled examples are
   listed from the package assets.
-- `firmware-lvgl-exports.patch` — generic LVGL export additions for external
-  LVGL bindings.
-- `firmware-c-symbols-exports.patch` — libc/libm functions Lua's standard
-  library needs (`ungetc`, `tmpfile`, `tmpnam`, `setlocale`, `strtof`,
-  `log2f`) exported from the firmware's c-symbols module.
-- `firmware-kernel-gpio-exports.patch` — adds `gpio_descriptor_has_flags` to
-  the kernel export table (the rest of the GPIO descriptor API was already
-  exported).
 - `BINDINGS.md` — design for the capability API + generated raw signature
   database, the IDL, and the SDK update workflow. Supersedes the old
   generated-wrapper approach.
@@ -326,16 +318,16 @@ runtime module (`ELF_COMPONENTS "lua"`). The `luavgl` bindings live in the
 hidden runner app, which loads after LVGL. A script on SD reads
 devices/power/fs/time; scripts with no widgets get their `result` drawn by C.
 
-The external-module constraint surfaced six libc imports the firmware does not
+The external-module constraint surfaced six libc imports the firmware did not
 export: `tmpfile`, `tmpnam`, `ungetc`, `setlocale`, `strtof`, `log2f`
 (`tmpfile` was found first; the rest came from `check-app-symbols.py`). They are
-now exported generically from the firmware's `c-symbols` module
-(`firmware-c-symbols-exports.patch`), so the runtime module uses the real
-implementations instead of local fallbacks. Verified on-device: `io.read("*n")`
-pushes back correctly, `os.setlocale()` returns `"C"`, `math.log(8, 2)` works,
-and `os.tmpname()` returns a name. `io.tmpfile()` still depends on a writable
-`/tmp`, which this filesystem does not mount; that is a system limitation rather
-than a missing symbol.
+now exported generically from the firmware's `c-symbols` module, so the runtime
+module uses the real implementations instead of local fallbacks and no local
+patch is needed. Verified on-device: `io.read("*n")` pushes back correctly,
+`os.setlocale()` returns `"C"`, `math.log(8, 2)` works, and `os.tmpname()`
+returns a name. `io.tmpfile()` still depends on a writable `/tmp`, which this
+filesystem does not mount; that is a system limitation rather than a missing
+symbol.
 
 Future libc gaps follow the same rule: add a generic export upstream when more
 than one app needs it; otherwise keep a module-local shim.
@@ -589,8 +581,9 @@ had.
 - [ ] Add a second target (esp32s3 / esp32s31) to `target.platforms`.
 - [ ] Pinned for later, after everything else: a POSIX/simulator build of the
       runtime and bindings, so scripts can be developed on a desktop.
-- [ ] Upstream `firmware-lvgl-exports.patch` and
-      `firmware-c-symbols-exports.patch`.
+- [x] Upstream the export additions for LVGL, kernel and libc/libm; the
+      temporary `firmware-*.patch` files were removed. Recreate a patch only if
+      a later firmware drops an export.
 - [x] Add the capability generator (`Apps/LuaRuntime/tools/lua-bindings`) and generate the
       `tactility.gpio` glue from `bindings/gpio.toml` at build time. It covers
       count/acquire/release/level/flags/pin number, with handle and enum
