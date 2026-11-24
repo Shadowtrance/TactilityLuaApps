@@ -3337,7 +3337,15 @@ def main() -> int:
         def capture() -> None:
             try:
                 # Flush pending geometry/redraw work; without this the grab can capture the
-                # frame from before the selected tab and palette were drawn.
+                # frame from before the selected tab and palette were drawn. Bring the window
+                # to the front first: ImageGrab reads the screen, so a window behind the
+                # terminal would otherwise screenshot the terminal.
+                app.lift()
+                app.focus_force()
+                try:
+                    app.attributes("-topmost", True)
+                except Exception:  # noqa: BLE001 - not every window manager supports it
+                    pass
                 app.update_idletasks()
                 app.update()
                 from PIL import ImageGrab

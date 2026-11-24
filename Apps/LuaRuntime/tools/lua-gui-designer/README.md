@@ -101,8 +101,13 @@ project.
   Card, Container, Label, Button, Chip, SliderBox, Spinbox, Slider, Switch,
   Checkbox, Dropdown, Roller, TextArea, Arc, Line, LED, Scale, ImageButton,
   Tabs, Statusline, Bar, List, PageIndicator, StepIndicator, Badge, Spinner,
-  Image, IconButton, TextButton. **Search widgets** filters by title or type;
-  **Esc** clears it.
+  Image, IconButton, TextButton, Table, Chart, Calendar, Keyboard and Button
+  matrix. **Search widgets** filters by title or type; **Esc** clears it.
+- **Table and chart data**: the Table fields are `rows`, `columns`, optional
+  column widths and one `cell | cell` line per row. Chart takes a chart type, a
+  point count and a comma-separated value series. Calendar edits the today/shown
+  dates and day names; Keyboard picks a mode; Button matrix takes one
+  comma-separated row per line.
 - **Icons**: the toolbar **Icons** button opens a searchable grid of the shared
   Material Symbols and copies `lvgl.ICON.NAME`. The Tabs content editor has its
   own **Icon...** button that inserts `NAME|` at the cursor.
@@ -289,9 +294,8 @@ automatically, and the exporter selects the icon font even if the font field
 still says `default`.
 
 ## Current limits
-- Not in the palette yet: `Table`, `Chart`, `Calendar`, `Keyboard`,
-  `ButtonMatrix`, `Tabview` and `Tileview`. They can still be used from the
-  Code tab.
+- Not in the palette yet: `Tabview` and `Tileview`. They can still be used from
+  the Code tab.
 
 - Flex and grid are supported; percentage width/height is supported. Grid
   tracks use `1fr`, `content`/`auto`, or a pixel value, separated by commas,

@@ -16,6 +16,7 @@ Geometry follows the firmware:
 
 from __future__ import annotations
 
+import calendar
 import datetime
 import math
 
@@ -230,6 +231,59 @@ def _value_fraction(props: dict) -> float:
     if maximum <= minimum:
         return 0.0
     return max(0.0, min(1.0, (value - minimum) / (maximum - minimum)))
+
+
+def _int_prop(props: dict, key: str, default: int, minimum: int | None = None, maximum: int | None = None) -> int:
+    try:
+        value = int(props.get(key, default))
+    except (TypeError, ValueError):
+        value = default
+    if minimum is not None:
+        value = max(minimum, value)
+    if maximum is not None:
+        value = min(maximum, value)
+    return value
+
+
+def _csv(value: object) -> list[str]:
+    return [part.strip() for part in str(value or "").replace(";", ",").split(",") if part.strip()]
+
+
+def _int_csv(value: object) -> list[int]:
+    numbers: list[int] = []
+    for part in _csv(value):
+        try:
+            numbers.append(int(part))
+        except ValueError:
+            continue
+    return numbers
+
+
+def _float_csv(value: object) -> list[float]:
+    numbers: list[float] = []
+    for part in _csv(value):
+        try:
+            numbers.append(float(part))
+        except ValueError:
+            continue
+    return numbers
+
+
+def _string_matrix(value: object) -> list[list[str]]:
+    rows: list[list[str]] = []
+    for line in str(value or "").splitlines():
+        line = line.strip()
+        if line:
+            rows.append(_csv(line))
+    return rows
+
+
+def _cell_matrix(value: object) -> list[list[str]]:
+    rows: list[list[str]] = []
+    for line in str(value or "").splitlines():
+        if line.strip():
+            rows.append([cell.strip() for cell in line.split("|")])
+    return rows
 
 
 def content_origin(profile: DeviceProfile, theme: MaterialTheme, zoom: float) -> tuple[float, float]:
@@ -1266,6 +1320,335 @@ def _draw_widget(
                     ],
                     fill=theme.outline if theme.mono else theme.divider,
                     width=1 * SUPERSAMPLE,
+                )
+        return
+
+    if widget.type == "Table":
+        rows = _int_prop(props, "rows", 3, 1, 100)
+        columns = _int_prop(props, "columns", 2, 1, 20)
+        cells = _cell_matrix(props.get("cells"))
+        widths = _int_csv(props.get("column_widths"))
+        fill = _fill_for(theme, props, theme.paper if theme.mono else theme.card)
+        radius = _radius_for(props, 0) * scale
+        _rounded(
+            draw,
+            x,
+            y,
+            x + w,
+            y + h,
+            radius,
+            fill=fill,
+            outline=theme.ink if theme.mono else theme.outline_variant,
+            width=1 * SUPERSAMPLE,
+        )
+
+        raw_widths: list[float | None] = [
+            max(1.0, float(widths[index]) * scale) if index < len(widths) else None
+            for index in range(columns)
+        ]
+        fixed = sum(width for width in raw_widths if width is not None)
+        unknown = [index for index, width in enumerate(raw_widths) if width is None]
+        share = max(0.0, w - fixed) / len(unknown) if unknown else 0.0
+        column_widths = [width if width is not None else share for width in raw_widths]
+        total_width = sum(column_widths)
+        if total_width > w and total_width > 0:
+            column_widths = [width * w / total_width for width in column_widths]
+
+        edges = [x]
+        for width in column_widths:
+            edges.append(min(x + w, edges[-1] + width))
+        edges[-1] = x + w
+
+        row_h = h / rows
+        regular = _font(theme, _text_font_kind(props) if "text_font" in props else "default", scale)
+        small = _font(theme, "small", scale)
+        text_color = str(props.get("text_color", "") or theme.text)
+        padding = max(2.0, 4 * scale)
+
+        for row_index in range(rows):
+            row_y = y + row_index * row_h
+            if row_index >= len(cells):
+                continue
+            header = row_index == 0 and rows > 1
+            font = small if header else regular
+            color = theme.text_muted if header else text_color
+            if theme.mono:
+                color = theme.ink
+            for column_index in range(columns):
+                if column_index >= len(cells[row_index]):
+                    continue
+                cell = cells[row_index][column_index]
+                if not cell:
+                    continue
+                cell_w = edges[column_index + 1] - edges[column_index]
+                _text(
+                    draw,
+                    edges[column_index] + padding,
+                    row_y + row_h / 2,
+                    _fit(draw, cell, font, max(0.0, cell_w - 2 * padding)),
+                    font,
+                    color,
+                    "lm",
+                )
+
+        line_color = theme.outline if theme.mono else theme.divider
+        for row_index in range(1, rows):
+            line_y = y + row_index * row_h
+            draw.line([x, line_y, x + w, line_y], fill=line_color, width=1 * SUPERSAMPLE)
+        for column_index in range(1, columns):
+            draw.line(
+                [edges[column_index], y, edges[column_index], y + h],
+                fill=line_color,
+                width=1 * SUPERSAMPLE,
+            )
+        return
+
+    if widget.type == "Chart":
+        chart_type = str(props.get("chart_type", "LINE") or "LINE").upper()
+        point_count = _int_prop(props, "point_count", 8, 2, 64)
+        values = _float_csv(props.get("values"))[:point_count]
+        axis_min = float(props.get("axis_min", 0) or 0)
+        axis_max = float(props.get("axis_max", 100) or 100)
+        if axis_max <= axis_min:
+            axis_min, axis_max = 0.0, 100.0
+        div_h = _int_prop(props, "div_h", 3, 1, 20)
+        div_v = _int_prop(props, "div_v", 4, 1, 20)
+
+        fill = _fill_for(theme, props, theme.paper if theme.mono else theme.card)
+        _rounded(
+            draw,
+            x,
+            y,
+            x + w,
+            y + h,
+            _radius_for(props, 0) * scale,
+            fill=fill,
+            outline=theme.ink if theme.mono else theme.outline_variant,
+            width=1 * SUPERSAMPLE,
+        )
+
+        left = x + 32 * scale
+        right = x + w - 8 * scale
+        top = y + 8 * scale
+        bottom = y + h - 18 * scale
+        plot_w = max(1.0, right - left)
+        plot_h = max(1.0, bottom - top)
+
+        grid_color = theme.outline if theme.mono else theme.divider
+        for index in range(div_h + 1):
+            line_y = top + plot_h * index / div_h
+            draw.line([left, line_y, right, line_y], fill=grid_color, width=1 * SUPERSAMPLE)
+        for index in range(div_v + 1):
+            line_x = left + plot_w * index / div_v
+            draw.line([line_x, top, line_x, bottom], fill=grid_color, width=1 * SUPERSAMPLE)
+
+        label_font = _font(theme, "small", scale)
+        label_color = theme.ink if theme.mono else theme.text_muted
+        _text(draw, left - 4 * scale, top, f"{axis_max:g}", label_font, label_color, "rm")
+        _text(draw, left - 4 * scale, bottom, f"{axis_min:g}", label_font, label_color, "rm")
+
+        def map_y(value: float) -> float:
+            fraction = (max(axis_min, min(axis_max, value)) - axis_min) / (axis_max - axis_min)
+            return bottom - fraction * plot_h
+
+        if values:
+            color = str(props.get("series_color", "") or theme.primary)
+            if theme.mono:
+                color = theme.ink
+            count = max(1, len(values))
+            step = plot_w / max(1, point_count - 1) if point_count > 1 else plot_w
+            points = [
+                (left + step * index if point_count > 1 else left + plot_w / 2, map_y(value))
+                for index, value in enumerate(values)
+            ]
+            if chart_type in ("BAR", "STACKED"):
+                bar_w = max(2.0, plot_w / max(1, point_count) * 0.6)
+                baseline = map_y(0.0)
+                for point_x, point_y in points:
+                    draw.rectangle(
+                        [point_x - bar_w / 2, min(point_y, baseline), point_x + bar_w / 2, max(point_y, baseline)],
+                        fill=color,
+                    )
+            elif chart_type == "SCATTER":
+                radius = max(2.0, 2.5 * scale)
+                for point_x, point_y in points:
+                    draw.ellipse(
+                        [point_x - radius, point_y - radius, point_x + radius, point_y + radius],
+                        fill=color,
+                    )
+            else:
+                if len(points) == 1:
+                    point_x, point_y = points[0]
+                    radius = max(2.0, 2.5 * scale)
+                    draw.ellipse(
+                        [point_x - radius, point_y - radius, point_x + radius, point_y + radius],
+                        fill=color,
+                    )
+                else:
+                    draw.line(points, fill=color, width=max(1, int(2 * SUPERSAMPLE)), joint="curve")
+        return
+
+    if widget.type == "Calendar":
+        today_year = _int_prop(props, "today_year", 2026, 1970, 2100)
+        today_month = _int_prop(props, "today_month", 11, 1, 12)
+        today_day = _int_prop(props, "today_day", 24, 1, 31)
+        shown_year = _int_prop(props, "shown_year", today_year, 1970, 2100)
+        shown_month = _int_prop(props, "shown_month", today_month, 1, 12)
+        day_names = _csv(props.get("day_names"))[:7] or ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+
+        _rounded(
+            draw,
+            x,
+            y,
+            x + w,
+            y + h,
+            _radius_for(props, theme.radius_card()) * scale,
+            fill=theme.paper if theme.mono else theme.card,
+            outline=theme.ink if theme.mono else theme.outline_variant,
+            width=1 * SUPERSAMPLE,
+        )
+
+        small = _font(theme, "small", scale)
+        title_color = theme.ink if theme.mono else theme.text
+        muted = theme.ink if theme.mono else theme.text_muted
+        names_h = max(14.0, 16 * scale)
+
+        cell_w = w / 7
+        for index, name in enumerate(day_names):
+            _text(
+                draw,
+                x + cell_w * (index + 0.5),
+                y + names_h / 2,
+                name,
+                small,
+                muted,
+                "mm",
+            )
+
+        first_weekday, days_in_month = calendar.monthrange(shown_year, shown_month)
+        grid_top = y + names_h
+        row_h = max(1.0, (y + h - grid_top) / 6)
+        for day in range(1, days_in_month + 1):
+            slot = first_weekday + day - 1
+            row = slot // 7
+            column = slot % 7
+            if row >= 6:
+                break
+            center_x = x + cell_w * (column + 0.5)
+            center_y = grid_top + row_h * (row + 0.5)
+            is_today = (
+                shown_year == today_year and shown_month == today_month and day == today_day
+            )
+            if is_today:
+                radius = min(cell_w, row_h) * 0.36
+                draw.ellipse(
+                    [center_x - radius, center_y - radius, center_x + radius, center_y + radius],
+                    fill=theme.ink if theme.mono else theme.primary,
+                )
+                _text(
+                    draw,
+                    center_x,
+                    center_y,
+                    str(day),
+                    small,
+                    theme.paper if theme.mono else theme.on_primary,
+                    "mm",
+                )
+            else:
+                _text(draw, center_x, center_y, str(day), small, title_color, "mm")
+        return
+
+    if widget.type == "Keyboard":
+        mode = str(props.get("keyboard_mode", "TEXT_LOWER") or "TEXT_LOWER").upper()
+        if mode == "NUMBER":
+            rows = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], ["0", ".", "-"]]
+        elif mode == "SPECIAL":
+            rows = [
+                ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+                ["-", "/", ":", ";", "(", ")"],
+                ["@", '"', "'", "#", "$", "%"],
+            ]
+        else:
+            letters = "qwertyuiop", "asdfghjkl", "zxcvbnm"
+            if mode == "TEXT_UPPER":
+                letters = tuple(row.upper() for row in letters)
+            rows = [list(row) for row in letters] + [["space", ".", "enter"]]
+
+        gap = max(1.0, 2 * scale)
+        row_h = (h - gap * (len(rows) - 1)) / max(1, len(rows))
+        key_font = _font(theme, "small", scale)
+        key_fill = theme.paper if theme.mono else theme.card
+        key_outline = theme.ink if theme.mono else theme.outline_variant
+        key_text = theme.ink if theme.mono else theme.text
+        for row_index, row in enumerate(rows):
+            key_w = (w - gap * (len(row) - 1)) / max(1, len(row))
+            for column_index, key in enumerate(row):
+                key_x = x + column_index * (key_w + gap)
+                key_y = y + row_index * (row_h + gap)
+                _rounded(
+                    draw,
+                    key_x,
+                    key_y,
+                    key_x + key_w,
+                    key_y + row_h,
+                    max(1.0, 3 * scale),
+                    fill=key_fill,
+                    outline=key_outline,
+                    width=1 * SUPERSAMPLE,
+                )
+                _text(
+                    draw,
+                    key_x + key_w / 2,
+                    key_y + row_h / 2,
+                    _fit(draw, key, key_font, key_w - 2 * scale),
+                    key_font,
+                    key_text,
+                    "mm",
+                )
+        return
+
+    if widget.type == "ButtonMatrix":
+        rows = _string_matrix(props.get("map")) or [["1", "2"], ["3", "4"]]
+        selected = _int_prop(props, "selected_button", 0, 0)
+        checkable = bool(props.get("checkable", True))
+        columns = max(1, max(len(row) for row in rows))
+        gap = max(1.0, 2 * scale)
+        cell_w = (w - gap * (columns - 1)) / columns
+        cell_h = (h - gap * (len(rows) - 1)) / max(1, len(rows))
+        font = _font(theme, "default", scale)
+        index = 0
+        for row_index, row in enumerate(rows):
+            for column_index, text in enumerate(row):
+                index += 1
+                cell_x = x + column_index * (cell_w + gap)
+                cell_y = y + row_index * (cell_h + gap)
+                is_selected = selected == index
+                fill = None
+                outline = theme.ink if theme.mono else theme.outline_variant
+                color = theme.ink if theme.mono else theme.text
+                if is_selected:
+                    fill = theme.ink if theme.mono else theme.primary
+                    color = theme.paper if theme.mono else theme.on_primary
+                    outline = fill
+                _rounded(
+                    draw,
+                    cell_x,
+                    cell_y,
+                    cell_x + cell_w,
+                    cell_y + cell_h,
+                    max(1.0, 3 * scale),
+                    fill=fill,
+                    outline=outline if (is_selected or checkable) else None,
+                    width=1 * SUPERSAMPLE,
+                )
+                _text(
+                    draw,
+                    cell_x + cell_w / 2,
+                    cell_y + cell_h / 2,
+                    _fit(draw, text, font, cell_w - 4 * scale),
+                    font,
+                    color,
+                    "mm",
                 )
         return
 

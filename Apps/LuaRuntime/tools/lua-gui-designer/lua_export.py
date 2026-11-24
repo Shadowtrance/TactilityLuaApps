@@ -31,6 +31,59 @@ def lua_color(value: object) -> str:
     return text
 
 
+def _int_prop(props: dict, key: str, default: int, minimum: int | None = None, maximum: int | None = None) -> int:
+    try:
+        value = int(props.get(key, default))
+    except (TypeError, ValueError):
+        value = default
+    if minimum is not None:
+        value = max(minimum, value)
+    if maximum is not None:
+        value = min(maximum, value)
+    return value
+
+
+def _csv(value: object) -> list[str]:
+    return [part.strip() for part in str(value or "").replace(";", ",").split(",") if part.strip()]
+
+
+def _int_csv(value: object) -> list[int]:
+    numbers: list[int] = []
+    for part in _csv(value):
+        try:
+            numbers.append(int(part))
+        except ValueError:
+            continue
+    return numbers
+
+
+def _float_csv(value: object) -> list[float]:
+    numbers: list[float] = []
+    for part in _csv(value):
+        try:
+            numbers.append(float(part))
+        except ValueError:
+            continue
+    return numbers
+
+
+def _string_matrix(value: object) -> list[list[str]]:
+    rows: list[list[str]] = []
+    for line in str(value or "").splitlines():
+        line = line.strip()
+        if line:
+            rows.append(_csv(line))
+    return rows
+
+
+def _cell_matrix(value: object) -> list[list[str]]:
+    rows: list[list[str]] = []
+    for line in str(value or "").splitlines():
+        if line.strip():
+            rows.append([cell.strip() for cell in line.split("|")])
+    return rows
+
+
 def variable_name(widget: WidgetNode) -> str:
     name = re.sub(r"[^A-Za-z0-9_]", "_", widget.id)
     if not name or name[0].isdigit():
@@ -304,6 +357,68 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
             )
         elif widget.type == "List":
             _add_props(entries, props, ("radius",))
+        elif widget.type == "Table":
+            rows = _int_prop(props, "rows", 3, 1, 100)
+            columns = _int_prop(props, "columns", 2, 1, 20)
+            entries.append(f"rows = {rows}")
+            entries.append(f"columns = {columns}")
+            widths = _int_csv(props.get("column_widths"))[:columns]
+            if widths:
+                entries.append("column_widths = { " + ", ".join(str(width) for width in widths) + " }")
+            _add_props(entries, props, ("text_color", "text_font", "radius"))
+        elif widget.type == "Chart":
+            chart_type = str(props.get("chart_type", "LINE") or "LINE").upper()
+            point_count = _int_prop(props, "point_count", 8, 2, 64)
+            update_mode = str(props.get("update_mode", "SHIFT") or "SHIFT").upper()
+            axis_min = _int_prop(props, "axis_min", 0)
+            axis_max = _int_prop(props, "axis_max", 100)
+            div_h = _int_prop(props, "div_h", 3, 1, 20)
+            div_v = _int_prop(props, "div_v", 4, 1, 20)
+            entries.append(f"chart_type = lvgl.CHART_TYPE.{chart_type}")
+            entries.append(f"point_count = {point_count}")
+            entries.append(f"update_mode = lvgl.CHART_UPDATE.{update_mode}")
+            entries.append(f"div_lines = {{ h = {div_h}, v = {div_v} }}")
+            entries.append(f"axis_range = {{ min = {axis_min}, max = {axis_max} }}")
+        elif widget.type == "Calendar":
+            today_year = _int_prop(props, "today_year", 2026, 1970, 2100)
+            today_month = _int_prop(props, "today_month", 11, 1, 12)
+            today_day = _int_prop(props, "today_day", 24, 1, 31)
+            shown_year = _int_prop(props, "shown_year", today_year, 1970, 2100)
+            shown_month = _int_prop(props, "shown_month", today_month, 1, 12)
+            entries.append(
+                f"today = {{ year = {today_year}, month = {today_month}, day = {today_day} }}"
+            )
+            entries.append(f"shown_date = {{ year = {shown_year}, month = {shown_month} }}")
+            day_names = _csv(props.get("day_names"))[:7]
+            if day_names:
+                entries.append(
+                    "day_names = { " + ", ".join(lua_string(name) for name in day_names) + " }"
+                )
+        elif widget.type == "Keyboard":
+            mode = str(props.get("keyboard_mode", "TEXT_LOWER") or "TEXT_LOWER").upper()
+            entries.append(f"keyboard_mode = lvgl.KEYBOARD_MODE.{mode}")
+            entries.append(f"popovers = {'true' if props.get('popovers') else 'false'}")
+        elif widget.type == "ButtonMatrix":
+            rows = _string_matrix(props.get("map")) or [["1", "2"], ["3", "4"]]
+            rows = [row for row in rows if row]
+            entries.append(
+                "map = { "
+                + ", ".join(
+                    "{ " + ", ".join(lua_string(cell) for cell in row) + " }" for row in rows
+                )
+                + " }"
+            )
+            if props.get("checkable", True):
+                count = sum(len(row) for row in rows)
+                entries.append(
+                    "ctrl_map = { "
+                    + ", ".join("lvgl.BUTTONMATRIX_CTRL.CHECKABLE" for _ in range(count))
+                    + " }"
+                )
+            entries.append(f"one_checked = {'true' if props.get('one_checked') else 'false'}")
+            selected = _int_prop(props, "selected_button", 0, 0)
+            if selected > 0:
+                entries.append(f"selected_button = {selected}")
         elif widget.type == "Tabs":
             mode = str(props.get("mode", "FIXED") or "FIXED")
             entries.append(f"mode = lvgl.TABS_MODE.{mode}")
@@ -386,6 +501,27 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
             else:
                 state.lines.append(f"    {var}:add_text({lua_string(line)})")
         state.lines.append(f"    {var}:hide_last_divider()")
+
+    if widget.type == "Table":
+        rows = _int_prop(props, "rows", 3, 1, 100)
+        columns = _int_prop(props, "columns", 2, 1, 20)
+        cells = _cell_matrix(props.get("cells"))
+        for row_index, row in enumerate(cells[:rows], start=1):
+            for column_index, text in enumerate(row[:columns], start=1):
+                if text:
+                    state.lines.append(
+                        f"    {var}:set_cell({row_index}, {column_index}, {lua_string(text)})"
+                    )
+
+    if widget.type == "Chart":
+        point_count = _int_prop(props, "point_count", 8, 2, 64)
+        values = _float_csv(props.get("values"))[:point_count]
+        if values:
+            color = lua_color(props.get("series_color") or "#00aaff")
+            formatted = ", ".join(str(int(round(value))) for value in values)
+            state.lines.append(f"    local {var}_series = {var}:add_series({color})")
+            state.lines.append(f"    {var}:set_values({var}_series, {{ {formatted} }})")
+            state.lines.append(f"    {var}:refresh()")
 
     if widget.type == "Tabs":
         for line in str(props.get("items", "")).splitlines():
