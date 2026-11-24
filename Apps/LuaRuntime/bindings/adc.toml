@@ -1,0 +1,21 @@
+# tactility.adc — raw reads from a configured ADC controller channel.
+#
+# The controller and channel must already be set up by the board's devicetree
+# driver. The read returns the raw conversion result; scale it in Lua if the
+# application needs millivolts.
+
+[module]
+name = "adc"
+summary = "ADC controller raw channel reads"
+api = 1
+includes = [
+    "tactility/drivers/adc_controller.h",
+    "tactility/error.h",
+]
+
+[[function]]
+name = "read_raw"
+signature = "read_raw(controller: Device, channel: u8, timeout?: u32 = 100) -> i32 | nil, string"
+impl = "custom"
+c = "lua_adc_read_raw"
+doc = "Reads the raw conversion result of a configured ADC channel."

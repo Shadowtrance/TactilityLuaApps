@@ -16,6 +16,9 @@ Status: partially implemented (2026-11-21)
   `impl = "custom"` hook: `i2c.read`, `i2c.write` and `i2c.write_read`. Lua
   strings are the binary-safe input buffer; a read returns a new string.
   `tests/i2c.lua` exercises a block read on `0x10` and the failure paths.
+- `tactility.adc` is generated from `bindings/adc.toml`:
+  `read_raw(controller, channel, timeout?)` returns the raw conversion or
+  `nil, reason`. `tests/adc.lua` covers discovery and the invalid channel path.
 - `device.address()` exposes the devicetree address of a device, so the Lua I2C
   scanner can map a controller's children to the address rows it found. The
   scanner now mirrors the internal one: bus chips plus a grid with device names.

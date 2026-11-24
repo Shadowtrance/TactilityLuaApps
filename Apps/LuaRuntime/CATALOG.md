@@ -139,7 +139,7 @@ test that proves it.
 | [x] | `notification` | hand-written | `tests/notification.lua`, `Lua Notifications` |
 | [ ] | `uart` | — | Needs buffer marshalling |
 | [ ] | `pwm` | — | |
-| [ ] | `adc` | — | Needs buffer/continuous read |
+| [x] | `adc` | generated (`adc.toml`) | `tests/adc.lua` |
 | [ ] | `spi` | — | |
 | [ ] | `i2s` / audio | — | Player/recorder clones |
 | [ ] | `display` / touch / backlight | — | |
@@ -239,6 +239,7 @@ can outlive the script's state.
 | [x] | `tests/teardown.lua` | Widget cleanup and explicit delete before close |
 | [x] | `tests/gpio.lua` | GPIO discovery, count, invalid pin |
 | [x] | `tests/i2c.lua` | Controllers, probes, child addresses, block read/write/write_read |
+| [x] | `tests/adc.lua` | ADC controller discovery, raw read and invalid channel |
 | [x] | `tests/bindings.lua` | fs, time, device, settings, power, Wi-Fi |
 | [x] | `tests/raw.lua` | Symbol lookup and missing symbol |
 | [x] | `tests/grid.lua` | Grid tracks and cell placement |
@@ -268,7 +269,7 @@ can outlive the script's state.
 | [!] | LVGL 9.6 drift | Keep the export/widget surface deliberate; removed/deprecated/disabled widgets stay excluded |
 | [!] | `lv_obj_is_valid()` is deprecated | It now walks the parent chain and faults on freed memory; use the runtime live set |
 | [!] | `raw.call` is untyped | Typed signature DB planned |
-| [!] | No buffer marshalling for UART/ADC/SPI | I2C block helpers exist; the rest is next |
+| [!] | No buffer marshalling for UART/SPI | I2C block helpers exist; the rest is next |
 | [!] | Notification actions/data/events | Actions need a Lua-callback lifetime design; data needs a Bundle binding |
 | [!] | I2C scanner scans all buses at startup (~3 s) | Pre-built cards keep switching/teardown stable |
 | [!] | I2C scanner does not persist the selected bus | Add a small settings entry |
