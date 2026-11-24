@@ -5,6 +5,7 @@
 
 #include <tactility/error.h>
 
+#include <cstdlib>
 #include <string>
 
 extern "C" {
@@ -136,7 +137,18 @@ int notification_send_binding(lua_State* state) {
 
 /** `tactility.notification.list()` - newest first. */
 int notification_list_binding(lua_State* state) {
-    struct Notification notifications[NOTIFICATION_HISTORY_CAPACITY] = {};
+    // The history holds NOTIFICATION_HISTORY_CAPACITY full Notification structs (~4.6 KB).
+    // That does not fit on an app task's 8 KB stack next to the Lua call, and it overflowed
+    // there on the S3 before the test even produced a result.
+    auto* notifications = static_cast<struct Notification*>(
+        std::calloc(NOTIFICATION_HISTORY_CAPACITY, sizeof(struct Notification))
+    );
+    if (notifications == nullptr) {
+        lua_pushnil(state);
+        lua_pushstring(state, "out of memory");
+        return 2;
+    }
+
     size_t count = 0;
 
     const error_t error = notification_get_all(
@@ -145,6 +157,7 @@ int notification_list_binding(lua_State* state) {
         &count
     );
     if (error != ERROR_NONE) {
+        std::free(notifications);
         lua_pushnil(state);
         lua_pushstring(state, error_to_string(error));
         return 2;
@@ -157,6 +170,7 @@ int notification_list_binding(lua_State* state) {
         notification_release(&notifications[i]);
     }
 
+    std::free(notifications);
     return 1;
 }
 

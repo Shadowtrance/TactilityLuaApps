@@ -184,6 +184,12 @@ static void create_widgets(lv_obj_t* parent, void* user_data) {
 
     const error_t error = lua_runtime_eval_file(context->runtime, context->path, context->script_arg);
     if (error != ERROR_NONE) {
+        LOG_E(
+            "LuaRunner",
+            "failed to evaluate %s: %s",
+            context->path,
+            lua_runtime_get_error(context->runtime)
+        );
         show_text(content, lua_runtime_get_error(context->runtime), 0xf7768e);
         return;
     }
