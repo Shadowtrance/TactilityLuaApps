@@ -396,7 +396,16 @@ runtime gains something a packaged app depends on.
 - `bindings.lua` — fs, time, device, settings, power and Wi-Fi smoke test.
 - `raw.lua` — `tactility.raw.call` symbol lookup and missing-symbol error.
 
-Run one from the Lua app, or package it for a headless run:
+Run the whole suite on connected devices (serial + development server):
+
+```powershell
+py Apps\LuaRuntime\tools\device-tests\run.py ^
+  --device "Tab5,192.168.0.245,esp32p4,COM34" ^
+  --device "T-Deck Plus,192.168.0.206,esp32s3,COM22"
+```
+
+See [tools/device-tests](tools/device-tests/README.md) for the options. A single
+script can still be run from the Lua app, or packaged for a headless run:
 
 ```powershell
 py Apps\LuaRuntime\tools\lua-app\make_lua_app.py --script tests\luavgl_smoke.lua --name "Lua Smoke Test"
