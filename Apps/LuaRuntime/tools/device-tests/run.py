@@ -43,6 +43,8 @@ DEFAULT_SETTLE_SECONDS = 4.5
 # timer's marker is missing from the serial capture, the runner's
 # "script evaluated (N-byte result)" line is a safe fallback.
 MARKERLESS_TESTS = {
+    "adc",
+    "uart",
     "bindings",
     "display",
     "gpio",

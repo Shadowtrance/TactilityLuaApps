@@ -1,0 +1,81 @@
+# tactility.uart — byte and block transfers through a kernel UART controller.
+#
+# Opening a controller that a service already owns (a GPS, a radio) will fail or
+# disturb that service. Find the controller with tactility.device and open it only
+# when the script owns the peripheral.
+
+[module]
+name = "uart"
+summary = "UART controller byte and block transfers"
+api = 1
+includes = [
+    "tactility/drivers/uart_controller.h",
+    "tactility/error.h",
+]
+
+[[function]]
+name = "open"
+signature = "open(controller: Device) -> true | nil, string"
+c = "uart_controller_open"
+doc = "Opens the UART controller."
+
+[[function]]
+name = "close"
+signature = "close(controller: Device) -> true | nil, string"
+c = "uart_controller_close"
+doc = "Closes the UART controller."
+
+[[function]]
+name = "read_byte"
+signature = "read_byte(controller: Device, timeout?: u32 = 100) -> u8 | nil, string"
+c = "uart_controller_read_byte"
+c_args = ["controller", "out", "timeout"]
+doc = "Reads one byte, or returns nil and a reason on timeout."
+
+[[function]]
+name = "write_byte"
+signature = "write_byte(controller: Device, value: u8, timeout?: u32 = 100) -> true | nil, string"
+c = "uart_controller_write_byte"
+c_args = ["controller", "value", "timeout"]
+doc = "Writes one byte."
+
+[[function]]
+name = "flush_input"
+signature = "flush_input(controller: Device) -> true | nil, string"
+c = "uart_controller_flush_input"
+doc = "Discards the controller's received data."
+
+[[function]]
+name = "is_open"
+signature = "is_open(controller: Device) -> bool"
+impl = "custom"
+c = "lua_uart_is_open"
+doc = "Whether the controller is currently open."
+
+[[function]]
+name = "available"
+signature = "available(controller: Device) -> u32 | nil, string"
+impl = "custom"
+c = "lua_uart_available"
+doc = "The number of bytes waiting to be read."
+
+[[function]]
+name = "read_bytes"
+signature = "read_bytes(controller: Device, size: u32, timeout?: u32 = 100) -> string | nil, string"
+impl = "custom"
+c = "lua_uart_read_bytes"
+doc = "Reads exactly size bytes and returns them as a string."
+
+[[function]]
+name = "write_bytes"
+signature = "write_bytes(controller: Device, data: string, timeout?: u32 = 100) -> true | nil, string"
+impl = "custom"
+c = "lua_uart_write_bytes"
+doc = "Writes a string as bytes."
+
+[[function]]
+name = "read_until"
+signature = "read_until(controller: Device, terminator: u8, size: u32, timeout?: u32 = 100) -> string | nil, string"
+impl = "custom"
+c = "lua_uart_read_until"
+doc = "Reads up to size bytes, stopping after terminator."

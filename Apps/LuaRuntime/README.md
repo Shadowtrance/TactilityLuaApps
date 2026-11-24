@@ -150,7 +150,8 @@ publisher requires; it defaults to `Lua app: <name>`.
 The Lua surface is split into a capability API (`tactility.gpio`,
 `tactility.fs`, …) and a raw escape hatch for exported SDK symbols. Capability
 glue is generated from `bindings/*.toml` at build time, so adding a function is
-an IDL entry, not a wrapper. GPIO, I2C and ADC are generated tables; the Lua GPIO
+an IDL entry, not a wrapper. GPIO, I2C, ADC and UART are generated tables (UART
+and I2C add hand-written block transfers); the Lua GPIO
 app uses GPIO. I2C also has hand-written block transfers (`read`, `write`,
 `write_read`) because the IDL has no buffer type yet. `tactility.raw.call(name, ...)` resolves an exported symbol at
 runtime and calls it with pointer-sized arguments; the typed signature database
@@ -188,6 +189,17 @@ unconfigured channel returns `nil, reason`.
 
 ```lua
 local raw = tactility.adc.read_raw(controller, 0, 50)
+```
+
+`tactility.uart` opens and closes a UART controller, reads and writes single
+bytes or blocks, reports available bytes and flushes input. Only open a
+controller the script owns: a GPS or radio service may already hold one.
+
+```lua
+tactility.uart.open(controller)
+tactility.uart.write_bytes(controller, "AT\r\n")
+local reply = tactility.uart.read_until(controller, 10, 64, 500)
+tactility.uart.close(controller)
 ```
 
 ### Widgets
@@ -401,6 +413,7 @@ runtime gains something a packaged app depends on.
 - `gpio.lua` — GPIO controller discovery, count and the invalid-pin error path.
 - `i2c.lua` — controller discovery, address probing and the missing-device path.
 - `adc.lua` — ADC controller discovery, raw channel read and the invalid-channel path.
+- `uart.lua` — UART discovery, `is_open`/`available` and the closed error paths.
 - `grid.lua` — grid tracks and cell placement on a themed card.
 - `notification.lua` — send, get, list, dismiss and missing-id handling.
 - `bindings.lua` — fs, time, device, settings, power and Wi-Fi smoke test.
