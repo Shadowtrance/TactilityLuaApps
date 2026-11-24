@@ -152,8 +152,8 @@ publisher requires; it defaults to `Lua app: <name>`.
 The Lua surface is split into a capability API (`tactility.gpio`,
 `tactility.fs`, …) and a raw escape hatch for exported SDK symbols. Capability
 glue is generated from `bindings/*.toml` at build time, so adding a function is
-an IDL entry, not a wrapper. GPIO, I2C, ADC and UART are generated tables (UART
-and I2C add hand-written block transfers); the Lua GPIO
+an IDL entry, not a wrapper. GPIO, I2C, ADC, UART and SPI are generated tables
+(UART, I2C and SPI add hand-written block transfers); the Lua GPIO
 app uses GPIO. I2C also has hand-written block transfers (`read`, `write`,
 `write_read`) because the IDL has no buffer type yet. `tactility.raw.call(name, ...)` resolves an exported symbol at
 runtime and calls it with pointer-sized arguments; the typed signature database
@@ -203,6 +203,13 @@ tactility.uart.write_bytes(controller, "AT\r\n")
 local reply = tactility.uart.read_until(controller, 10, 64, 500)
 tactility.uart.close(controller)
 ```
+
+`tactility.spi` performs one-shot transfers: each call adds a temporary
+peripheral for the given clock/mode/chip-select, transfers and removes it. Use
+only a chip select that the script owns; a display or SD driver may already hold
+one. `transmit` sends and receives the same length, `read` leaves the transmit
+line idle, and `write` discards the response. `lock`/`try_lock`/`unlock` take
+the controller's bus mutex.
 
 ### Widgets
 
@@ -416,6 +423,7 @@ runtime gains something a packaged app depends on.
 - `i2c.lua` — controller discovery, address probing and the missing-device path.
 - `adc.lua` — ADC controller discovery, raw channel read and the invalid-channel path.
 - `uart.lua` — UART discovery, `is_open`/`available` and the closed error paths.
+- `spi.lua` — SPI discovery, constants, invalid CS and try_lock/unlock.
 - `icons.lua` — shared icon names, including the icons added in the latest firmware.
 - `grid.lua` — grid tracks and cell placement on a themed card.
 - `notification.lua` — send, get, list, dismiss and missing-id handling.

@@ -1,0 +1,57 @@
+# tactility.spi — one-shot transfers on a kernel SPI controller.
+#
+# The script owns the peripheral it talks to, including the chip-select choice.
+# Each transfer adds a temporary SPI device for the given clock/mode/CS, performs
+# the transfer and removes it again. Do not use a CS that a driver already owns.
+
+[module]
+name = "spi"
+summary = "SPI controller transfers"
+api = 1
+includes = [
+    "tactility/drivers/spi_controller.h",
+    "tactility/error.h",
+]
+
+[constants]
+CS_NONE = -1
+
+[[function]]
+name = "lock"
+signature = "lock(controller: Device) -> true | nil, string"
+c = "spi_controller_lock"
+doc = "Locks the controller's bus mutex."
+
+[[function]]
+name = "try_lock"
+signature = "try_lock(controller: Device, timeout?: u32 = 100) -> true | nil, string"
+c = "spi_controller_try_lock"
+c_args = ["controller", "timeout"]
+doc = "Tries to lock the controller's bus mutex."
+
+[[function]]
+name = "unlock"
+signature = "unlock(controller: Device) -> true | nil, string"
+c = "spi_controller_unlock"
+doc = "Unlocks the controller's bus mutex."
+
+[[function]]
+name = "transmit"
+signature = "transmit(controller: Device, clock_hz: u32, mode: u8, cs_index: i32, tx: string, half_duplex?: bool = false) -> string | nil, string"
+impl = "custom"
+c = "lua_spi_transmit"
+doc = "Full-duplex transfer: sends tx and returns the same number of received bytes."
+
+[[function]]
+name = "read"
+signature = "read(controller: Device, clock_hz: u32, mode: u8, cs_index: i32, length: u32, half_duplex?: bool = false) -> string | nil, string"
+impl = "custom"
+c = "lua_spi_read"
+doc = "Reads length bytes with the transmit line idle."
+
+[[function]]
+name = "write"
+signature = "write(controller: Device, clock_hz: u32, mode: u8, cs_index: i32, tx: string, half_duplex?: bool = false) -> true | nil, string"
+impl = "custom"
+c = "lua_spi_write"
+doc = "Writes tx without reading a response."

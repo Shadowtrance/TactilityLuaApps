@@ -140,7 +140,7 @@ test that proves it.
 | [x] | `uart` | generated (`uart.toml`) + custom | `tests/uart.lua` |
 | [ ] | `pwm` | — | |
 | [x] | `adc` | generated (`adc.toml`) | `tests/adc.lua` |
-| [ ] | `spi` | — | |
+| [x] | `spi` | generated (`spi.toml`) + custom | `tests/spi.lua` |
 | [ ] | `i2s` / audio | — | Player/recorder clones |
 | [ ] | `display` / touch / backlight | — | |
 | [ ] | `camera` | — | |
@@ -241,6 +241,7 @@ can outlive the script's state.
 | [x] | `tests/i2c.lua` | Controllers, probes, child addresses, block read/write/write_read |
 | [x] | `tests/adc.lua` | ADC controller discovery, raw read and invalid channel |
 | [x] | `tests/uart.lua` | UART discovery, is_open/available and closed error paths |
+| [x] | `tests/spi.lua` | SPI discovery, constants, invalid CS and try_lock/unlock |
 | [x] | `tests/icons.lua` | Shared icon table, including the latest firmware additions |
 | [x] | `tests/bindings.lua` | fs, time, device, settings, power, Wi-Fi |
 | [x] | `tests/raw.lua` | Symbol lookup and missing symbol |
@@ -271,7 +272,6 @@ can outlive the script's state.
 | [!] | LVGL 9.6 drift | Keep the export/widget surface deliberate; removed/deprecated/disabled widgets stay excluded |
 | [!] | `lv_obj_is_valid()` is deprecated | It now walks the parent chain and faults on freed memory; use the runtime live set |
 | [!] | `raw.call` is untyped | Typed signature DB planned |
-| [!] | No buffer marshalling for SPI | I2C and UART block helpers exist; SPI is next |
 | [!] | Notification actions/data/events | Actions need a Lua-callback lifetime design; data needs a Bundle binding |
 | [!] | I2C scanner scans all buses at startup (~3 s) | Pre-built cards keep switching/teardown stable |
 | [!] | I2C scanner does not persist the selected bus | Add a small settings entry |

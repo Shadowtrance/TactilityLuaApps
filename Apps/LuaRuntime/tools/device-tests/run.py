@@ -45,6 +45,7 @@ DEFAULT_SETTLE_SECONDS = 4.5
 MARKERLESS_TESTS = {
     "adc",
     "icons",
+    "spi",
     "uart",
     "bindings",
     "display",
