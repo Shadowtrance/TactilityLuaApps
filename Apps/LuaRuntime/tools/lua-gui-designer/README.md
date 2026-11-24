@@ -101,13 +101,17 @@ project.
   Card, Container, Label, Button, Chip, SliderBox, Spinbox, Slider, Switch,
   Checkbox, Dropdown, Roller, TextArea, Arc, Line, LED, Scale, ImageButton,
   Tabs, Statusline, Bar, List, PageIndicator, StepIndicator, Badge, Spinner,
-  Image, IconButton, TextButton, Table, Chart, Calendar, Keyboard and Button
-  matrix. **Search widgets** filters by title or type; **Esc** clears it.
+  Image, IconButton, TextButton, Table, Chart, Calendar, Keyboard, Button
+  matrix, Tab view and Tile view. **Search widgets** filters by title or type;
+  **Esc** clears it.
 - **Table and chart data**: the Table fields are `rows`, `columns`, optional
   column widths and one `cell | cell` line per row. Chart takes a chart type, a
   point count and a comma-separated value series. Calendar edits the today/shown
   dates and day names; Keyboard picks a mode; Button matrix takes one
   comma-separated row per line.
+- **Tab view and tile view**: children are added to the active tab/tile. Change
+  `active_tab` or `active_tile` to design a different page. The preview and
+  export model one page/tile of content per widget for now.
 - **Icons**: the toolbar **Icons** button opens a searchable grid of the shared
   Material Symbols and copies `lvgl.ICON.NAME`. The Tabs content editor has its
   own **Icon...** button that inserts `NAME|` at the cursor.
@@ -294,8 +298,9 @@ automatically, and the exporter selects the icon font even if the font field
 still says `default`.
 
 ## Current limits
-- Not in the palette yet: `Tabview` and `Tileview`. They can still be used from
-  the Code tab.
+- `Tabview` and `Tileview` model one page/tile of content per widget: children
+  belong to the active tab or tile. Switch `active_tab`/`active_tile` to design
+  another page; the other pages are empty until edited.
 
 - Flex and grid are supported; percentage width/height is supported. Grid
   tracks use `1fr`, `content`/`auto`, or a pixel value, separated by commas,

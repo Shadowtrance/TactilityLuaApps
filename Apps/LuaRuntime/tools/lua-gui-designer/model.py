@@ -707,6 +707,22 @@ class Project:
             layout = "NONE"
             if parent is not None:
                 layout = str((parent.props or {}).get("layout", "NONE") or "NONE")
+
+            # A Tabview's children live in the active tab's content, below or above
+            # the tab bar. The stored child coordinates are relative to that content.
+            if parent is not None and parent.type == "Tabview":
+                try:
+                    bar = max(0, int((parent.props or {}).get("tab_bar_size", 44) or 44))
+                except (TypeError, ValueError):
+                    bar = 44
+                bar = min(content_h, bar)
+                position = str((parent.props or {}).get("tab_bar_position", "TOP") or "TOP")
+                if position == "BOTTOM":
+                    content_h = max(1, content_h - bar)
+                else:
+                    content_y += bar
+                    content_h = max(1, content_h - bar)
+
             if parent is not None and layout == "FLEX" and children:
                 placed = place_flex(parent, children, content_x, content_y, content_w, content_h)
                 for child in children:

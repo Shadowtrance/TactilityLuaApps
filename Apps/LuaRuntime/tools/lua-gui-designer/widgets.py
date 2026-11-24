@@ -621,6 +621,43 @@ WIDGET_SPECS: tuple[WidgetSpec, ...] = (
         ),
         events=("VALUE_CHANGED",),
     ),
+    _spec(
+        "Tabview",
+        "Tab view",
+        "Navigation",
+        360,
+        260,
+        container=True,
+        summary="Tabs with a content page",
+        properties=(
+            PropertySpec("tabs", "Tabs (one per line)", "multiline", "One\nTwo\nThree"),
+            PropertySpec("active_tab", "Active tab (1-based)", "int", 1, minimum=1),
+            PropertySpec("tab_bar_position", "Tab bar", "choice", "TOP", ("TOP", "BOTTOM")),
+            PropertySpec("tab_bar_size", "Tab bar size", "int", 44, minimum=0, maximum=200),
+            PropertySpec("pad_all", "Padding", "int", 8, minimum=0, maximum=64),
+            *FLEX_PROPS,
+        ),
+    ),
+    _spec(
+        "Tileview",
+        "Tile view",
+        "Navigation",
+        360,
+        220,
+        container=True,
+        summary="Tiles with a content page",
+        properties=(
+            PropertySpec(
+                "tiles",
+                "Tiles (column, row, direction)",
+                "multiline",
+                "0, 0, RIGHT\n1, 0, LEFT",
+            ),
+            PropertySpec("active_tile", "Active tile (1-based)", "int", 1, minimum=1),
+            PropertySpec("pad_all", "Padding", "int", 8, minimum=0, maximum=64),
+            *FLEX_PROPS,
+        ),
+    ),
 )
 
 SPEC_BY_TYPE = {spec.type: spec for spec in WIDGET_SPECS}

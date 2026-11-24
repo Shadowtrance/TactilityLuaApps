@@ -252,6 +252,9 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
     var = variable_name(widget)
     state.variables[widget.id] = var
     parent = state.variables.get(widget.parent, "canvas") if widget.parent else "canvas"
+    parent_widget = project.find(widget.parent) if widget.parent else None
+    if parent_widget is not None and parent_widget.type in ("Tabview", "Tileview"):
+        parent = state.variables.get(f"{parent_widget.id}#content", parent)
     props = widget.props or {}
 
     if widget.type == "SliderBox":
@@ -291,7 +294,7 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
     else:
         entries = _geometry(widget)
 
-        if spec.container:
+        if spec.container and widget.type not in ("Tabview", "Tileview"):
             layout = str(props.get("layout", "NONE") or "NONE")
             entries.append(f"layout = lvgl.LAYOUT.{layout}")
             entries.append(f"pad_all = {int(props.get('pad_all', 0) or 0)}")
@@ -419,6 +422,9 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
             selected = _int_prop(props, "selected_button", 0, 0)
             if selected > 0:
                 entries.append(f"selected_button = {selected}")
+        elif widget.type in ("Tabview", "Tileview"):
+            # The page/tile layout is applied to the active tab or tile after construction.
+            pass
         elif widget.type == "Tabs":
             mode = str(props.get("mode", "FIXED") or "FIXED")
             entries.append(f"mode = lvgl.TABS_MODE.{mode}")
@@ -451,15 +457,84 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
 
         state.lines.append(f"    local {var} = lvgl.{widget.type}({parent}, {_table(entries)})")
 
+    if widget.type in ("Tabview", "Tileview"):
+        content_var = var
+        if widget.type == "Tabview":
+            tabs = [line.strip() for line in str(props.get("tabs", "")).splitlines() if line.strip()]
+            if not tabs:
+                tabs = ["One"]
+            for index, label in enumerate(tabs, start=1):
+                state.lines.append(
+                    f"    local {var}_tab_{index} = {var}:add_tab({lua_string(label)})"
+                )
+            active = _int_prop(props, "active_tab", 1, 1, len(tabs))
+            position = str(props.get("tab_bar_position", "TOP") or "TOP").upper()
+            if position not in ("TOP", "BOTTOM"):
+                position = "TOP"
+            bar_size = _int_prop(props, "tab_bar_size", 44, 0, 200)
+            state.lines.append(
+                f"    {var}:set{{ active_tab = {active}, "
+                f"tab_bar_position = lvgl.DIR.{position}, tab_bar_size = {bar_size} }}"
+            )
+            content_var = f"{var}_tab_{active}"
+        else:
+            tiles = _string_matrix(props.get("tiles")) or [["0", "0", "RIGHT"]]
+            parsed: list[tuple[int, int, str]] = []
+            for row in tiles:
+                if len(row) < 2:
+                    continue
+                try:
+                    column = int(row[0])
+                    row_index = int(row[1])
+                except ValueError:
+                    continue
+                direction = str(row[2]).upper() if len(row) > 2 else "RIGHT"
+                if direction not in ("RIGHT", "LEFT", "UP", "DOWN"):
+                    direction = "RIGHT"
+                parsed.append((column, row_index, direction))
+            if not parsed:
+                parsed = [(0, 0, "RIGHT")]
+            for index, (column, row_index, direction) in enumerate(parsed, start=1):
+                state.lines.append(
+                    f"    local {var}_tile_{index} = "
+                    f"{var}:add_tile({column}, {row_index}, lvgl.DIR.{direction})"
+                )
+            active = _int_prop(props, "active_tile", 1, 1, len(parsed))
+            content_var = f"{var}_tile_{active}"
+            state.lines.append(f"    {var}:set_tile({content_var}, false)")
+
+        layout = str(props.get("layout", "NONE") or "NONE")
+        content_entries = [f"pad_all = {int(props.get('pad_all', 0) or 0)}"]
+        content_entries.append(f"layout = lvgl.LAYOUT.{layout}")
+        if layout in ("FLEX", "GRID"):
+            content_entries.append(f"pad_row = {int(props.get('pad_row', 0) or 0)}")
+            content_entries.append(f"pad_column = {int(props.get('pad_column', 0) or 0)}")
+        if layout == "FLEX":
+            flow = str(props.get("flex_flow", "ROW") or "ROW")
+            main = str(props.get("flex_main", "START") or "START")
+            cross = str(props.get("flex_cross", "START") or "START")
+            track = str(props.get("flex_track", "START") or "START")
+            content_entries.append(f"flex_flow = lvgl.FLEX_FLOW.{flow}")
+            content_entries.append(
+                "flex_align = { "
+                f"main = lvgl.FLEX_ALIGN.{main}, "
+                f"cross = lvgl.FLEX_ALIGN.{cross}, "
+                f"track = lvgl.FLEX_ALIGN.{track} "
+                "}"
+            )
+        state.lines.append(f"    {content_var}:set{{ " + ", ".join(content_entries) + " }")
+        state.variables[f"{widget.id}#content"] = content_var
+
     if spec.container and str(props.get("layout", "NONE") or "NONE") == "GRID":
         columns = _grid_tracks(props.get("grid_columns", "1fr, 1fr"))
         rows = _grid_tracks(props.get("grid_rows", "1fr"))
-        state.deferred_grid.append(f"    {var}:grid({columns}, {rows})")
+        grid_target = state.variables.get(f"{widget.id}#content", var)
+        state.deferred_grid.append(f"    {grid_target}:grid({columns}, {rows})")
         column_align = str(props.get("grid_col_align", "START") or "START")
         row_align = str(props.get("grid_row_align", "START") or "START")
         if column_align != "START" or row_align != "START":
             state.deferred_grid.append(
-                f"    {var}:grid_align(lvgl.GRID_ALIGN.{column_align}, lvgl.GRID_ALIGN.{row_align})"
+                f"    {grid_target}:grid_align(lvgl.GRID_ALIGN.{column_align}, lvgl.GRID_ALIGN.{row_align})"
             )
 
     parent_widget = project.find(widget.parent)

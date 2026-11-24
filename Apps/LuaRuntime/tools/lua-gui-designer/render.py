@@ -1154,6 +1154,85 @@ def _draw_widget(
         )
         return
 
+    if widget.type == "Tabview":
+        rows = [line.strip() for line in str(props.get("tabs", "")).splitlines() if line.strip()]
+        if not rows:
+            rows = ["One", "Two", "Three"]
+        try:
+            active = max(0, min(len(rows) - 1, int(props.get("active_tab", 1)) - 1))
+        except (TypeError, ValueError):
+            active = 0
+        try:
+            bar_size = max(0, int(props.get("tab_bar_size", 44) or 44))
+        except (TypeError, ValueError):
+            bar_size = 44
+        bar_h = min(h, bar_size * scale)
+        position = str(props.get("tab_bar_position", "TOP") or "TOP")
+
+        bar_y = y if position != "BOTTOM" else y + h - bar_h
+        tab_width = w / len(rows)
+        regular = _font(theme, "default", scale)
+        small = _font(theme, "small", scale)
+        icon_scale = _font(theme, "icon", scale)
+        for index, row in enumerate(rows):
+            icon_name, separator, label = row.partition("|")
+            if not separator:
+                label = row
+                icon_name = ""
+            center = x + tab_width * (index + 0.5)
+            color = theme.primary if index == active else theme.text_muted
+            if theme.mono:
+                color = theme.ink if index == active else theme.text_muted
+            glyph = SHARED_ICONS.get(icon_name.strip().upper()) if icon_name else None
+            max_width = tab_width - 8 * scale
+            if glyph and bar_h >= 32 * scale:
+                _text(draw, center, bar_y + bar_h * 0.32, glyph, icon_scale, color, "mm")
+                _text(
+                    draw,
+                    center,
+                    bar_y + bar_h * 0.72,
+                    _fit(draw, label, small, max_width),
+                    small,
+                    color,
+                    "mm",
+                )
+            else:
+                _text(
+                    draw,
+                    center,
+                    bar_y + bar_h / 2,
+                    _fit(draw, label, regular, max_width),
+                    regular,
+                    color,
+                    "mm",
+                )
+
+        if bar_h > 0:
+            separator_y = bar_y + bar_h if position != "BOTTOM" else bar_y
+            draw.line(
+                [x, separator_y, x + w, separator_y],
+                fill=theme.outline if theme.mono else theme.divider,
+                width=1 * SUPERSAMPLE,
+            )
+            if active < len(rows):
+                thickness = max(2.0, theme.dp(3) * scale)
+                tab_x = x + tab_width * active
+                if position != "BOTTOM":
+                    draw.rectangle(
+                        [tab_x, separator_y - thickness, tab_x + tab_width, separator_y],
+                        fill=theme.primary if not theme.mono else theme.ink,
+                    )
+                else:
+                    draw.rectangle(
+                        [tab_x, bar_y, tab_x + tab_width, bar_y + thickness],
+                        fill=theme.primary if not theme.mono else theme.ink,
+                    )
+        return
+
+    if widget.type == "Tileview":
+        # The tile page itself is transparent; its children are the visible content.
+        return
+
     if widget.type == "Tabs":
         rows = [line.strip() for line in str(props.get("items", "")).splitlines() if line.strip()]
         if not rows:
