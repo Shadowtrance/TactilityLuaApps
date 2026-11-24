@@ -31,7 +31,9 @@ Open the **Lua** app to list them. Selecting one opens the built-in editor
 **Export** and **Back**. **New** asks for a name and opens a fresh script in
 the editor. **Export** asks for an app name, packages the script with the
 runner and icons from this package, and installs it on the device — the new
-app appears in the launcher immediately.
+app appears in the launcher immediately. Enter keeps the previous line's
+indentation and adds four spaces after a block opener (`{`, `(`, `[`, `then`,
+`do` or `else`).
 
 **Folder** chooses a different script folder (the firmware's file selection
 app). The choice is stored next to the app's other settings, in
@@ -460,6 +462,8 @@ capabilities, app clones and known limitations, with demo/test columns.
 [catalog/sdk-coverage.md](catalog/sdk-coverage.md) is generated from the SDK and
 the firmware's export tables by `tools/sdk-catalog/catalog.py`; it classifies
 every exported/declared symbol as generated, bound, raw-only or unbound.
+[catalog/measurements.md](catalog/measurements.md) has boot, memory and
+app-start timings for the Tab5 and the T-Deck Plus.
 
 ```powershell
 py tools\sdk-catalog\catalog.py          # regenerate catalog/

@@ -28,6 +28,7 @@
 #include <dirent.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -92,6 +93,8 @@ struct Context {
     /* The name dialog hides and rebuilds this app, so the export target is captured first. */
     char pending_export_path[FILE_MAX_PATH_STRING_LENGTH];
     bool editing_example;
+    /* Guards the VALUE_CHANGED handler while it inserts indentation. */
+    bool auto_indent_guard;
     /* Hash of the bundled example as opened, so Run can tell an untouched one. */
     uint64_t example_hash;
     char message[128];
@@ -1133,6 +1136,75 @@ static lv_obj_t* create_action_button(lv_obj_t* parent, const char* text, lv_eve
     return button;
 }
 
+/**
+ * Copies the previous line's indentation after Enter, plus one level after a
+ * block opener. The textarea inserts the newline itself; this runs after it.
+ */
+static void on_editor_changed(lv_event_t* event) {
+    struct Context* context = (struct Context*)lv_event_get_user_data(event);
+    if (context->auto_indent_guard || context->editor == NULL) {
+        return;
+    }
+
+    lv_obj_t* editor = context->editor;
+    const char* text = lv_textarea_get_text(editor);
+    const uint32_t cursor = lv_textarea_get_cursor_pos(editor);
+    if (cursor == 0 || text[cursor - 1] != '\n') {
+        return;
+    }
+
+    const uint32_t previous_end = cursor - 1;
+    uint32_t previous_start = previous_end;
+    while (previous_start > 0 && text[previous_start - 1] != '\n') {
+        previous_start--;
+    }
+
+    char indent[64];
+    size_t length = 0;
+    for (uint32_t index = previous_start; index < previous_end && length < sizeof(indent) - 1; index++) {
+        if (text[index] == ' ' || text[index] == '\t') {
+            indent[length++] = text[index];
+        } else {
+            break;
+        }
+    }
+
+    // Indent one more level after the end of a block opener. This is deliberately
+    // conservative: the editor does not parse Lua, so it only reacts to the final
+    // non-space character of the previous line.
+    uint32_t last = previous_end;
+    while (last > previous_start &&
+           (text[last - 1] == ' ' || text[last - 1] == '\t' || text[last - 1] == '\r')) {
+        last--;
+    }
+    if (last > previous_start) {
+        const char previous = text[last - 1];
+        bool opener = previous == '{' || previous == '(' || previous == '[';
+        const uint32_t word_length = last - previous_start;
+        if (!opener && word_length >= 4 && memcmp(text + last - 4, "then", 4) == 0) {
+            opener = true;
+        } else if (!opener && word_length >= 2 && memcmp(text + last - 2, "do", 2) == 0) {
+            opener = true;
+        } else if (!opener && word_length >= 4 && memcmp(text + last - 4, "else", 4) == 0) {
+            opener = true;
+        }
+        if (opener && length + 4 < sizeof(indent)) {
+            for (int index = 0; index < 4; index++) {
+                indent[length++] = ' ';
+            }
+        }
+    }
+
+    if (length == 0) {
+        return;
+    }
+
+    indent[length] = '\0';
+    context->auto_indent_guard = true;
+    lv_textarea_add_text(editor, indent);
+    context->auto_indent_guard = false;
+}
+
 static void show_editor(struct Context* context, struct ScriptEntry* script) {
     char* source = read_file(script->path);
     if (source == NULL) {
@@ -1204,6 +1276,7 @@ static void show_editor(struct Context* context, struct ScriptEntry* script) {
     lv_label_set_long_mode(context->status_label, LV_LABEL_LONG_MODE_DOTS);
 
     context->editor = editor;
+    lv_obj_add_event_cb(editor, on_editor_changed, LV_EVENT_VALUE_CHANGED, context);
 }
 
 static void on_entry_clicked(lv_event_t* event) {
