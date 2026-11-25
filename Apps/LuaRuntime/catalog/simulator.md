@@ -88,9 +88,9 @@ open an example. The simulator's script folder is `/mnt/lua` by default.
 
 ## Limits
 
-- `make_lua_app.py` still packages only ESP runner ELFs, so `Scripts/*.lua`
-  standalone apps are not built for Linux yet. The runtime package's bundled
-  examples do run, as do scripts in the simulator's `/mnt/lua` folder.
+- `make_lua_app.py` packages the Linux runner only when the runtime build
+  produced `bin/linux-x86_64/lua_runner.so`. CI builds it and the published
+  script packages include Linux; a local ESP-only build stays ESP-only.
 - Simulator-only modules loaded before the runtime keep `RTLD_LOCAL`; the
   promotion happens when a module is registered, which is enough for apps
   started afterwards.
