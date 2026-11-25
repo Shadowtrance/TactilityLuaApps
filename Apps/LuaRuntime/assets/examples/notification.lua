@@ -1,11 +1,15 @@
 -- Post and manage notifications through the firmware notification module.
 --
 -- The three send buttons use the theme's info/warning/error accents, and the
--- history card lists what the module currently holds (newest first).
+-- history card lists what the module currently holds (newest first). The
+-- subscription at the bottom shows the live event stream, so the history and
+-- event line update as soon as the module changes.
 
 local SEVERITY = tactility.notification and tactility.notification.SEVERITY
 local status_label
 local list_label
+local event_label
+local subscription
 local sent = 0
 
 local function channel(value, shift)
@@ -127,7 +131,32 @@ function on_show()
         long_mode = lvgl.LONG.WRAP,
         text_font = 'small',
     })
+    event_label = lvgl.Label(card, {
+        text = 'Listening for events...',
+        w = lvgl.PCT(100),
+        text_font = 'small',
+        long_mode = lvgl.LONG.WRAP,
+    })
+
+    subscription = tactility.notification.subscribe(function(event)
+        if event_label then
+            event_label:set{
+                text = string.format('event: %s #%d (order %d)', event.type, event.id, event.order),
+            }
+        end
+        refresh()
+    end)
+    if subscription == nil then
+        event_label:set{ text = 'The event stream is not available in this runner.' }
+    end
 
     refresh()
     result = 'notification example'
+end
+
+function on_destroy()
+    if subscription then
+        subscription:cancel()
+        subscription = nil
+    end
 end

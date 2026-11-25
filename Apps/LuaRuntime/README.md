@@ -60,7 +60,8 @@ continues from that copy.
   address/name grids (the Lua I2C scanner)
 - `lights_out.lua` — the Lights Out puzzle on a square, theme-coloured grid
 - `memory.lua` — memory match with LVGL symbols and timed flips
-- `notification.lua` — posts info/warning/error notifications, lists and dismisses them
+- `notification.lua` — posts info/warning/error notifications, lists and dismisses
+  them, and shows the live event stream
 - `simon.lua` — Simon: dim/bright themed pads, a sequence timer, growing rounds
   and a best score (the highlight/timing borrows from TamaTac's pattern game)
 - `system_info.lua` — Memory / Storage / Tasks / About tabs with usage bars,
