@@ -235,6 +235,7 @@ be read back from it unaided.
 | [x] | Designer settings persistence | Profile/theme/zoom/grid/snap/tab/window saved next to the tool |
 | [x] | Lua highlighting / auto-indent | PC designer Code tab and event editor |
 | [x] | On-device auto-indent / cursor position | `Ln X, Col Y` follows the cursor; Tab stays focus navigation |
+| [x] | Responsive icon buttons | Toolbar actions; browser Folder/New in a dots overflow menu |
 | [ ] | On-device syntax highlighting | Deferred; needs custom drawing |
 | [ ] | Rename / delete | Browser currently lists only |
 | [ ] | Search / filter | Useful with many scripts |

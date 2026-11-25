@@ -19,9 +19,13 @@
 
 #include <lvgl.h>
 #include <lvgl/fonts.h>
+#include <lvgl/grid_navigation.h>
+#include <lvgl/icons/shared.h>
+#include <lvgl/insets.h>
 #include <lvgl/lvgl.h>
 #include <lvgl/theme.h>
 #include <lvgl/widgets/card.h>
+#include <lvgl/widgets/icon_button.h>
 #include <lvgl/widgets/list.h>
 #include <lvgl/widgets/toolbar.h>
 
@@ -85,6 +89,8 @@ struct Context {
     size_t example_count;
 
     lv_obj_t* content;
+    lv_obj_t* toolbar;
+    lv_obj_t* overflow;
     lv_obj_t* title_label;
     lv_obj_t* position_label;
     lv_obj_t* save_label;
@@ -936,8 +942,11 @@ static bool save_example_copy(struct Context* context) {
     if (context->title_label != NULL) {
         lv_label_set_text(context->title_label, file_name(destination));
     }
+    if (context->toolbar != NULL) {
+        lvgl_toolbar_set_title(context->toolbar, file_name(destination));
+    }
     if (context->save_label != NULL) {
-        lv_label_set_text(context->save_label, "Save");
+        lv_label_set_text(context->save_label, LVGL_ICON_SHARED_SAVE);
     }
 
     char message[128];
@@ -1124,17 +1133,60 @@ static void create_new_script(struct Context* context, const char* requested_nam
     }
 }
 
-static lv_obj_t* create_action_button(lv_obj_t* parent, const char* text, lv_event_cb_t callback, struct Context* context) {
-    lv_obj_t* button = lv_button_create(parent);
-    lv_obj_set_height(button, LV_SIZE_CONTENT);
-    lv_obj_add_event_cb(button, callback, LV_EVENT_CLICKED, context);
-
-    lv_obj_t* label = lv_label_create(button);
-    lv_label_set_text(label, text);
-    lv_obj_set_style_text_font(label, lvgl_get_text_font(FONT_SIZE_DEFAULT), 0);
-    lv_obj_center(label);
-
+/** Adds an icon-font action to the companion's toolbar. */
+static lv_obj_t* add_toolbar_action(struct Context* context, const char* icon, lv_event_cb_t callback) {
+    lv_obj_t* button = lvgl_toolbar_add_text_button_action(context->toolbar, icon, callback, context);
+    lv_obj_t* label = lv_obj_get_child(button, 0);
+    if (label != NULL) {
+        lv_obj_set_style_text_font(label, lvgl_get_shared_icon_default_font(), 0);
+    }
     return button;
+}
+
+static void set_overflow_visible(struct Context* context, bool visible) {
+    if (context->overflow == NULL) {
+        return;
+    }
+    lv_obj_set_hidden(context->overflow, !visible);
+    if (visible) {
+        lv_obj_align_to(context->overflow, context->toolbar, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+    }
+}
+
+static void clear_overflow(struct Context* context) {
+    if (context->overflow != NULL) {
+        lv_obj_clean(context->overflow);
+        lv_obj_set_hidden(context->overflow, true);
+    }
+}
+
+static void add_overflow_button(struct Context* context, const char* icon, lv_event_cb_t callback) {
+    lv_obj_t* button = lvgl_icon_button_create(context->overflow);
+    lv_obj_t* label = lv_label_create(button);
+    lv_obj_set_style_text_font(label, lvgl_get_shared_icon_default_font(), 0);
+    lv_label_set_text(label, icon);
+    lv_obj_add_event_cb(button, callback, LV_EVENT_SHORT_CLICKED, context);
+}
+
+static void on_overflow(lv_event_t* event) {
+    struct Context* context = (struct Context*)lv_event_get_user_data(event);
+    set_overflow_visible(context, lv_obj_is_hidden(context->overflow));
+}
+
+static void on_overflow_key(lv_event_t* event) {
+    if (lv_event_get_key(event) == LV_KEY_ESC) {
+        set_overflow_visible((struct Context*)lv_event_get_user_data(event), false);
+    }
+}
+
+static void on_folder_from_menu(lv_event_t* event) {
+    set_overflow_visible((struct Context*)lv_event_get_user_data(event), false);
+    on_folder(event);
+}
+
+static void on_new_from_menu(lv_event_t* event) {
+    set_overflow_visible((struct Context*)lv_event_get_user_data(event), false);
+    on_new(event);
 }
 
 /** Updates the "Ln X, Col Y" label from the textarea cursor. */
@@ -1266,29 +1318,19 @@ static void show_editor(struct Context* context, struct ScriptEntry* script) {
         snprintf(title_text, sizeof(title_text), "%s", name);
     }
 
-    lv_obj_t* header = lv_obj_create(context->content);
-    lv_obj_set_width(header, LV_PCT(100));
-    lv_obj_set_height(header, LV_SIZE_CONTENT);
-    lv_obj_set_flex_flow(header, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(header, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_all(header, 0, 0);
-    lv_obj_set_style_pad_column(header, gap, 0);
-    lv_obj_set_style_border_width(header, 0, 0);
-    lv_obj_set_style_bg_opa(header, LV_OPA_TRANSP, 0);
-
-    lv_obj_t* title = lv_label_create(header);
-    lv_label_set_text(title, title_text);
-    lv_obj_set_flex_grow(title, 1);
-    lv_label_set_long_mode(title, LV_LABEL_LONG_MODE_DOTS);
-    lv_obj_set_style_text_font(title, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
-    lv_obj_set_style_text_opa(title, LV_OPA_70, 0);
-    context->title_label = title;
-
-    lv_obj_t* position = lv_label_create(header);
-    lv_label_set_text(position, "Ln 1, Col 1");
-    lv_obj_set_style_text_font(position, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
-    lv_obj_set_style_text_opa(position, LV_OPA_70, 0);
-    context->position_label = position;
+    lvgl_toolbar_clear_actions(context->toolbar);
+    lvgl_toolbar_set_title(context->toolbar, title_text);
+    clear_overflow(context);
+    lv_obj_t* save_action = add_toolbar_action(
+        context,
+        context->editing_example ? LVGL_ICON_SHARED_SAVE_AS : LVGL_ICON_SHARED_SAVE,
+        on_save
+    );
+    context->save_label = lv_obj_get_child(save_action, 0);
+    add_toolbar_action(context, LVGL_ICON_SHARED_PLAY_ARROW, on_run);
+    add_toolbar_action(context, LVGL_ICON_SHARED_DOWNLOAD, on_export);
+    add_toolbar_action(context, LVGL_ICON_SHARED_KEYBOARD_ARROW_LEFT, on_back);
+    context->title_label = NULL;
 
     lv_obj_t* editor = lv_textarea_create(context->content);
     lv_obj_set_width(editor, LV_PCT(100));
@@ -1300,37 +1342,42 @@ static void show_editor(struct Context* context, struct ScriptEntry* script) {
     lv_obj_set_style_text_font(editor, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
     free(source);
 
-    lv_obj_t* buttons = lv_obj_create(context->content);
-    lv_obj_set_width(buttons, LV_PCT(100));
-    lv_obj_set_height(buttons, LV_SIZE_CONTENT);
-    lv_obj_set_flex_flow(buttons, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(buttons, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_all(buttons, 0, 0);
-    lv_obj_set_style_pad_column(buttons, gap, 0);
-    lv_obj_set_style_border_width(buttons, 0, 0);
-    lv_obj_set_style_bg_opa(buttons, LV_OPA_TRANSP, 0);
-
-    lv_obj_t* save_button = create_action_button(buttons, context->editing_example ? "Save Copy" : "Save", on_save, context);
-    context->save_label = lv_obj_get_child(save_button, 0);
-    create_action_button(buttons, "Run", on_run, context);
-    create_action_button(buttons, "Export", on_export, context);
-    create_action_button(buttons, "Back", on_back, context);
-
-    context->status_label = lv_label_create(context->content);
-    lv_label_set_text(
-        context->status_label,
-        context->editing_example ? "Bundled example - Run as-is; Save Copy to keep edits" : "Ready"
-    );
-    lv_obj_set_style_text_font(context->status_label, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
-    lv_obj_set_style_text_opa(context->status_label, LV_OPA_70, 0);
-    lv_obj_set_width(context->status_label, LV_PCT(100));
-    lv_label_set_long_mode(context->status_label, LV_LABEL_LONG_MODE_DOTS);
-
     context->editor = editor;
     lv_obj_add_event_cb(editor, on_editor_changed, LV_EVENT_VALUE_CHANGED, context);
     lv_obj_add_event_cb(editor, on_editor_cursor, LV_EVENT_KEY, context);
     lv_obj_add_event_cb(editor, on_editor_cursor, LV_EVENT_CLICKED, context);
     lv_obj_add_event_cb(editor, on_editor_cursor, LV_EVENT_FOCUSED, context);
+
+    lv_obj_t* status_row = lv_obj_create(context->content);
+    lv_obj_set_width(status_row, LV_PCT(100));
+    lv_obj_set_height(status_row, LV_SIZE_CONTENT);
+    lv_obj_set_flex_flow(status_row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(status_row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_all(status_row, 0, 0);
+    lv_obj_set_style_pad_column(status_row, gap, 0);
+    lv_obj_set_style_border_width(status_row, 0, 0);
+    lv_obj_set_style_bg_opa(status_row, LV_OPA_TRANSP, 0);
+
+    context->status_label = lv_label_create(status_row);
+    const bool compact = lv_display_get_horizontal_resolution(lv_display_get_default()) < 480;
+    if (context->editing_example) {
+        lv_label_set_text(
+            context->status_label,
+            compact ? "Example - Save Copy to edit" : "Bundled example - Run as-is; Save Copy to keep edits"
+        );
+    } else {
+        lv_label_set_text(context->status_label, "Ready");
+    }
+    lv_obj_set_style_text_font(context->status_label, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
+    lv_obj_set_style_text_opa(context->status_label, LV_OPA_70, 0);
+    lv_obj_set_flex_grow(context->status_label, 1);
+    lv_label_set_long_mode(context->status_label, LV_LABEL_LONG_MODE_DOTS);
+
+    context->position_label = lv_label_create(status_row);
+    lv_label_set_text(context->position_label, "Ln 1, Col 1");
+    lv_obj_set_style_text_font(context->position_label, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
+    lv_obj_set_style_text_opa(context->position_label, LV_OPA_70, 0);
+
     update_position_label(context);
 }
 
@@ -1365,6 +1412,13 @@ static void show_browser(struct Context* context) {
     context->current_path[0] = '\0';
     context->editing_example = false;
 
+    lvgl_toolbar_clear_actions(context->toolbar);
+    lvgl_toolbar_set_title(context->toolbar, "Lua");
+    add_toolbar_action(context, LVGL_ICON_SHARED_MORE_VERT, on_overflow);
+    clear_overflow(context);
+    add_overflow_button(context, LVGL_ICON_SHARED_FOLDER, on_folder_from_menu);
+    add_overflow_button(context, LVGL_ICON_SHARED_ADD, on_new_from_menu);
+
     const lv_coord_t gap = (lv_coord_t)lvgl_theme_lerp(4, 12, lvgl_theme_get_spacing());
 
     lv_obj_t* caption_row = lv_obj_create(context->content);
@@ -1383,22 +1437,6 @@ static void show_browser(struct Context* context) {
     lv_obj_set_style_text_opa(caption, LV_OPA_70, 0);
     lv_label_set_long_mode(caption, LV_LABEL_LONG_MODE_DOTS);
     lv_obj_set_flex_grow(caption, 1);
-
-    lv_obj_t* folder_button = lv_button_create(caption_row);
-    lv_obj_set_height(folder_button, LV_SIZE_CONTENT);
-    lv_obj_add_event_cb(folder_button, on_folder, LV_EVENT_CLICKED, context);
-    lv_obj_t* folder_label = lv_label_create(folder_button);
-    lv_label_set_text(folder_label, "Folder");
-    lv_obj_set_style_text_font(folder_label, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
-    lv_obj_center(folder_label);
-
-    lv_obj_t* new_button = lv_button_create(caption_row);
-    lv_obj_set_height(new_button, LV_SIZE_CONTENT);
-    lv_obj_add_event_cb(new_button, on_new, LV_EVENT_CLICKED, context);
-    lv_obj_t* new_label = lv_label_create(new_button);
-    lv_label_set_text(new_label, "New");
-    lv_obj_set_style_text_font(new_label, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
-    lv_obj_center(new_label);
 
     if (context->message[0] != '\0') {
         lv_obj_t* message = lv_label_create(context->content);
@@ -1467,6 +1505,7 @@ static void create_widgets(lv_obj_t* parent, void* user_data) {
 
     lv_obj_t* toolbar = lvgl_toolbar_create(parent, "Lua");
     lvgl_toolbar_set_nav_action(toolbar, LV_SYMBOL_CLOSE, on_close, context);
+    context->toolbar = toolbar;
 
     const lv_coord_t gap = (lv_coord_t)lvgl_theme_lerp(4, 12, lvgl_theme_get_spacing());
 
@@ -1481,6 +1520,24 @@ static void create_widgets(lv_obj_t* parent, void* user_data) {
     lv_obj_set_flex_flow(content, LV_FLEX_FLOW_COLUMN);
 
     context->content = content;
+
+    // Floating menu below the toolbar, populated per view (see show_browser()). Created
+    // after the content so it is drawn on top: floating only removes it from the layout.
+    context->overflow = lvgl_card_create(parent);
+    lv_obj_set_floating(context->overflow, true);
+    lv_obj_set_size(context->overflow, LV_PCT(100), LV_SIZE_CONTENT);
+    lv_obj_set_flex_flow(context->overflow, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(
+        context->overflow,
+        LV_FLEX_ALIGN_CENTER,
+        LV_FLEX_ALIGN_CENTER,
+        LV_FLEX_ALIGN_CENTER
+    );
+    lv_obj_set_scrollable(context->overflow, false);
+    lvgl_obj_add_edge_padding(context->overflow);
+    lvgl_grid_navigation_add(context->overflow);
+    lv_obj_add_event_cb(context->overflow, on_overflow_key, LV_EVENT_KEY, context);
+    lv_obj_set_hidden(context->overflow, true);
 
     if (context->script_dir[0] == '\0') {
         lv_obj_t* error = lv_label_create(content);

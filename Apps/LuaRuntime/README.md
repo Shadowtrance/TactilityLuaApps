@@ -31,10 +31,13 @@ Open the **Lua** app to list them. Selecting one opens the built-in editor
 **Export** and **Back**. **New** asks for a name and opens a fresh script in
 the editor. **Export** asks for an app name, packages the script with the
 runner and icons from this package, and installs it on the device — the new
-app appears in the launcher immediately. Enter keeps the previous line's
-indentation and adds four spaces after a block opener (`{`, `(`, `[`, `then`,
-`do` or `else`). A `Ln X, Col Y` readout in the header follows the cursor; Tab
-remains LVGL's focus-navigation key, so indent with spaces.
+app appears in the launcher immediately. **Save**, **Run**, **Export** and
+**Back** are icon buttons in the window toolbar; the browser's **Folder** and
+**New** live in a vertical-dots overflow menu below the toolbar. The editor's
+status line shows the file name and a `Ln X, Col Y` readout that follows the
+cursor. Enter keeps the previous line's indentation and adds four spaces after a
+block opener (`{`, `(`, `[`, `then`, `do` or `else`). Tab remains LVGL's
+focus-navigation key, so indent with spaces.
 
 **Folder** chooses a different script folder (the firmware's file selection
 app). The choice is stored next to the app's other settings, in
