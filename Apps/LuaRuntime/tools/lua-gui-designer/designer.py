@@ -1293,12 +1293,16 @@ class LuaDesigner(ctk.CTk):
 
     def on_release(self, _event) -> None:
         if self._drag:
-            if self._drag.get("moved"):
+            moved = self._drag.get("moved")
+            if moved:
                 self.undo_stack.append(self._drag["pre"])
                 if len(self.undo_stack) > 50:
                     self.undo_stack.pop(0)
             self._drag = None
-            self.refresh(rebuild_properties=True)
+            # The press already rebuilt the panels; a click that did not drag has
+            # nothing new to show.
+            if moved:
+                self.refresh(rebuild_properties=True)
 
     def grid_step(self) -> int:
         return 8
