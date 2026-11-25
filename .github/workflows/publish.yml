@@ -24,6 +24,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Read target SDK
+        id: target
+        run: |
+          echo "version=$(python3 -c 'import tt; print(tt.resolve_target()[0])')" >> "$GITHUB_OUTPUT"
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import urllib.request
+          import tt
+          version, _ = tt.resolve_target()
+          with urllib.request.urlopen(tt.sdk_url(version, "index.json"), timeout=30) as response:
+              index = json.load(response)
+          print(f"commit={index.get('gitCommit', version)}")
+          PY
+      - name: Cache SDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.tactility/sdk
+          key: tactility-sdk-${{ steps.target.outputs.version }}-${{ steps.target.outputs.commit }}
       - name: Build Lua Runtime
         uses: TactilityProject/TactilityAppPublisher/.github/actions/build-app@main
         with:
@@ -32,14 +50,6 @@ jobs:
           upload_artifact: 'true'
       - name: Audit packaged ELFs
         run: python3 Apps/LuaRuntime/tools/elf-audit/elf_audit.py
-      - name: Read target SDK
-        id: target
-        run: echo "version=$(python3 -c 'import tt; print(tt.resolve_target()[0])')" >> "$GITHUB_OUTPUT"
-      - name: Cache SDK
-        uses: actions/cache@v4
-        with:
-          path: ~/.tactility/sdk
-          key: tactility-sdk-${{ steps.target.outputs.version }}-${{ runner.os }}
       - name: Check generated bindings against the SDK
         run: |
           python3 -c "import tt; version, platforms = tt.resolve_target(); tt.prepare_sdk(version, platforms[:1] or ['esp32p4'])"
