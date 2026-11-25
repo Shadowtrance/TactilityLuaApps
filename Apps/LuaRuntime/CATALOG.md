@@ -237,6 +237,7 @@ be read back from it unaided.
 | [x] | Lua highlighting / auto-indent | PC designer Code tab and event editor |
 | [x] | On-device auto-indent / cursor position | `Ln X, Col Y` follows the cursor; Tab stays focus navigation |
 | [x] | Responsive icon buttons | Both views use the dots overflow menu; the toolbar keeps the title |
+| [x] | Module stop/start | Gates new runtimes; refuses stop while a script runs |
 | [ ] | On-device syntax highlighting | Deferred; needs custom drawing |
 | [ ] | Rename / delete | Browser currently lists only |
 | [ ] | Search / filter | Useful with many scripts |

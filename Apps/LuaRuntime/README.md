@@ -540,6 +540,15 @@ Earlier firmware needed hand-written export patches. Those lived in this app as
 removed. If a later firmware lacks an export, add it generically upstream (or
 recreate a temporary patch here) rather than working around it in a binding.
 
+## Stopping the runtime
+
+The runtime is an external module. **Settings > Kernel** can stop it: new
+scripts then fail with “Failed to allocate Lua runtime”, while a script that is
+already running keeps its interpreter. Stop is refused (`resource busy`) while a
+runtime is alive, so a running script is never torn down underneath the app.
+Starting the module enables new runtimes again. The module's code stays mapped,
+as it does for every kernel module; only the Lua API boundary is gated.
+
 ## Simulator
 
 The same package also builds for **linux-x86_64** and runs in FirmwareSim on a
