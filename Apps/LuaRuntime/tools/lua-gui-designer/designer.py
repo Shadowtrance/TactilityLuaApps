@@ -432,6 +432,7 @@ class LuaDesigner(ctk.CTk):
         self.active_tab = str(saved.get("tab", "Tree"))
         self.preview_scroll = 0
         self.undo_stack: list[Project] = []
+        self.redo_stack: list[Project] = []
         self._drag: dict | None = None
         self._tree_collapsed: set[str] = set()
         self._code_job = None
@@ -784,6 +785,9 @@ class LuaDesigner(ctk.CTk):
         self.canvas.bind("<MouseWheel>", self.on_preview_wheel)
         self.canvas.bind("<Delete>", lambda _event: self.delete_selected())
         self.canvas.bind("<Control-z>", lambda _event: self.undo())
+        self.canvas.bind("<Control-y>", lambda _event: self.redo())
+        self.canvas.bind("<Control-Shift-Z>", lambda _event: self.redo())
+        self.canvas.bind("<Control-Shift-z>", lambda _event: self.redo())
         self.canvas.bind("<Control-d>", lambda _event: self.duplicate_selected())
         self.canvas.bind("<Left>", lambda _event: self.nudge(-self.grid_step(), 0))
         self.canvas.bind("<Right>", lambda _event: self.nudge(self.grid_step(), 0))
@@ -858,6 +862,7 @@ class LuaDesigner(ctk.CTk):
         self.selected_id = None
         self.preview_scroll = 0
         self.undo_stack.clear()
+        self.redo_stack.clear()
         self.code_dirty = False
         self.sync_theme_controls()
         self.refresh()
@@ -933,11 +938,28 @@ class LuaDesigner(ctk.CTk):
         self.undo_stack.append(copy.deepcopy(self.project))
         if len(self.undo_stack) > 50:
             self.undo_stack.pop(0)
+        self.redo_stack.clear()
 
     def undo(self) -> None:
         if not self.undo_stack:
             return
+        self.redo_stack.append(copy.deepcopy(self.project))
+        if len(self.redo_stack) > 50:
+            self.redo_stack.pop(0)
         self.project = self.undo_stack.pop()
+        self.profile = find_profile(self.project.profile)
+        self.profile_menu.set(self.profile.name)
+        self.selected_id = None
+        self.sync_theme_controls()
+        self.refresh()
+
+    def redo(self) -> None:
+        if not self.redo_stack:
+            return
+        self.undo_stack.append(copy.deepcopy(self.project))
+        if len(self.undo_stack) > 50:
+            self.undo_stack.pop(0)
+        self.project = self.redo_stack.pop()
         self.profile = find_profile(self.project.profile)
         self.profile_menu.set(self.profile.name)
         self.selected_id = None
@@ -1298,6 +1320,7 @@ class LuaDesigner(ctk.CTk):
                 self.undo_stack.append(self._drag["pre"])
                 if len(self.undo_stack) > 50:
                     self.undo_stack.pop(0)
+                self.redo_stack.clear()
             self._drag = None
             # The press already rebuilt the panels; a click that did not drag has
             # nothing new to show.
@@ -3341,7 +3364,16 @@ def ui_test() -> int:
             app.selected_id = app.project.widgets[0].id if app.project.widgets else None
             check("duplicate", app.duplicate_selected)
             check("undo duplicate", app.undo)
+            app.selected_id = app.project.widgets[0].id if app.project.widgets else None
             check("nudge", lambda: app.nudge(8, 8))
+            nudge_id = app.selected_id
+            nudged = app.project.find(nudge_id)
+            nudged_position = (nudged.x, nudged.y) if nudged is not None else None
+            app.undo()
+            app.redo()
+            redone = app.project.find(nudge_id)
+            if nudged_position is None or redone is None or (redone.x, redone.y) != nudged_position:
+                failures.append(("redo", "the nudged position was not restored"))
 
             # Multi-selection, alignment and distribution.
             first = app.project.add_widget("Label")

@@ -123,7 +123,8 @@ project.
   selected widget. Right-click opens Duplicate/Delete and, with two or more
   selected, Align Left/Center/Right/Top/Middle/Bottom and Distribute
   Horizontally/Vertically. Widgets outside the canvas get a red dashed warning,
-  and the status line counts them.
+  and the status line counts them. Keyboard: **Ctrl+Z** undo, **Ctrl+Y** or
+  **Ctrl+Shift+Z** redo, **Ctrl+D** duplicate, **Delete** remove.
 - **Hierarchy**: the **Tree** tab is the first panel. Use the arrow to
   collapse/expand a container. **Filter widgets** narrows the tree to matching
   widgets and their ancestors and temporarily expands the matches. Right-click a
