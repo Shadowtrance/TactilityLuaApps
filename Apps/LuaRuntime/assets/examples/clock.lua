@@ -52,9 +52,9 @@ local function format_uptime(milliseconds)
     local minutes = math.floor(total % 3600 / 60)
     local seconds = total % 60
     if days > 0 then
-        return string.format("Up %dd %02d:%02d:%02d", days, hours, minutes, seconds)
+        return string.format("Uptime %dd %02d:%02d:%02d", days, hours, minutes, seconds)
     end
-    return string.format("Up %02d:%02d:%02d", hours, minutes, seconds)
+    return string.format("Uptime %02d:%02d:%02d", hours, minutes, seconds)
 end
 
 local function update()
