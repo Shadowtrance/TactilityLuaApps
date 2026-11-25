@@ -154,7 +154,8 @@ test that proves it.
 | [ ] | `graphics` (PPA/SVG) | — | |
 | [ ] | `service` | — | Battery/status services |
 | [ ] | `bundle` / properties files | — | |
-| [ ] | App lifecycle | — | Launch/stop/install/uninstall from Lua |
+| [x] | `app` | hand-written | `tests/app.lua` |
+| [!] | App lifecycle | list/start/is_running/current from Lua | stop/install/uninstall still C-only |
 | [ ] | Dialogs / file picker / input dialog | — | App cloning and settings UIs |
 | [x] | Notification events | Runner timer + `notification_subscribe` | `subscribe(callback)`, `EVENT`, `tests/notification_events.lua` |
 | [!] | Notification actions / Bundle data | — | Actions need Lua-callback lifetime design; Bundle needs a kernel key-enumeration API |
@@ -258,6 +259,7 @@ be read back from it unaided.
 | [x] | `tests/grid.lua` | Grid tracks and cell placement |
 | [x] | `tests/notification.lua` | Send, get, list, dismiss and missing id |
 | [x] | `tests/notification_events.lua` | Subscribe, posted/dismissed/cleared order and cancel |
+| [x] | `tests/app.lua` | App list, running state, current app and the unknown-app start path |
 | [x] | `tests/object_api.lua` | Core sizing/margins/outline/shadow/text/transforms/states/flags/children, Arc and Spinbox |
 | [x] | `tests/widget_batch2.lua` | LED, Table, Scale, ImageButton, Chart, Calendar, Keyboard, ButtonMatrix |
 | [x] | `tests/widget_batch3.lua` | Tabview, Tileview |

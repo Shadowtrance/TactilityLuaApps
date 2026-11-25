@@ -235,6 +235,12 @@ device:close()
 The handle methods use the same `transmit`/`read`/`write` contract and close
 the peripheral when the handle is collected, so an explicit `close` is optional.
 
+`tactility.app` lists every registered app (`list()` returns `{ id, name,
+category, hidden }`), reports whether one is running (`is_running(id)`), returns
+the topmost app id (`current()`) and launches one (`start(id, args?)`, which
+returns the new instance id). Starting an app returns as soon as it is
+scheduled; its window opens like any launcher start.
+
 ### Widgets
 
 `lvgl` covers LVGL's core widgets plus Tactility's framework widgets:

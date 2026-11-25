@@ -35,6 +35,7 @@ void lua_bindings_open_display(lua_State* state);
 void lua_bindings_open_system(lua_State* state);
 void lua_bindings_open_wifi(lua_State* state);
 void lua_bindings_open_notification(lua_State* state);
+void lua_bindings_open_app(lua_State* state);
 
 /** Generated from the bindings IDL; adds every capability table to `tactility`. */
 void lua_bindings_open_generated(lua_State* state);

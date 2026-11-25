@@ -34,6 +34,11 @@ Status: partially implemented (2026-11-21)
 - `device.address()` exposes the devicetree address of a device, so the Lua I2C
   scanner can map a controller's children to the address rows it found. The
   scanner now mirrors the internal one: bus chips plus a grid with device names.
+- `tactility.app` is hand-written: `list()` enumerates the registered
+  manifests (the visitor runs under the app ledger lock, so only copies),
+  `is_running(id)`, `current()` and `start(id, args?)`. Starting returns the new
+  instance id immediately; the app gets its own task and window. Verified with
+  `tests/app.lua`.
 - `tactility.notification` is hand-written: `send{...}`, `list`, `get`,
   `dismiss`, `dismiss_all`, `dismiss_non_sticky` and `count`, with `SEVERITY`
   and `SOURCE` constants. The runner adds `subscribe(callback)` and `EVENT`:
