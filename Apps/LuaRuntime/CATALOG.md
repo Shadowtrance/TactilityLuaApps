@@ -230,7 +230,7 @@ be read back from it unaided.
 | [x] | Save Copy | Bundled examples are read-only |
 | [x] | On-device Export | Tar + install |
 | [x] | Toolbar close | Emits the app close event |
-| [x] | PC GUI designer | `tools/lua-gui-designer`; simulator profiles, Material/mono theme, system bars, tree drag/context, editable code, absolute + percentage + flex + grid layout, Lua export |
+| [x] | PC GUI designer | `tools/lua-gui-designer`; simulator profiles, Material/mono theme, system bars, tree drag/context, editable code, absolute + percentage + flex + grid layout, multi-select align/distribute, Lua export |
 | [x] | Designer settings persistence | Profile/theme/zoom/grid/snap/tab/window saved next to the tool |
 | [x] | Lua highlighting / auto-indent | PC designer Code tab and event editor |
 | [x] | On-device auto-indent / cursor position | `Ln X, Col Y` follows the cursor; Tab stays focus navigation |

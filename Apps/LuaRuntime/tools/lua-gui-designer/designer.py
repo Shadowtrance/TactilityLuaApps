@@ -421,7 +421,8 @@ class LuaDesigner(ctk.CTk):
         else:
             self.project.theme = self.profile.default_theme()
         self.theme = MaterialTheme(self.project.theme, self.profile.dpi)
-        self.selected_id: str | None = None
+        self._selected_id: str | None = None
+        self.selected_ids: set[str] = set()
         try:
             self.zoom = max(0.3, min(1.0, float(saved.get("zoom", 0.65))))
         except (TypeError, ValueError):
@@ -777,6 +778,7 @@ class LuaDesigner(ctk.CTk):
         self.canvas.configure(yscrollcommand=y_scroll.set, xscrollcommand=x_scroll.set)
 
         self.canvas.bind("<Button-1>", self.on_press)
+        self.canvas.bind("<Button-3>", self.on_canvas_menu)
         self.canvas.bind("<B1-Motion>", self.on_drag)
         self.canvas.bind("<ButtonRelease-1>", self.on_release)
         self.canvas.bind("<MouseWheel>", self.on_preview_wheel)
@@ -979,10 +981,11 @@ class LuaDesigner(ctk.CTk):
             pass
 
     def delete_selected(self) -> None:
-        if not self.selected_id:
+        if not self.selected_ids:
             return
         self.push_undo()
-        self.project.remove_widget(self.selected_id)
+        for widget_id in list(self.selected_ids):
+            self.project.remove_widget(widget_id)
         self.selected_id = None
         self.refresh()
 
@@ -996,13 +999,136 @@ class LuaDesigner(ctk.CTk):
         self.refresh()
 
     def nudge(self, dx: int, dy: int) -> None:
-        widget = self.project.find(self.selected_id)
-        if widget is None:
+        widgets = [self.project.find(widget_id) for widget_id in sorted(self.selected_ids)]
+        widgets = [widget for widget in widgets if widget is not None]
+        if not widgets:
             return
         self.push_undo()
-        widget.x += dx
-        widget.y += dy
+        for widget in widgets:
+            widget.x += dx
+            widget.y += dy
         self.refresh()
+
+    @property
+    def selected_id(self) -> str | None:
+        return self._selected_id
+
+    @selected_id.setter
+    def selected_id(self, widget_id: str | None) -> None:
+        """Assigning the primary selection also resets the multi-selection."""
+        self._selected_id = widget_id
+        self.selected_ids = {widget_id} if widget_id is not None else set()
+
+    def toggle_selected(self, widget_id: str) -> None:
+        """Shift-click: add or remove one widget without clearing the others."""
+        if widget_id in self.selected_ids:
+            self.selected_ids.discard(widget_id)
+            if self._selected_id == widget_id:
+                self._selected_id = next(iter(self.selected_ids), None)
+        else:
+            self.selected_ids.add(widget_id)
+            self._selected_id = widget_id
+
+    def selection_widgets(self) -> list:
+        widgets = [self.project.find(widget_id) for widget_id in self.selected_ids]
+        return [widget for widget in widgets if widget is not None]
+
+    def _parent_content_origin(self, widget) -> tuple[int, int]:
+        """Absolute position of a widget's parent content box (padding included)."""
+        parent = self.project.find(widget.parent)
+        if parent is None:
+            return 0, 0
+        x, y, _, _ = self.project.abs_rect(parent)
+        pad = content_offset(self.project, parent)
+        return x + pad, y + pad
+
+    def _positionable(self, widget) -> bool:
+        parent = self.project.find(widget.parent)
+        return parent is None or str((parent.props or {}).get("layout", "NONE") or "NONE") == "NONE"
+
+    def align_selection(self, mode: str) -> None:
+        """Aligns or distributes the selected widgets inside their bounding box."""
+        widgets = [widget for widget in self.selection_widgets() if self._positionable(widget)]
+        if len(widgets) < 2:
+            self.set_status("Select at least two freely positioned widgets")
+            return
+
+        rects = {widget.id: self.project.abs_rect(widget) for widget in widgets}
+        left = min(x for x, _, _, _ in rects.values())
+        top = min(y for _, y, _, _ in rects.values())
+        right = max(x + w for x, _, w, _ in rects.values())
+        bottom = max(y + h for _, y, _, h in rects.values())
+
+        self.push_undo()
+        if mode in ("distribute_h", "distribute_v"):
+            axis = 0 if mode == "distribute_h" else 1
+            ordered = sorted(widgets, key=lambda item: rects[item.id][axis])
+            first = rects[ordered[0].id]
+            last = rects[ordered[-1].id]
+            span = (last[axis] + last[2 + axis]) - first[axis]
+            total = sum(rects[item.id][2 + axis] for item in ordered)
+            gap = (span - total) / (len(ordered) - 1)
+            cursor = first[axis]
+            for widget in ordered:
+                x, y, w, h = rects[widget.id]
+                target = round(cursor)
+                if axis == 0:
+                    origin_x, _ = self._parent_content_origin(widget)
+                    widget.x = target - origin_x
+                else:
+                    _, origin_y = self._parent_content_origin(widget)
+                    widget.y = target - origin_y
+                cursor += (w if axis == 0 else h) + gap
+        else:
+            for widget in widgets:
+                x, y, w, h = rects[widget.id]
+                origin_x, origin_y = self._parent_content_origin(widget)
+                if mode == "left":
+                    widget.x = left - origin_x
+                elif mode == "right":
+                    widget.x = right - w - origin_x
+                elif mode == "hcenter":
+                    widget.x = (left + right - w) // 2 - origin_x
+                elif mode == "top":
+                    widget.y = top - origin_y
+                elif mode == "bottom":
+                    widget.y = bottom - h - origin_y
+                elif mode == "vcenter":
+                    widget.y = (top + bottom - h) // 2 - origin_y
+
+        self.refresh()
+        self.set_status(
+            f"Aligned {len(widgets)} widgets" if not mode.startswith("distribute") else
+            f"Distributed {len(widgets)} widgets"
+        )
+
+    def on_canvas_menu(self, event) -> None:
+        cx, cy = self.canvas_point(event)
+        mx, my = self.model_point(cx, cy)
+        widget = self.hit_test(mx, my)
+        if widget is not None and widget.id not in self.selected_ids:
+            self.selected_id = widget.id
+            self.refresh()
+
+        menu = tk.Menu(self, tearoff=0)
+        if len(self.selected_ids) >= 2:
+            menu.add_command(label="Align Left", command=lambda: self.align_selection("left"))
+            menu.add_command(label="Align Center", command=lambda: self.align_selection("hcenter"))
+            menu.add_command(label="Align Right", command=lambda: self.align_selection("right"))
+            menu.add_separator()
+            menu.add_command(label="Align Top", command=lambda: self.align_selection("top"))
+            menu.add_command(label="Align Middle", command=lambda: self.align_selection("vcenter"))
+            menu.add_command(label="Align Bottom", command=lambda: self.align_selection("bottom"))
+            menu.add_separator()
+            menu.add_command(label="Distribute Horizontally", command=lambda: self.align_selection("distribute_h"))
+            menu.add_command(label="Distribute Vertically", command=lambda: self.align_selection("distribute_v"))
+            menu.add_separator()
+        menu.add_command(label="Duplicate", command=self.duplicate_selected)
+        menu.add_command(label="Delete", command=self.delete_selected)
+        try:
+            menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            menu.grab_release()
 
     # ---- selection and drag ----------------------------------------------
 
@@ -1068,9 +1194,13 @@ class LuaDesigner(ctk.CTk):
                 return
 
         widget = self.hit_test(mx, my)
-        self.selected_id = widget.id if widget else None
+        shift = bool(getattr(event, "state", 0) & 0x0001)
+        if widget is not None and shift:
+            self.toggle_selected(widget.id)
+        else:
+            self.selected_id = widget.id if widget else None
         self.canvas.focus_set()
-        if widget is not None:
+        if widget is not None and not shift and len(self.selected_ids) <= 1:
             self._drag = {
                 "mode": "move",
                 "widget": widget.id,
@@ -1408,6 +1538,7 @@ class LuaDesigner(ctk.CTk):
             self.theme,
             self.zoom,
             self.selected_id,
+            self.selected_ids,
             self.show_grid,
             self.preview_scroll,
         )
@@ -3207,6 +3338,50 @@ def ui_test() -> int:
             check("duplicate", app.duplicate_selected)
             check("undo duplicate", app.undo)
             check("nudge", lambda: app.nudge(8, 8))
+
+            # Multi-selection, alignment and distribution.
+            first = app.project.add_widget("Label")
+            second = app.project.add_widget("Label")
+            third = app.project.add_widget("Label")
+            first.x, first.y, first.w, first.h = 10, 10, 40, 20
+            second.x, second.y, second.w, second.h = 90, 50, 60, 30
+            third.x, third.y, third.w, third.h = 220, 30, 30, 30
+
+            app.selected_id = first.id
+            app.toggle_selected(second.id)
+            if app.selected_ids != {first.id, second.id} or app.selected_id != second.id:
+                failures.append(("multi-select", "selection was not updated"))
+
+            check("align left", lambda: app.align_selection("left"))
+            lefts = {app.project.abs_rect(widget)[0] for widget in (first, second)}
+            if lefts != {10}:
+                failures.append(("align left", f"left edges are {sorted(lefts)}"))
+
+            app.selected_id = first.id
+            app.toggle_selected(second.id)
+            app.toggle_selected(third.id)
+            check("align bottom", lambda: app.align_selection("bottom"))
+            bottoms = {
+                app.project.abs_rect(widget)[1] + app.project.abs_rect(widget)[3]
+                for widget in (first, second, third)
+            }
+            if len(bottoms) != 1:
+                failures.append(("align bottom", f"bottom edges are {sorted(bottoms)}"))
+
+            first.x, second.x, third.x = 0, 100, 300
+            check("distribute", lambda: app.align_selection("distribute_h"))
+            r1 = app.project.abs_rect(first)
+            r2 = app.project.abs_rect(second)
+            r3 = app.project.abs_rect(third)
+            gap1 = r2[0] - (r1[0] + r1[2])
+            gap2 = r3[0] - (r2[0] + r2[2])
+            if abs(gap1 - gap2) > 1:
+                failures.append(("distribute", f"gaps are {gap1} and {gap2}"))
+
+            app.selected_id = first.id
+            if app.selected_ids != {first.id}:
+                failures.append(("selection reset", "assigning a primary did not clear the set"))
+
             check("delete", app.delete_selected)
             check("undo delete", app.undo)
 

@@ -330,6 +330,7 @@ def render(
     theme: MaterialTheme,
     zoom: float,
     selected_id: str | None,
+    selected_ids: set[str] | None = None,
     show_grid: bool = True,
     scroll_y: int = 0,
 ) -> None:
@@ -485,6 +486,27 @@ def render(
                 outline=theme.on_primary,
                 width=1 * SUPERSAMPLE,
             )
+
+    # Additional multi-selection entries: an outline without resize handles.
+    for extra_id in selected_ids or ():
+        if extra_id == selected_id:
+            continue
+        extra = project.find(extra_id)
+        if extra is None:
+            continue
+        x, y, w, h = rects.get(extra.id, project.abs_rect(extra))
+        sx = x * scale
+        sy = y * scale - scroll_px
+        _dashed_rect(
+            ldraw,
+            sx,
+            sy,
+            sx + w * scale,
+            sy + h * scale,
+            theme.primary,
+            width=1 * SUPERSAMPLE,
+            dash=3 * SUPERSAMPLE,
+        )
 
     image.paste(layer, (int(round(canvas_x)), int(round(canvas_y))), layer)
 

@@ -117,9 +117,13 @@ project.
 - **Icons**: the toolbar **Icons** button opens a searchable grid of the shared
   Material Symbols and copies `lvgl.ICON.NAME`. The Tabs content editor has its
   own **Icon...** button that inserts `NAME|` at the cursor.
-- **Canvas**: select, drag, resize with 8 handles, snap to an 8 px grid, delete,
-  duplicate, nudge with arrow keys. Widgets outside the canvas get a red dashed
-  warning, and the status line counts them.
+- **Canvas**: click to select, Shift+click to add or remove a widget from a
+  multi-selection, drag, resize with 8 handles, snap to an 8 px grid, delete,
+  duplicate, nudge with arrow keys. Delete and the arrow keys act on every
+  selected widget. Right-click opens Duplicate/Delete and, with two or more
+  selected, Align Left/Center/Right/Top/Middle/Bottom and Distribute
+  Horizontally/Vertically. Widgets outside the canvas get a red dashed warning,
+  and the status line counts them.
 - **Hierarchy**: the **Tree** tab is the first panel. Use the arrow to
   collapse/expand a container. **Filter widgets** narrows the tree to matching
   widgets and their ancestors and temporarily expands the matches. Right-click a
@@ -300,6 +304,9 @@ automatically, and the exporter selects the icon font even if the font field
 still says `default`.
 
 ## Current limits
+- Alignment and distribution move widgets by their `x`/`y`; children of a flex
+  or grid container are positioned by that parent and are skipped with a status
+  message.
 - Only the active Tabview tab or Tileview tile is drawn in the preview. The
   other pages still export; switch `active_tab`/`active_tile` to inspect them.
 
