@@ -33,7 +33,11 @@ jobs:
           import urllib.request
           import tt
           version, _ = tt.resolve_target()
-          with urllib.request.urlopen(tt.sdk_url(version, "index.json"), timeout=30) as response:
+          request = urllib.request.Request(
+              tt.sdk_url(version, "index.json"),
+              headers={"User-Agent": f"tt.py {tt.TT_VERSION}"},
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
               index = json.load(response)
           print(f"commit={index.get('gitCommit', version)}")
           PY
