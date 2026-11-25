@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include <lua/runtime.h>
+#include <lua/module_state.h>
 #include <lua/runtime_private.h>
 
 #include <tactility/log.h>
@@ -104,9 +105,15 @@ static error_t protected_call(LuaRuntime* runtime, int argument_count) {
 extern "C" {
 
 struct LuaRuntime* lua_runtime_alloc(void) {
+    if (!lua_module_acquire_runtime()) {
+        LOG_E(TAG, "The Lua runtime module is stopped");
+        return nullptr;
+    }
+
     auto* runtime = new (std::nothrow) LuaRuntime();
     if (runtime == nullptr) {
         LOG_E(TAG, "Out of memory allocating runtime");
+        lua_module_release_runtime();
         return nullptr;
     }
 
@@ -118,6 +125,7 @@ struct LuaRuntime* lua_runtime_alloc(void) {
     if (runtime->state == nullptr) {
         LOG_E(TAG, "Out of memory allocating interpreter");
         delete runtime;
+        lua_module_release_runtime();
         return nullptr;
     }
 
@@ -134,9 +142,13 @@ struct LuaRuntime* lua_runtime_alloc(void) {
 }
 
 void lua_runtime_free(struct LuaRuntime* runtime) {
+    if (runtime == nullptr) {
+        return;
+    }
     // Closing runs every pending finalizer and frees the heap through allocate() above.
     lua_close(runtime->state);
     delete runtime;
+    lua_module_release_runtime();
 }
 
 error_t lua_runtime_eval(struct LuaRuntime* runtime, const char* code, const char* chunk_name) {
