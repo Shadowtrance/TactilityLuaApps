@@ -232,10 +232,11 @@ be read back from it unaided.
 | [x] | On-device Export | Tar + install |
 | [x] | Toolbar close | Emits the app close event |
 | [x] | PC GUI designer | `tools/lua-gui-designer`; simulator profiles, Material/mono theme, system bars, tree drag/context, editable code, absolute + percentage + flex + grid layout, multi-select align/distribute, Lua export |
+| [x] | POSIX / simulator package | `linux-x86_64` .so package; `catalog/simulator.md` |
 | [x] | Designer settings persistence | Profile/theme/zoom/grid/snap/tab/window saved next to the tool |
 | [x] | Lua highlighting / auto-indent | PC designer Code tab and event editor |
 | [x] | On-device auto-indent / cursor position | `Ln X, Col Y` follows the cursor; Tab stays focus navigation |
-| [x] | Responsive icon buttons | Toolbar actions; browser Folder/New in a dots overflow menu |
+| [x] | Responsive icon buttons | Both views use the dots overflow menu; the toolbar keeps the title |
 | [ ] | On-device syntax highlighting | Deferred; needs custom drawing |
 | [ ] | Rename / delete | Browser currently lists only |
 | [ ] | Search / filter | Useful with many scripts |

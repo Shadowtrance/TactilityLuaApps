@@ -6,8 +6,18 @@ file(GLOB_RECURSE SOURCE_FILES Source/*.c Source/*.cpp)
 set(BINDINGS_GENERATED_DIR "${CMAKE_BINARY_DIR}/generated")
 set(SOURCE_FILES ${SOURCE_FILES} "${BINDINGS_GENERATED_DIR}/bindings_generated.cpp")
 
+# ESP-IDF links the vendored Lua component through REQUIRES. The POSIX SDK has no
+# component dependency graph, so compile the interpreter sources into the module.
+if (NOT ESP_PLATFORM)
+    file(GLOB LUA_SOURCE_FILES ../components/lua/Source/*.c)
+    set(SOURCE_FILES ${SOURCE_FILES} ${LUA_SOURCE_FILES})
+    set(LUA_INCLUDE_DIRS ../components/lua/Include ../components/lua/Source)
+else ()
+    set(LUA_INCLUDE_DIRS "")
+endif ()
+
 tactility_component_register(
     SRCS ${SOURCE_FILES}
-    INCLUDE_DIRS Include Private Source/lua "${BINDINGS_GENERATED_DIR}"
+    INCLUDE_DIRS Include Private Source/lua "${BINDINGS_GENERATED_DIR}" ${LUA_INCLUDE_DIRS}
     REQUIRES lua notification-module
 )

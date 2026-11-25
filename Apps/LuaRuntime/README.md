@@ -31,13 +31,13 @@ Open the **Lua** app to list them. Selecting one opens the built-in editor
 **Export** and **Back**. **New** asks for a name and opens a fresh script in
 the editor. **Export** asks for an app name, packages the script with the
 runner and icons from this package, and installs it on the device — the new
-app appears in the launcher immediately. **Save**, **Run**, **Export** and
-**Back** are icon buttons in the window toolbar; the browser's **Folder** and
-**New** live in a vertical-dots overflow menu below the toolbar. The editor's
-status line shows the file name and a `Ln X, Col Y` readout that follows the
-cursor. Enter keeps the previous line's indentation and adds four spaces after a
-block opener (`{`, `(`, `[`, `then`, `do` or `else`). Tab remains LVGL's
-focus-navigation key, so indent with spaces.
+app appears in the launcher immediately. Both views keep the toolbar for the
+title and a vertical-dots overflow menu: the browser's **Folder** and **New**,
+and the editor's **Save**, **Run**, **Export** and **Back**, live in that menu.
+The editor's status line shows the file name and a `Ln X, Col Y` readout that
+follows the cursor. Enter keeps the previous line's indentation and adds four
+spaces after a block opener (`{`, `(`, `[`, `then`, `do` or `else`). Tab remains
+LVGL's focus-navigation key, so indent with spaces.
 
 **Folder** chooses a different script folder (the firmware's file selection
 app). The choice is stored next to the app's other settings, in
@@ -539,6 +539,16 @@ Earlier firmware needed hand-written export patches. Those lived in this app as
 `firmware-*.patch`; the upstream exports made them obsolete and they were
 removed. If a later firmware lacks an export, add it generically upstream (or
 recreate a temporary patch here) rather than working around it in a binding.
+
+## Simulator
+
+The same package also builds for **linux-x86_64** and runs in FirmwareSim on a
+Linux host (WSL2 with WSLg works). The simulator's POSIX loader needs one
+simulator-only change: a module's handle must be promoted to `RTLD_GLOBAL` so
+apps loaded later can resolve its symbols. Apply
+`firmware-app-posix-module-rtld-global.patch` to the firmware; device firmware
+needs no patch. See [catalog/simulator.md](catalog/simulator.md) for the build,
+run and install steps.
 
 `firmware-elf-loader-end-pointer.patch` was also removed. It mapped a pointer
 to one-past-the-end of a loaded section to the end of its copy instead of

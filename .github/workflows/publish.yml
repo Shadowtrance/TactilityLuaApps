@@ -63,12 +63,15 @@ jobs:
           set -euo pipefail
           mkdir -p scripts_out
           shopt -s nullglob
+          platforms=(--platform esp32p4 --platform esp32s3)
+          if [[ -f Apps/LuaRuntime/build/package-intermediate/bin/linux-x86_64/lua_runner.so ]]; then
+            platforms+=(--platform linux-x86_64)
+          fi
           for script in Scripts/*.lua; do
             name="$(basename "$script" .lua)"
             python3 Apps/LuaRuntime/tools/lua-app/make_lua_app.py \
               --script "$script" \
-              --platform esp32p4 \
-              --platform esp32s3 \
+              "${platforms[@]}" \
               --output "scripts_out/$name.app"
           done
       - name: Upload script packages

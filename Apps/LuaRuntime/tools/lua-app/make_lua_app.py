@@ -26,7 +26,12 @@ from pathlib import Path
 
 RUNTIME_DIR = Path(__file__).resolve().parents[2]  # Apps/LuaRuntime
 REPO_ROOT = RUNTIME_DIR.parents[1]
-DEFAULT_RUNNER = RUNTIME_DIR / "build" / "package-intermediate" / "bin" / "{platform}" / "lua_runner.elf"
+
+
+def default_runner(platform: str) -> Path:
+    """The built runner for a platform: .elf on ESP, .so on POSIX."""
+    suffix = "so" if platform.startswith("linux") else "elf"
+    return RUNTIME_DIR / "build" / "package-intermediate" / "bin" / platform / f"lua_runner.{suffix}"
 
 DEFAULT_SDK = "0.8.0-dev"
 DEFAULT_PLATFORM = "esp32p4"
@@ -142,7 +147,7 @@ def main():
         help="one-line description for app catalogs (max 32 characters, default: 'Lua app: <name>')",
     )
     parser.add_argument("--platform", action="append", help=f"target platform, repeatable (default {DEFAULT_PLATFORM})")
-    parser.add_argument("--runner", help="lua_runner ELF to ship (default: the built LuaRuntime runner)")
+    parser.add_argument("--runner", help="lua_runner binary to ship (default: the built LuaRuntime runner for each platform)")
     parser.add_argument("--icon", help="colour icon SVG (default: the LuaRuntime icon)")
     parser.add_argument("--mono-icon", help="monochrome icon SVG (default: the LuaRuntime icon)")
     parser.add_argument("--assets", help="directory copied to the package's assets/ folder")
@@ -176,9 +181,7 @@ def main():
 
     runners = {}
     for platform in platforms:
-        runner = Path(args.runner).expanduser() if args.runner else Path(
-            str(DEFAULT_RUNNER).format(platform=platform)
-        )
+        runner = Path(args.runner).expanduser() if args.runner else default_runner(platform)
         if not runner.is_file():
             fail(
                 f"{runner}: no lua_runner for {platform}. "
@@ -244,7 +247,7 @@ def main():
 
         for platform, runner in runners.items():
             binary = runner.read_bytes()
-            add_bytes(f"bin/{platform}/lua_runner.elf", binary, mode=0o755)
+            add_bytes(f"bin/{platform}/{runner.name}", binary, mode=0o755)
 
         if assets is not None:
             for path in sorted(assets.rglob("*")):
