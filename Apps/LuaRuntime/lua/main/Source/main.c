@@ -1160,12 +1160,13 @@ static void clear_overflow(struct Context* context) {
     }
 }
 
-static void add_overflow_button(struct Context* context, const char* icon, lv_event_cb_t callback) {
+static lv_obj_t* add_overflow_button(struct Context* context, const char* icon, lv_event_cb_t callback) {
     lv_obj_t* button = lvgl_icon_button_create(context->overflow);
     lv_obj_t* label = lv_label_create(button);
     lv_obj_set_style_text_font(label, lvgl_get_shared_icon_default_font(), 0);
     lv_label_set_text(label, icon);
     lv_obj_add_event_cb(button, callback, LV_EVENT_SHORT_CLICKED, context);
+    return button;
 }
 
 static void on_overflow(lv_event_t* event) {
@@ -1187,6 +1188,26 @@ static void on_folder_from_menu(lv_event_t* event) {
 static void on_new_from_menu(lv_event_t* event) {
     set_overflow_visible((struct Context*)lv_event_get_user_data(event), false);
     on_new(event);
+}
+
+static void on_save_from_menu(lv_event_t* event) {
+    set_overflow_visible((struct Context*)lv_event_get_user_data(event), false);
+    on_save(event);
+}
+
+static void on_run_from_menu(lv_event_t* event) {
+    set_overflow_visible((struct Context*)lv_event_get_user_data(event), false);
+    on_run(event);
+}
+
+static void on_export_from_menu(lv_event_t* event) {
+    set_overflow_visible((struct Context*)lv_event_get_user_data(event), false);
+    on_export(event);
+}
+
+static void on_back_from_menu(lv_event_t* event) {
+    set_overflow_visible((struct Context*)lv_event_get_user_data(event), false);
+    on_back(event);
 }
 
 /** Updates the "Ln X, Col Y" label from the textarea cursor. */
@@ -1321,15 +1342,16 @@ static void show_editor(struct Context* context, struct ScriptEntry* script) {
     lvgl_toolbar_clear_actions(context->toolbar);
     lvgl_toolbar_set_title(context->toolbar, title_text);
     clear_overflow(context);
-    lv_obj_t* save_action = add_toolbar_action(
+    add_toolbar_action(context, LVGL_ICON_SHARED_MORE_VERT, on_overflow);
+    lv_obj_t* save_action = add_overflow_button(
         context,
         context->editing_example ? LVGL_ICON_SHARED_SAVE_AS : LVGL_ICON_SHARED_SAVE,
-        on_save
+        on_save_from_menu
     );
     context->save_label = lv_obj_get_child(save_action, 0);
-    add_toolbar_action(context, LVGL_ICON_SHARED_PLAY_ARROW, on_run);
-    add_toolbar_action(context, LVGL_ICON_SHARED_DOWNLOAD, on_export);
-    add_toolbar_action(context, LVGL_ICON_SHARED_KEYBOARD_ARROW_LEFT, on_back);
+    add_overflow_button(context, LVGL_ICON_SHARED_PLAY_ARROW, on_run_from_menu);
+    add_overflow_button(context, LVGL_ICON_SHARED_DOWNLOAD, on_export_from_menu);
+    add_overflow_button(context, LVGL_ICON_SHARED_KEYBOARD_ARROW_LEFT, on_back_from_menu);
     context->title_label = NULL;
 
     lv_obj_t* editor = lv_textarea_create(context->content);
