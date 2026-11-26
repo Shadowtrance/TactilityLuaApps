@@ -243,9 +243,9 @@ be read back from it unaided.
 | [x] | Module stop/start | Gates new runtimes; refuses stop while a script runs |
 | [ ] | On-device syntax highlighting | Deferred; needs custom drawing |
 | [ ] | Rename / delete | Browser currently lists only |
-| [ ] | Search / filter | Useful with many scripts |
+| [x] | Search / filter | Search action; case-insensitive name filter, active filter shown next to the path |
 | [ ] | Syntax highlighting / line numbers | Editor is plain text |
-| [ ] | Runtime version display | Show installed API + update hint |
+| [x] | Runtime version display | Browser title shows the installed package version; the runner explains an API mismatch |
 | [ ] | Multi-file project view | `require` prerequisite |
 
 ## 7. Tests

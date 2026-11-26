@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
@@ -57,6 +58,7 @@
 
 #define MAX_ENTRIES 16
 #define MAX_EDITOR_BYTES (64 * 1024)
+#define MAX_FILTER_LENGTH 48
 
 enum ScriptSource {
     SCRIPT_SOURCE_EXAMPLE,
@@ -68,6 +70,7 @@ enum DialogKind {
     DIALOG_FOLDER,
     DIALOG_NEW_FILE,
     DIALOG_EXPORT_NAME,
+    DIALOG_FILTER,
 };
 
 struct Context;
@@ -82,6 +85,8 @@ struct ScriptEntry {
 struct Context {
     char script_dir[FILE_MAX_PATH_STRING_LENGTH];
     char examples_dir[FILE_MAX_PATH_STRING_LENGTH];
+    /* Case-insensitive substring filter for the browser lists. */
+    char filter[MAX_FILTER_LENGTH + 1];
 
     struct ScriptEntry entries[MAX_ENTRIES];
     size_t entry_count;
@@ -271,11 +276,33 @@ static void load_examples_dir(char* out_path, size_t out_size) {
     closedir(directory);
 }
 
+static bool contains_ignore_case(const char* text, const char* needle) {
+    if (needle[0] == '\0') {
+        return true;
+    }
+
+    const size_t needle_length = strlen(needle);
+    for (const char* start = text; *start != '\0'; start++) {
+        size_t index = 0;
+        while (
+            index < needle_length && start[index] != '\0' &&
+            tolower((unsigned char)start[index]) == tolower((unsigned char)needle[index])
+        ) {
+            index++;
+        }
+        if (index == needle_length) {
+            return true;
+        }
+    }
+    return false;
+}
+
 static size_t collect_lua_files(
     struct Context* context,
     const char* directory_path,
     struct ScriptEntry* entries,
     size_t capacity,
+    const char* filter,
     enum ScriptSource source
 ) {
     if (directory_path[0] == '\0') {
@@ -298,6 +325,9 @@ static size_t collect_lua_files(
 
         const size_t stem_length = name_length - 4;
         if (stem_length > APP_MANIFEST_NAME_LENGTH) {
+            continue;
+        }
+        if (filter != NULL && !contains_ignore_case(name, filter)) {
             continue;
         }
 
@@ -377,9 +407,16 @@ static void launch_dialog_job(void* argument) {
     const char* folder_arguments[] = { "--folder", "--no-files", "--max-bytes=256", NULL };
     const char* new_file_arguments[] = { "New script", "File name (no .lua needed)", "", NULL };
     const char* export_arguments[] = { "Make app", "App name", prefill, NULL };
+    const char* filter_arguments[] = { "Filter scripts", "Name contains", prefill, NULL };
     app_start_context_set_arguments(
         &start,
-        kind == DIALOG_FOLDER ? folder_arguments : (kind == DIALOG_EXPORT_NAME ? export_arguments : new_file_arguments)
+        kind == DIALOG_FOLDER
+            ? folder_arguments
+            : kind == DIALOG_EXPORT_NAME
+                ? export_arguments
+                : kind == DIALOG_FILTER
+                    ? filter_arguments
+                    : new_file_arguments
     );
 
     struct AppStreamBinding binding = {
@@ -1044,6 +1081,11 @@ static void on_new(lv_event_t* event) {
     queue_dialog((struct Context*)lv_event_get_user_data(event), DIALOG_NEW_FILE, NULL);
 }
 
+static void on_filter(lv_event_t* event) {
+    struct Context* context = (struct Context*)lv_event_get_user_data(event);
+    queue_dialog(context, DIALOG_FILTER, context->filter);
+}
+
 static const char* file_name(const char* path) {
     const char* slash = strrchr(path, '/');
     return slash != NULL ? slash + 1 : path;
@@ -1433,6 +1475,21 @@ static void add_script_row(lv_obj_t* list, struct ScriptEntry* script, const cha
     lv_obj_set_style_text_opa(path, LV_OPA_70, 0);
 }
 
+static const char* runtime_title(void) {
+    static char title[64];
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        char version[32];
+        if (read_manifest_value("version.name=", version, sizeof(version))) {
+            snprintf(title, sizeof(title), "Lua %s", version);
+        } else {
+            snprintf(title, sizeof(title), "Lua");
+        }
+    }
+    return title;
+}
+
 static void show_browser(struct Context* context) {
     lv_obj_clean(context->content);
     context->editor = NULL;
@@ -1444,11 +1501,12 @@ static void show_browser(struct Context* context) {
     context->editing_example = false;
 
     lvgl_toolbar_clear_actions(context->toolbar);
-    lvgl_toolbar_set_title(context->toolbar, "Lua");
+    lvgl_toolbar_set_title(context->toolbar, runtime_title());
     add_toolbar_action(context, LVGL_ICON_SHARED_MORE_VERT, on_overflow);
     clear_overflow(context);
     add_overflow_button(context, LVGL_ICON_SHARED_FOLDER, on_folder_from_menu);
     add_overflow_button(context, LVGL_ICON_SHARED_ADD, on_new_from_menu);
+    add_overflow_button(context, LVGL_ICON_SHARED_SEARCH, on_filter);
 
     const lv_coord_t gap = (lv_coord_t)lvgl_theme_lerp(4, 12, lvgl_theme_get_spacing());
 
@@ -1469,6 +1527,16 @@ static void show_browser(struct Context* context) {
     lv_label_set_long_mode(caption, LV_LABEL_LONG_MODE_DOTS);
     lv_obj_set_flex_grow(caption, 1);
 
+    if (context->filter[0] != '\0') {
+        char filter_text[MAX_FILTER_LENGTH + 16];
+        snprintf(filter_text, sizeof(filter_text), "Filter: %s", context->filter);
+        lv_obj_t* filter_label = lv_label_create(caption_row);
+        lv_label_set_text(filter_label, filter_text);
+        lv_obj_set_style_text_font(filter_label, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
+        lv_obj_set_style_text_opa(filter_label, LV_OPA_70, 0);
+        lv_label_set_long_mode(filter_label, LV_LABEL_LONG_MODE_DOTS);
+    }
+
     if (context->message[0] != '\0') {
         lv_obj_t* message = lv_label_create(context->content);
         lv_label_set_text(message, context->message);
@@ -1480,15 +1548,20 @@ static void show_browser(struct Context* context) {
     }
 
     context->example_count = collect_lua_files(
-        context, context->examples_dir, context->examples, MAX_ENTRIES, SCRIPT_SOURCE_EXAMPLE
+        context, context->examples_dir, context->examples, MAX_ENTRIES, context->filter, SCRIPT_SOURCE_EXAMPLE
     );
     context->entry_count = collect_lua_files(
-        context, context->script_dir, context->entries, MAX_ENTRIES, SCRIPT_SOURCE_FOLDER
+        context, context->script_dir, context->entries, MAX_ENTRIES, context->filter, SCRIPT_SOURCE_FOLDER
     );
 
     if (context->example_count == 0 && context->entry_count == 0) {
         lv_obj_t* empty = lv_label_create(context->content);
-        lv_label_set_text(empty, "No scripts found.\n\nTap New to create one.");
+        lv_label_set_text(
+            empty,
+            context->filter[0] != '\0'
+                ? "No scripts match the filter."
+                : "No scripts found.\n\nTap New to create one."
+        );
         lv_label_set_long_mode(empty, LV_LABEL_LONG_MODE_WRAP);
         lv_obj_set_width(empty, LV_PCT(100));
         lv_obj_set_style_text_opa(empty, LV_OPA_70, 0);
@@ -1662,6 +1735,15 @@ int main(int argc, char* argv[]) {
                 } else if (kind == DIALOG_EXPORT_NAME && length > 0) {
                     lvgl_lock();
                     start_export(&context, text);
+                    lvgl_unlock();
+                } else if (kind == DIALOG_FILTER) {
+                    if (event.result.result == 0) {
+                        const size_t filter_length = length < MAX_FILTER_LENGTH ? length : MAX_FILTER_LENGTH;
+                        memcpy(context.filter, text, filter_length);
+                        context.filter[filter_length] = '\0';
+                    }
+                    lvgl_lock();
+                    show_browser(&context);
                     lvgl_unlock();
                 }
 
