@@ -20,8 +20,8 @@ jobs:
       run:
         working-directory: Apps/LuaRuntime/tools/lua-gui-designer
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       # Pinned: the goldens are rendered with this Pillow, and its bundled
@@ -31,7 +31,7 @@ jobs:
       - run: python visual_test.py --diff-dir out
       - name: Upload difference images
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: designer-visual-diff
           path: Apps/LuaRuntime/tools/lua-gui-designer/out
@@ -44,7 +44,7 @@ jobs:
       run:
         working-directory: Apps/LuaRuntime/tools/lua-gui-designer
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Custom2kinter 6 uses TypedDict(extra_items=...), which needs Python 3.13.
       # The runner's 3.12 has no matching tk package, so use deadsnakes with
       # python3.13-tk instead of setup-python's build (which may lack Tkinter).

@@ -3,7 +3,12 @@ name: Publish Lua apps
 on:
   push:
     branches: [main]
+    # The designer is a PC tool and is not part of any published package.
+    paths-ignore:
+      - "Apps/LuaRuntime/tools/lua-gui-designer/**"
   pull_request:
+    paths-ignore:
+      - "Apps/LuaRuntime/tools/lua-gui-designer/**"
   workflow_dispatch:
 
 permissions:
