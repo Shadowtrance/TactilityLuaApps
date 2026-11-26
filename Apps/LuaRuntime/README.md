@@ -586,8 +586,9 @@ This is a multi-binary v3 package: `get_binary_dirs()` builds `lua/`,
 - `io.tmpfile()` needs a writable `/tmp`, which the device filesystem does not
   mount; `io.open` works normally. `os.tmpname()` returns a `/tmp/...` name from
   newlib, but opening that path fails for the same reason.
-- `requires.ram=1M` keeps the package off devices without PSRAM. The current
-  target is the Tab5 (ESP32-P4).
+- `requires.ram=1M` keeps the package off devices without PSRAM. Targets are
+  `esp32s3` (T-Deck Plus), `esp32p4` (Tab5), `esp32s31` (esp-mosaico) and
+  `linux-x86_64` (simulator).
 - LVGL 9.6. The `luavgl` port needed one font API rename; LVGL symbols now come
   from the firmware's generic exports.
 - There is no sandbox. A script has the same access as an ELF app.

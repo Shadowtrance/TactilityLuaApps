@@ -2,8 +2,8 @@
 -- The runner's root is a flex column, so a full-size absolute page gives
 -- `align` a stable surface to center in.
 --
--- @version 0.1.1
--- @code 2
+-- @version 0.1.2
+-- @code 3
 function on_show()
     local root = lvgl.root()
     local page = lvgl.Object(root, {

@@ -64,6 +64,9 @@ jobs:
           mkdir -p scripts_out
           shopt -s nullglob
           platforms=(--platform esp32p4 --platform esp32s3)
+          if [[ -f Apps/LuaRuntime/build/package-intermediate/bin/esp32s31/lua_runner.elf ]]; then
+            platforms+=(--platform esp32s31)
+          fi
           if [[ -f Apps/LuaRuntime/build/package-intermediate/bin/linux-x86_64/lua_runner.so ]]; then
             platforms+=(--platform linux-x86_64)
           fi
