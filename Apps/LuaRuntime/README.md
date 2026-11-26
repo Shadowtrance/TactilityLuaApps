@@ -68,7 +68,8 @@ continues from that copy.
 - `simon.lua` — Simon: dim/bright themed pads, a sequence timer, growing rounds
   and a best score (the highlight/timing borrows from TamaTac's pattern game)
 - `system_info.lua` — Memory / Storage / Tasks / About tabs with usage bars,
-  statusline and live display, heap, storage and task readings
+  statusline and live display, heap, every mounted storage volume (SD card,
+  internal data, ...) and task readings
 
 Scripts draw into the content area below a toolbar the runner provides, so
 every script has a working close button. `on_create` / `on_show` / `on_hide` /

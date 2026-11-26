@@ -1,8 +1,10 @@
 -- System Info: a Lua counterpart of the firmware's System Info app.
 --
 -- It uses the Material 3 Tabs and Statusline widgets, the display capability and
--- the system memory/storage readings. Tab panes are created once and toggled with
--- the hidden flag, so switching tabs never rebuilds the layout.
+-- the system memory/storage readings. The Storage tab has one card per mounted file
+-- system (normally /sdcard, but some boards mount internal flash at /data or /system).
+-- Tab panes are created once and toggled with the hidden flag, so switching tabs never
+-- rebuilds the layout.
 
 local root = lvgl.root()
 root:set{ flex_flow = lvgl.FLEX_FLOW.COLUMN, pad_all = 0 }
@@ -69,6 +71,7 @@ local function usage_card(parent, icon, title)
     })
 
     return {
+        card = card,
         update = function(free, total, used, note)
             if note ~= nil then
                 bar:add_flag(lvgl.FLAG.HIDDEN)
@@ -134,7 +137,70 @@ end
 
 local internal_card = usage_card(panes[1], lvgl.ICON.MEMORY, "Internal memory")
 local external_card = usage_card(panes[1], lvgl.ICON.MEMORY, "External memory")
-local storage_card = usage_card(panes[2], lvgl.ICON.HARD_DISK, "SD card")
+
+-- One card per mounted file system. /sdcard is common, but some boards have an
+-- internal data or system volume instead (or as well).
+local storage_signature = nil
+local storage_cards = {}
+local storage_empty = lvgl.Label(panes[2], {
+    text = "No mounted storage",
+    text_font = "small",
+    long_mode = lvgl.LONG.WRAP,
+})
+storage_empty:add_flag(lvgl.FLAG.HIDDEN)
+
+local function storage_name(path)
+    if path == "/sdcard" then
+        return "SD card"
+    elseif path == "/data" then
+        return "Internal storage"
+    elseif path == "/system" then
+        return "System"
+    end
+    return path
+end
+
+local function storage_mounts()
+    local mounts = tactility.fs.mounts()
+    if type(mounts) ~= "table" then
+        return {}
+    end
+    local result = {}
+    for _, mount in ipairs(mounts) do
+        if type(mount) == "string" and mount ~= "" then
+            result[#result + 1] = mount
+        end
+    end
+    table.sort(result)
+    return result
+end
+
+local function update_storage_cards(mounts)
+    local signature = table.concat(mounts, "|")
+    if signature == storage_signature then
+        return
+    end
+
+    storage_signature = signature
+    for _, entry in ipairs(storage_cards) do
+        entry.card:delete()
+    end
+    storage_cards = {}
+    if #mounts == 0 then
+        storage_empty:remove_flag(lvgl.FLAG.HIDDEN)
+    else
+        storage_empty:add_flag(lvgl.FLAG.HIDDEN)
+    end
+
+    for _, mount in ipairs(mounts) do
+        storage_cards[#storage_cards + 1] = usage_card(
+            panes[2],
+            lvgl.ICON.HARD_DISK,
+            storage_name(mount)
+        )
+    end
+end
+
 
 local tasks_card = lvgl.Card(panes[3], {
     w = lvgl.PCT(100),
@@ -196,15 +262,27 @@ local function refresh()
         external_card.update(0, 0, 0, "No external memory on this device")
     end
 
-    local storage, storage_reason = tactility.system.storage("/sdcard")
-    if storage ~= nil then
-        storage_card.update(storage.free, storage.total, storage.used)
+    local mounts = storage_mounts()
+    update_storage_cards(mounts)
+    local storage_ok = #mounts > 0
+    for index, mount in ipairs(mounts) do
+        local storage, storage_reason = tactility.system.storage(mount)
+        if storage ~= nil then
+            storage_cards[index].update(storage.free, storage.total, storage.used)
+        else
+            storage_cards[index].update(0, 0, 0, storage_reason or "Usage not available")
+            storage_ok = false
+        end
+    end
+    if #mounts == 0 then
+        statusline:set_text("No mounted storage")
+        statusline:set_level(lvgl.STATUSLINE_LEVEL.WARNING)
+    elseif not storage_ok then
+        statusline:set_text("Some storage usage is not available")
+        statusline:set_level(lvgl.STATUSLINE_LEVEL.WARNING)
+    else
         statusline:set_text("System running normally")
         statusline:set_level(lvgl.STATUSLINE_LEVEL.OK)
-    else
-        storage_card.update(0, 0, 0, storage_reason)
-        statusline:set_text("Storage info needs a newer firmware")
-        statusline:set_level(lvgl.STATUSLINE_LEVEL.WARNING)
     end
 
     if memory.internal.total > 0 and memory.internal.percent >= 90 then
