@@ -70,7 +70,6 @@ enum DialogKind {
     DIALOG_FOLDER,
     DIALOG_NEW_FILE,
     DIALOG_EXPORT_NAME,
-    DIALOG_FILTER,
 };
 
 struct Context;
@@ -101,6 +100,12 @@ struct Context {
     lv_obj_t* save_label;
     lv_obj_t* status_label;
     lv_obj_t* editor;
+    lv_obj_t* search_row;
+    lv_obj_t* search_textarea;
+    lv_obj_t* list_container;
+    bool search_visible;
+    /* Suppresses the query handler while the filter is set programmatically. */
+    bool suppress_query;
     char current_path[FILE_MAX_PATH_STRING_LENGTH];
     /* The name dialog hides and rebuilds this app, so the export target is captured first. */
     char pending_export_path[FILE_MAX_PATH_STRING_LENGTH];
@@ -407,16 +412,9 @@ static void launch_dialog_job(void* argument) {
     const char* folder_arguments[] = { "--folder", "--no-files", "--max-bytes=256", NULL };
     const char* new_file_arguments[] = { "New script", "File name (no .lua needed)", "", NULL };
     const char* export_arguments[] = { "Make app", "App name", prefill, NULL };
-    const char* filter_arguments[] = { "Filter scripts", "Name contains", prefill, NULL };
     app_start_context_set_arguments(
         &start,
-        kind == DIALOG_FOLDER
-            ? folder_arguments
-            : kind == DIALOG_EXPORT_NAME
-                ? export_arguments
-                : kind == DIALOG_FILTER
-                    ? filter_arguments
-                    : new_file_arguments
+        kind == DIALOG_FOLDER ? folder_arguments : (kind == DIALOG_EXPORT_NAME ? export_arguments : new_file_arguments)
     );
 
     struct AppStreamBinding binding = {
@@ -1081,11 +1079,6 @@ static void on_new(lv_event_t* event) {
     queue_dialog((struct Context*)lv_event_get_user_data(event), DIALOG_NEW_FILE, NULL);
 }
 
-static void on_filter(lv_event_t* event) {
-    struct Context* context = (struct Context*)lv_event_get_user_data(event);
-    queue_dialog(context, DIALOG_FILTER, context->filter);
-}
-
 static const char* file_name(const char* path) {
     const char* slash = strrchr(path, '/');
     return slash != NULL ? slash + 1 : path;
@@ -1490,62 +1483,11 @@ static const char* runtime_title(void) {
     return title;
 }
 
-static void show_browser(struct Context* context) {
-    lv_obj_clean(context->content);
-    context->editor = NULL;
-    context->status_label = NULL;
-    context->position_label = NULL;
-    context->title_label = NULL;
-    context->save_label = NULL;
-    context->current_path[0] = '\0';
-    context->editing_example = false;
-
-    lvgl_toolbar_clear_actions(context->toolbar);
-    lvgl_toolbar_set_title(context->toolbar, runtime_title());
-    add_toolbar_action(context, LVGL_ICON_SHARED_MORE_VERT, on_overflow);
-    clear_overflow(context);
-    add_overflow_button(context, LVGL_ICON_SHARED_FOLDER, on_folder_from_menu);
-    add_overflow_button(context, LVGL_ICON_SHARED_ADD, on_new_from_menu);
-    add_overflow_button(context, LVGL_ICON_SHARED_SEARCH, on_filter);
-
-    const lv_coord_t gap = (lv_coord_t)lvgl_theme_lerp(4, 12, lvgl_theme_get_spacing());
-
-    lv_obj_t* caption_row = lv_obj_create(context->content);
-    lv_obj_set_width(caption_row, LV_PCT(100));
-    lv_obj_set_height(caption_row, LV_SIZE_CONTENT);
-    lv_obj_set_flex_flow(caption_row, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(caption_row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_all(caption_row, 0, 0);
-    lv_obj_set_style_pad_column(caption_row, gap, 0);
-    lv_obj_set_style_border_width(caption_row, 0, 0);
-    lv_obj_set_style_bg_opa(caption_row, LV_OPA_TRANSP, 0);
-
-    lv_obj_t* caption = lv_label_create(caption_row);
-    lv_label_set_text(caption, context->script_dir);
-    lv_obj_set_style_text_font(caption, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
-    lv_obj_set_style_text_opa(caption, LV_OPA_70, 0);
-    lv_label_set_long_mode(caption, LV_LABEL_LONG_MODE_DOTS);
-    lv_obj_set_flex_grow(caption, 1);
-
-    if (context->filter[0] != '\0') {
-        char filter_text[MAX_FILTER_LENGTH + 16];
-        snprintf(filter_text, sizeof(filter_text), "Filter: %s", context->filter);
-        lv_obj_t* filter_label = lv_label_create(caption_row);
-        lv_label_set_text(filter_label, filter_text);
-        lv_obj_set_style_text_font(filter_label, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
-        lv_obj_set_style_text_opa(filter_label, LV_OPA_70, 0);
-        lv_label_set_long_mode(filter_label, LV_LABEL_LONG_MODE_DOTS);
+static void rebuild_browser_list(struct Context* context) {
+    if (context->list_container == NULL) {
+        return;
     }
-
-    if (context->message[0] != '\0') {
-        lv_obj_t* message = lv_label_create(context->content);
-        lv_label_set_text(message, context->message);
-        lv_obj_set_style_text_font(message, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
-        lv_obj_set_style_text_opa(message, LV_OPA_70, 0);
-        lv_obj_set_width(message, LV_PCT(100));
-        lv_label_set_long_mode(message, LV_LABEL_LONG_MODE_WRAP);
-        context->message[0] = '\0';
-    }
+    lv_obj_clean(context->list_container);
 
     context->example_count = collect_lua_files(
         context, context->examples_dir, context->examples, MAX_ENTRIES, context->filter, SCRIPT_SOURCE_EXAMPLE
@@ -1555,7 +1497,7 @@ static void show_browser(struct Context* context) {
     );
 
     if (context->example_count == 0 && context->entry_count == 0) {
-        lv_obj_t* empty = lv_label_create(context->content);
+        lv_obj_t* empty = lv_label_create(context->list_container);
         lv_label_set_text(
             empty,
             context->filter[0] != '\0'
@@ -1568,7 +1510,7 @@ static void show_browser(struct Context* context) {
         return;
     }
 
-    lv_obj_t* card = lvgl_card_create(context->content);
+    lv_obj_t* card = lvgl_card_create(context->list_container);
     lv_obj_set_width(card, LV_PCT(100));
     lv_obj_set_flex_grow(card, 1);
 
@@ -1593,6 +1535,131 @@ static void show_browser(struct Context* context) {
     }
 
     lvgl_list_hide_last_divider(list);
+}
+
+static void on_query_changed(lv_event_t* event) {
+    struct Context* context = (struct Context*)lv_event_get_user_data(event);
+    if (context->suppress_query) {
+        return;
+    }
+
+    const char* text = lv_textarea_get_text(context->search_textarea);
+    size_t length = strlen(text);
+    if (length > MAX_FILTER_LENGTH) {
+        length = MAX_FILTER_LENGTH;
+    }
+    memcpy(context->filter, text, length);
+    context->filter[length] = '\0';
+    rebuild_browser_list(context);
+}
+
+static void on_search_toggle(lv_event_t* event) {
+    struct Context* context = (struct Context*)lv_event_get_user_data(event);
+    context->search_visible = !context->search_visible;
+    if (context->search_row != NULL) {
+        lv_obj_set_hidden(context->search_row, !context->search_visible);
+    }
+
+    if (context->search_visible) {
+        if (context->search_textarea != NULL) {
+            lv_group_focus_obj(context->search_textarea);
+        }
+        return;
+    }
+
+    if (context->filter[0] != '\0') {
+        context->suppress_query = true;
+        if (context->search_textarea != NULL) {
+            lv_textarea_set_text(context->search_textarea, "");
+        }
+        context->suppress_query = false;
+        context->filter[0] = '\0';
+        rebuild_browser_list(context);
+    }
+}
+
+static void show_browser(struct Context* context) {
+    lv_obj_clean(context->content);
+    context->editor = NULL;
+    context->status_label = NULL;
+    context->position_label = NULL;
+    context->title_label = NULL;
+    context->save_label = NULL;
+    context->search_row = NULL;
+    context->search_textarea = NULL;
+    context->list_container = NULL;
+    context->current_path[0] = '\0';
+    context->editing_example = false;
+
+    lvgl_toolbar_clear_actions(context->toolbar);
+    lvgl_toolbar_set_title(context->toolbar, runtime_title());
+    add_toolbar_action(context, LVGL_ICON_SHARED_SEARCH, on_search_toggle);
+    add_toolbar_action(context, LVGL_ICON_SHARED_MORE_VERT, on_overflow);
+    clear_overflow(context);
+    add_overflow_button(context, LVGL_ICON_SHARED_FOLDER, on_folder_from_menu);
+    add_overflow_button(context, LVGL_ICON_SHARED_ADD, on_new_from_menu);
+
+    const lv_coord_t gap = (lv_coord_t)lvgl_theme_lerp(4, 12, lvgl_theme_get_spacing());
+
+    lv_obj_t* caption_row = lv_obj_create(context->content);
+    lv_obj_set_width(caption_row, LV_PCT(100));
+    lv_obj_set_height(caption_row, LV_SIZE_CONTENT);
+    lv_obj_set_flex_flow(caption_row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(caption_row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_all(caption_row, 0, 0);
+    lv_obj_set_style_pad_column(caption_row, gap, 0);
+    lv_obj_set_style_border_width(caption_row, 0, 0);
+    lv_obj_set_style_bg_opa(caption_row, LV_OPA_TRANSP, 0);
+
+    lv_obj_t* caption = lv_label_create(caption_row);
+    lv_label_set_text(caption, context->script_dir);
+    lv_obj_set_style_text_font(caption, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
+    lv_obj_set_style_text_opa(caption, LV_OPA_70, 0);
+    lv_label_set_long_mode(caption, LV_LABEL_LONG_MODE_DOTS);
+    lv_obj_set_flex_grow(caption, 1);
+
+    if (context->message[0] != '\0') {
+        lv_obj_t* message = lv_label_create(context->content);
+        lv_label_set_text(message, context->message);
+        lv_obj_set_style_text_font(message, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
+        lv_obj_set_style_text_opa(message, LV_OPA_70, 0);
+        lv_obj_set_width(message, LV_PCT(100));
+        lv_label_set_long_mode(message, LV_LABEL_LONG_MODE_WRAP);
+        context->message[0] = '\0';
+    }
+
+    lv_obj_t* search_row = lv_obj_create(context->content);
+    lv_obj_remove_style_all(search_row);
+    lv_obj_set_width(search_row, LV_PCT(100));
+    lv_obj_set_height(search_row, LV_SIZE_CONTENT);
+    lv_obj_set_flex_flow(search_row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(search_row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_column(search_row, gap, 0);
+    lv_obj_set_hidden(search_row, !context->search_visible);
+    context->search_row = search_row;
+
+    lv_obj_t* search_icon = lv_label_create(search_row);
+    lv_label_set_text(search_icon, LVGL_ICON_SHARED_SEARCH);
+    lv_obj_set_style_text_font(search_icon, lvgl_get_shared_icon_default_font(), 0);
+    lv_obj_set_style_text_opa(search_icon, LV_OPA_70, 0);
+
+    context->search_textarea = lv_textarea_create(search_row);
+    lv_textarea_set_one_line(context->search_textarea, true);
+    lv_textarea_set_placeholder_text(context->search_textarea, "Search scripts");
+    lv_obj_set_flex_grow(context->search_textarea, 1);
+    lv_textarea_set_text(context->search_textarea, context->filter);
+    lv_obj_add_event_cb(context->search_textarea, on_query_changed, LV_EVENT_VALUE_CHANGED, context);
+
+    lv_obj_t* list_container = lv_obj_create(context->content);
+    lv_obj_set_width(list_container, LV_PCT(100));
+    lv_obj_set_flex_grow(list_container, 1);
+    lv_obj_set_flex_flow(list_container, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_style_pad_all(list_container, 0, 0);
+    lv_obj_set_style_border_width(list_container, 0, 0);
+    lv_obj_set_style_bg_opa(list_container, LV_OPA_TRANSP, 0);
+    context->list_container = list_container;
+
+    rebuild_browser_list(context);
 }
 
 static void on_close(lv_event_t* event) {
@@ -1735,15 +1802,6 @@ int main(int argc, char* argv[]) {
                 } else if (kind == DIALOG_EXPORT_NAME && length > 0) {
                     lvgl_lock();
                     start_export(&context, text);
-                    lvgl_unlock();
-                } else if (kind == DIALOG_FILTER) {
-                    if (event.result.result == 0) {
-                        const size_t filter_length = length < MAX_FILTER_LENGTH ? length : MAX_FILTER_LENGTH;
-                        memcpy(context.filter, text, filter_length);
-                        context.filter[filter_length] = '\0';
-                    }
-                    lvgl_lock();
-                    show_browser(&context);
                     lvgl_unlock();
                 }
 

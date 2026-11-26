@@ -243,7 +243,7 @@ be read back from it unaided.
 | [x] | Module stop/start | Gates new runtimes; refuses stop while a script runs |
 | [ ] | On-device syntax highlighting | Deferred; needs custom drawing |
 | [ ] | Rename / delete | Browser currently lists only |
-| [x] | Search / filter | Search action; case-insensitive name filter, active filter shown next to the path |
+| [x] | Search / filter | Toolbar search toggles an inline App Hub-style row; live, case-insensitive filtering |
 | [ ] | Syntax highlighting / line numbers | Editor is plain text |
 | [x] | Runtime version display | Browser title shows the installed package version; the runner explains an API mismatch |
 | [ ] | Multi-file project view | `require` prerequisite |
