@@ -284,6 +284,7 @@ be read back from it unaided.
 |---|---|---|
 | [!] | Re-applying `grid()` after layout corrupts teardown | Build one card per layout; toggle `HIDDEN` |
 | [!] | Runtime module cannot be replaced while an app uses it | Close the app (or reboot) before install |
+| [!] | Script package embeds its runner | Repackage after a Lua ABI change; 0.1.24 moved integers to 64-bit |
 | [!] | No sandbox | A script has ELF-app access |
 | [!] | No writable `/tmp` | `io.tmpfile`/`os.tmpname` unusable |
 | [!] | `requires.ram=1M` | PSRAM required |

@@ -103,6 +103,13 @@ The Lua Runtime package must be installed: its module supplies the interpreter.
 When the runner changes, re-run the packaging tool to refresh the copy inside
 each script package (the script itself does not need rebuilding).
 
+The runner and the runtime must agree on Lua's number layout: a script package
+embeds its own runner, and the Lua C API passes `lua_Integer` values by width.
+0.1.24 moved integers to 64-bit (floats stay 32-bit), so a package built against
+an earlier runtime aborts inside the runtime module when its script is
+evaluated. Repackage it with 0.1.24; the script and assets do not change. Hello
+0.1.2 is rebuilt for it.
+
 ## Lua Apps
 
 The **Lua Apps** app (id `tactility.luaapps`, in this package) collects the

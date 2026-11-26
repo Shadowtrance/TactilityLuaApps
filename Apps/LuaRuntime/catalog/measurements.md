@@ -86,6 +86,47 @@ memory and cache do the same work in ~170 ms.
 The fix belongs in the kernel: index module symbols (a hash table or a
 per-module Bloom filter to skip modules that cannot contain the name) instead of
 scanning all of them per lookup. No app-side change can remove the relocations.
+This was implemented on 2026-11-26; see the update below.
 
 Raw run durations are in `build/measure_devices.py`'s output; the script is a
 local measurement helper and is not packaged.
+
+## Update 2026-11-26: kernel symbol index
+
+Firmware **ac42cd31** plus a local kernel change: each module builds a small
+FNV-1a hash index of its exported names in `module_add()`, so a global lookup
+probes one bucket per module instead of `strcmp`-ing every symbol. The linear
+scan remains the fallback when the allocation fails or a module has more than
+65,535 symbols.
+
+Three launches of **hello 0.1.2 (code 3)** after a hard reset:
+
+| Segment | Before (2026-11-25) | After |
+|---|---:|---:|
+| loader (`starting` → `elf->entry`) | 135–142 ms | 143–145 ms |
+| `elf->entry` → `LuaRunner: started` | 1,382–1,390 ms | 55–69 ms |
+| eval (`started` → `script evaluated`) | 50–100 ms | 48–101 ms |
+| **total** | **~1.6 s** | **248–313 ms** |
+
+The first launch is the slow one (69 ms relocation, 101 ms eval) because the
+script and its fonts are cold; the next two relocate in 55 ms and evaluate in
+48–49 ms. The bulk of the remaining relocation time is the 1,664
+`R_XTENSA_RELATIVE` stores and the single cache flush, not name lookup.
+
+The index uses about 17 KB of internal heap: `free` after boot reports 98,647 B
+instead of the 115,787 B recorded above. The index stores only 16-bit bucket and
+chain positions, so the trade is a one-time boot cost (hashing ~2,600 names) for
+an O(1) lookup per module; the names themselves stay in the module's own table
+(PSRAM for loaded modules, flash for firmware modules).
+
+The kernel test suite covers the indexed path, duplicate names (the first table
+entry still wins) and removal (`TactilityKernelTests`, 229 cases).
+
+### Runner/runtime integer width
+
+hello initially aborted in the runtime module right after `LuaRunner: started`,
+with 103,767 B of heap free, so it was not an allocation failure. The installed
+package was older than 0.1.24: a script package embeds its own runner, and
+0.1.24 changed `lua_Integer` to 64-bit. Reinstalling hello 0.1.2 (code 3)
+fixed it. Any third-party script package built before 0.1.24 needs the same
+repackage; the script itself is unchanged.
