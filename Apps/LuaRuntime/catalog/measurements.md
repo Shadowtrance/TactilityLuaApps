@@ -123,9 +123,15 @@ the earlier resident variant kept it at boot, which is what the 98,647 B vs
 115,787 B boot comparison measured. Building it costs ~2 ms per launch (hashing
 the names and one allocation).
 
+The scoped build was verified on esp-mosaico (S31): `free` reports **144,507 B
+at idle** (launcher, no script), and hello relocates in **51 ms** with 46 ms
+eval — the same relocation time as the resident build. Launching hello lowers
+free by ~9.7 KB for the script itself; the ~15 KB arena is no longer part of the
+idle figure.
+
 The kernel test suite covers the indexed path, duplicate names (the first table
 entry still wins), nested acquire/release, removal while an index is active, and
-resolution with no index at all (`TactilityKernelTests`, 229 cases).
+resolution with no index at all (`TactilityKernelTests`, 230 cases).
 
 ### Runner/runtime integer width
 
