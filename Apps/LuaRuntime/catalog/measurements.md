@@ -93,11 +93,14 @@ local measurement helper and is not packaged.
 
 ## Update 2026-11-26: kernel symbol index
 
-Firmware **ac42cd31** plus a local kernel change: each module builds a small
-FNV-1a hash index of its exported names in `module_add()`, so a global lookup
-probes one bucket per module instead of `strcmp`-ing every symbol. The linear
-scan remains the fallback when the allocation fails or a module has more than
-65,535 symbols.
+Firmware **ac42cd31** plus a local kernel change: while an ELF is relocated, each
+module gets a small FNV-1a hash index of its exported names, so a global lookup
+probes one bucket per module instead of `strcmp`-ing every symbol. The loader's
+existing `module_refs_begin()`/`module_refs_end()` pair brackets the work, so
+the indexes live in one arena allocation only for the duration of
+`esp_elf_relocate()` and are freed afterwards. Idle systems keep **no** index
+memory; the linear scan remains the fallback when the allocation fails or a
+module has more than 65,535 symbols.
 
 Three launches of **hello 0.1.2 (code 3)** after a hard reset:
 
@@ -113,14 +116,16 @@ script and its fonts are cold; the next two relocate in 55 ms and evaluate in
 48–49 ms. The bulk of the remaining relocation time is the 1,664
 `R_XTENSA_RELATIVE` stores and the single cache flush, not name lookup.
 
-The index uses about 17 KB of internal heap: `free` after boot reports 98,647 B
-instead of the 115,787 B recorded above. The index stores only 16-bit bucket and
-chain positions, so the trade is a one-time boot cost (hashing ~2,600 names) for
-an O(1) lookup per module; the names themselves stay in the module's own table
-(PSRAM for loaded modules, flash for firmware modules).
+The arena is ~15.4 KB for the 2,647 names exported by the firmware build
+(`2 * bucket_count + 2 * count` per module), plus allocator overhead. Because it
+is only held during relocation, that is a peak rather than a permanent cost;
+the earlier resident variant kept it at boot, which is what the 98,647 B vs
+115,787 B boot comparison measured. Building it costs ~2 ms per launch (hashing
+the names and one allocation).
 
 The kernel test suite covers the indexed path, duplicate names (the first table
-entry still wins) and removal (`TactilityKernelTests`, 229 cases).
+entry still wins), nested acquire/release, removal while an index is active, and
+resolution with no index at all (`TactilityKernelTests`, 229 cases).
 
 ### Runner/runtime integer width
 
