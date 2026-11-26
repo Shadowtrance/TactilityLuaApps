@@ -11,6 +11,17 @@
 #include <limits.h>
 #include <stddef.h>
 
+/* TACTILITY BEGIN
+** newlib's <limits.h> does not expose LLONG_MAX in C++ mode, which the runner uses to
+** include the Lua headers. GCC still has the builtin limit.
+*/
+#if !defined(LLONG_MAX) && defined(__LONG_LONG_MAX__)
+#define LLONG_MAX __LONG_LONG_MAX__
+#define LLONG_MIN (-__LONG_LONG_MAX__ - 1LL)
+#define ULLONG_MAX (__LONG_LONG_MAX__ * 2ULL + 1ULL)
+#endif
+/* TACTILITY END */
+
 
 /*
 ** ===================================================================
@@ -156,15 +167,16 @@
 /* TACTILITY BEGIN
 ** No ESP32 target has a 64-bit FPU, so the default 'double' floats are emulated in
 ** software, and every Lua value carries 8 bytes of number payload instead of 4. 32-bit
-** numbers are the standard trade for embedded Lua: faster arithmetic and a smaller heap,
-** at the cost of ~7 significant digits and integers capped at 2^31. Espressif's own Lua
-** component makes the same choice.
+** floats are the standard trade for embedded Lua: faster arithmetic and a smaller heap,
+** at the cost of ~7 significant digits. Integers stay 64-bit (see the override below) so
+** byte counts such as SD-card sizes do not truncate. Espressif's own Lua component makes
+** the same float choice.
 **
 ** Note this is tested with #if defined() below, not for a value, so it must stay
 ** undefined (rather than defined to 0) off-target.
 **
-** This deliberately differs between targets - the simulator keeps 64-bit numbers - so
-** scripts doing large-integer or high-precision arithmetic can behave differently on
+** This deliberately differs between targets - the simulator keeps 64-bit floats - so
+** scripts doing high-precision arithmetic can behave differently on
 ** device than in the simulator. Precompiled bytecode is not portable across the two
 ** either (it never was: the header records the number sizes and Lua rejects a mismatch).
 ** Source scripts are unaffected, which is how apps ship.
@@ -212,6 +224,18 @@
 #define LUA_FLOAT_TYPE	LUA_FLOAT_DEFAULT
 
 #endif				/* } */
+
+
+/* TACTILITY BEGIN
+** Keep 32-bit floats on ESP, but use 64-bit Lua integers: SD-card and other byte
+** counts exceed 2^31, and lua_Integer is what the system.storage() values use.
+** This also matches the simulator's integer width.
+*/
+#if defined(ESP_PLATFORM)
+#undef LUA_INT_TYPE
+#define LUA_INT_TYPE	LUA_INT_LONGLONG
+#endif
+/* TACTILITY END */
 
 
 /* }================================================================== */
