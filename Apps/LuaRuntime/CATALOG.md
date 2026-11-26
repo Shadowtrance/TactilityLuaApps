@@ -273,7 +273,7 @@ be read back from it unaided.
 | [x] | `tests/animation.lua` | x/value/colour animations, stop, path constants, target deletion |
 | [x] | Designer self-test | `designer.py --self-test` (chrome geometry, mono, model, flex/grid layout, JSON, export, tree moves) |
 | [x] | Designer UI test | `designer.py --ui-test` drives every control, tab, widget, property and tree drag |
-| [ ] | Screenshot UI regression | Pixel comparison per demo |
+| [x] | Screenshot UI regression | `visual_test.py`; headless `render_image()` goldens for Tab5 landscape/portrait, split/side bars, dark/light/mono |
 | [x] | `catalog.py --check` in CI | IDL drift against the SDK |
 | [ ] | Close-path test | Open/close every packaged demo |
 | [ ] | Soak / memory test | Long-running scripts |

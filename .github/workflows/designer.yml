@@ -1,0 +1,58 @@
+name: Designer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Apps/LuaRuntime/tools/lua-gui-designer/**"
+      - ".github/workflows/designer.yml"
+  pull_request:
+    paths:
+      - "Apps/LuaRuntime/tools/lua-gui-designer/**"
+      - ".github/workflows/designer.yml"
+  workflow_dispatch:
+
+jobs:
+  model:
+    name: Visual regression
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Apps/LuaRuntime/tools/lua-gui-designer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      # Pinned: the goldens are rendered with this Pillow, and its bundled
+      # FreeType decides the text antialiasing. A different version may shift a
+      # few edge pixels; the tolerance covers that, but pin to keep it tight.
+      - run: pip install --disable-pip-version-check pillow==12.1.1
+      - run: python visual_test.py --diff-dir out
+      - name: Upload difference images
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: designer-visual-diff
+          path: Apps/LuaRuntime/tools/lua-gui-designer/out
+          if-no-files-found: ignore
+
+  ui:
+    name: Model and UI tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Apps/LuaRuntime/tools/lua-gui-designer
+    steps:
+      - uses: actions/checkout@v4
+      # Custom2kinter 6 uses TypedDict(extra_items=...), which needs Python 3.13.
+      # The runner's 3.12 has no matching tk package, so use deadsnakes with
+      # python3.13-tk instead of setup-python's build (which may lack Tkinter).
+      - run: |
+          sudo add-apt-repository -y ppa:deadsnakes/ppa
+          sudo apt-get update
+          sudo apt-get install -y python3.13 python3.13-venv python3.13-tk xvfb
+          python3.13 -m venv .venv
+          .venv/bin/pip install --disable-pip-version-check "custom2kinter>=6,<7" pillow==12.1.1
+      - run: xvfb-run -a .venv/bin/python designer.py --self-test
+      - run: xvfb-run -a .venv/bin/python designer.py --ui-test

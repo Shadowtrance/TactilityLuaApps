@@ -20,7 +20,7 @@ import calendar
 import datetime
 import math
 
-from PIL import Image, ImageDraw, ImageTk
+from PIL import Image, ImageDraw
 
 from fonts import icon_font as _icon_font
 from icons import SHARED_ICONS
@@ -323,8 +323,7 @@ def _is_on_active_page(project: Project, widget: WidgetNode) -> bool:
     return True
 
 
-def render(
-    canvas,
+def render_image(
     project: Project,
     profile: DeviceProfile,
     theme: MaterialTheme,
@@ -333,11 +332,12 @@ def render(
     selected_ids: set[str] | None = None,
     show_grid: bool = True,
     scroll_y: int = 0,
-) -> None:
+    now: datetime.datetime | None = None,
+) -> Image.Image | None:
     final_w = round(profile.width * zoom) + MARGIN * 2
     final_h = round(profile.height * zoom) + MARGIN * 2
     if final_w <= 0 or final_h <= 0:
-        return
+        return None
 
     scale = zoom * SUPERSAMPLE
     width = final_w * SUPERSAMPLE
@@ -374,6 +374,7 @@ def render(
             device_y,
             strip * scale,
             device_h,
+            now,
         )
         inner_x = (
             device_x + strip_x * scale
@@ -396,6 +397,7 @@ def render(
             device_y,
             device_w,
             statusbar_h * scale,
+            now,
         )
         toolbar_x = 0.0
         toolbar_y = statusbar_h * scale
@@ -536,12 +538,41 @@ def render(
         )
 
     image = image.resize((final_w, final_h), Image.LANCZOS)
+    return image
+
+
+def render(
+    canvas,
+    project: Project,
+    profile: DeviceProfile,
+    theme: MaterialTheme,
+    zoom: float,
+    selected_id: str | None,
+    selected_ids: set[str] | None = None,
+    show_grid: bool = True,
+    scroll_y: int = 0,
+) -> None:
+    image = render_image(
+        project,
+        profile,
+        theme,
+        zoom,
+        selected_id,
+        selected_ids,
+        show_grid,
+        scroll_y,
+    )
+    if image is None:
+        return
+    # Imported here so the headless visual test (render_image) needs no Tk.
+    from PIL import ImageTk
+
     canvas._image = image  # available to the UI test and diagnostics
     photo = ImageTk.PhotoImage(image)
     canvas._photo = photo  # keep the Tk image alive
     canvas.delete("all")
     canvas.create_image(0, 0, image=photo, anchor="nw")
-    canvas.configure(scrollregion=(0, 0, final_w, final_h))
+    canvas.configure(scrollregion=(0, 0, image.width, image.height))
 
 
 def _draw_split_statusbar(
@@ -552,8 +583,9 @@ def _draw_split_statusbar(
     y: float,
     w: float,
     h: float,
+    now: datetime.datetime | None = None,
 ) -> None:
-    time_text = datetime.datetime.now().strftime("%H:%M")
+    time_text = (now or datetime.datetime.now()).strftime("%H:%M")
     _text(
         draw,
         x + 6 * scale,
@@ -610,12 +642,13 @@ def _draw_side_statusbar(
     y: float,
     w: float,
     h: float,
+    now: datetime.datetime | None = None,
 ) -> None:
     draw.rectangle([x, y, x + w, y + h], fill=theme.side_bar_color)
 
     pad_top = lerp(0, 4, theme.settings.spacing) * scale
     small = _font(theme, "small", scale)
-    time_text = datetime.datetime.now().strftime("%H:%M")
+    time_text = (now or datetime.datetime.now()).strftime("%H:%M")
     _text(
         draw,
         x + w / 2,

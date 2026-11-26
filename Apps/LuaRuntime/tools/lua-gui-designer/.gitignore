@@ -1,2 +1,4 @@
 __pycache__/
+.venv/
 designer.settings.json
+out/

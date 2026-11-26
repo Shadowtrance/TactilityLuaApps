@@ -17,7 +17,7 @@ is run with the Lua app or packaged as a Lua app.
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.13+ (Custom2kinter 6 uses `TypedDict(extra_items=...)`)
 - [Custom2kinter](https://pypi.org/project/custom2kinter/) 6.x
   (`pip install custom2kinter`)
 - Pillow (Custom2kinter depends on it; the preview renderer uses it too)
@@ -69,6 +69,30 @@ settings; use it to reproduce a particular device.
 profiles, themes, bars layouts and colours, adds every widget, edits every
 property type, invokes every switch and button callback, and saves/exports the
 project.
+
+## Visual regression
+
+`visual_test.py` renders the Appearance clone and the demo project headlessly
+through the same `render_image()` the canvas uses, then compares them with the
+PNGs in `golden/`. It needs only Pillow: no window, no Custom2kinter.
+
+```powershell
+py Apps\LuaRuntime\tools\lua-gui-designer\visual_test.py
+py Apps\LuaRuntime\tools\lua-gui-designer\visual_test.py --update          # after an intended change
+py Apps\LuaRuntime\tools\lua-gui-designer\visual_test.py --diff-dir out    # difference images
+py Apps\LuaRuntime\tools\lua-gui-designer\visual_test.py --list            # case names
+```
+
+The cases cover the Tab5 in landscape and portrait, the split and side system
+bars, dark/light and mono. The status bar clock is pinned, and the fonts are
+bundled, so rendering is deterministic (CI pins the Pillow version). A pixel
+counts as changed only when a channel differs by more than `--tolerance`
+(default 2); a case fails above `--max-changed` (0.02% of pixels) or
+`--max-mean` (0.05), which still catches one moved or recoloured widget.
+
+CI runs this and the `--self-test`/`--ui-test` modes under `xvfb`
+(`.github/workflows/designer.yml`). `golden/` is committed: a red job means the
+preview changed, and a deliberate change needs `--update`.
 
 ## What it does
 

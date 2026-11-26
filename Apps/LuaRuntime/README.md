@@ -496,6 +496,7 @@ has syntax highlighting and the event editor has auto-indent.
 ```powershell
 py Apps\LuaRuntime\tools\lua-gui-designer\designer.py
 py Apps\LuaRuntime\tools\lua-gui-designer\designer.py --self-test
+py Apps\LuaRuntime\tools\lua-gui-designer\visual_test.py
 ```
 
 ## Catalog
