@@ -1358,10 +1358,19 @@ static void show_editor(struct Context* context, struct ScriptEntry* script) {
     lv_obj_set_width(editor, LV_PCT(100));
     lv_obj_set_flex_grow(editor, 1);
     lv_textarea_set_one_line(editor, false);
-    lv_textarea_set_text(editor, source);
-    // Open at the top: set_text leaves the cursor at the end, which scrolls long scripts.
+    // Kerning costs a second glyph lookup per character (and a kerning table search).
+    // The editor copies the theme font so it can lay out code without it.
+    static lv_font_t editor_font;
+    editor_font = *lvgl_get_text_font(FONT_SIZE_SMALL);
+    editor_font.kerning = LV_FONT_KERNING_NONE;
+    lv_obj_set_style_text_font(editor, &editor_font, 0);
+    // lv_textarea_set_text() puts the cursor at the end, which makes LVGL measure the whole
+    // text to find the last line. A 25 KB script took 7.6 s there (and tripped the task
+    // watchdog). The editor opens at the top anyway, so set the label directly and leave the
+    // cursor at position 0.
+    lv_label_set_text(lv_obj_get_child(editor, 0), source);
+    // Keep the textarea's cursor and scroll state in sync with the label.
     lv_textarea_set_cursor_pos(editor, 0);
-    lv_obj_set_style_text_font(editor, lvgl_get_text_font(FONT_SIZE_SMALL), 0);
     free(source);
 
     context->editor = editor;

@@ -141,3 +141,29 @@ package was older than 0.1.24: a script package embeds its own runner, and
 0.1.24 changed `lua_Integer` to 64-bit. Reinstalling hello 0.1.2 (code 3)
 fixed it. Any third-party script package built before 0.1.24 needs the same
 repackage; the script itself is unchanged.
+
+### Companion editor load
+
+`appearance.lua` (24,925 bytes) on the T-Deck, measured with temporary logs
+inside `show_editor()`:
+
+| Phase | Before | After |
+|---|---:|---:|
+| `lv_textarea_set_text()` (cursor-to-end scan) | 7,595 ms | removed |
+| cursor/layout after setting the text | 10 ms | 1,690 ms |
+| first draw | 2,155 ms | 20 ms |
+| **total** | **~9.8 s** | **~1.8 s** |
+
+Two changes:
+
+- The editor opens at the top, so `lv_textarea_set_text()` was scanning the whole
+  document to place the cursor at the end for nothing. The label is now set
+  directly and the cursor stays at position 0. This also stops the task watchdog
+  from firing on large scripts.
+- The editor copies the theme font with kerning disabled. The binfont font does a
+  second glyph lookup plus a kerning table search per character with kerning on;
+  code editing does not need it. That cut the remaining layout from ~2.9 s to
+  ~1.7 s.
+
+The remaining layout time is the proportional font's per-glyph work; a glyph
+cache in the LVGL binfont wrapper (firmware) would likely take it below 200 ms.
