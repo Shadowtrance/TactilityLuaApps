@@ -29,7 +29,7 @@ test that proves it.
 | [x] | Runtime API guard | `LUA_RUNTIME_API_VERSION` = 3 |
 | [x] | Toolbar close actions | Runner and companion emit `APP_EVENT_CLOSE` |
 | [x] | Missing-export failure | Module load fails at install, not at script runtime |
-| [ ] | Companion runtime-version display | Show installed vs required API |
+| [x] | Companion runtime-version display | Browser title shows the installed package version |
 | [ ] | `require` / multi-file scripts | Scripts are single-file today |
 | [x] | Package asset API (images) | `...` gives the install dir; absolute paths get the `A:` LVGL prefix; PNG decodes through lodepng |
 | [ ] | Sandbox / permissions | A script has full ELF-app access |
@@ -155,7 +155,7 @@ test that proves it.
 | [ ] | `service` | — | Battery/status services |
 | [ ] | `bundle` / properties files | — | |
 | [x] | `app` | hand-written | `tests/app.lua` |
-| [!] | App lifecycle | list/start/is_running/current from Lua | stop/install/uninstall still C-only |
+| [x] | App lifecycle | list/start/stop/is_running/current/install/uninstall from Lua; stop refuses the running script, uninstall refuses the runtime |
 | [ ] | Dialogs / file picker / input dialog | — | App cloning and settings UIs |
 | [x] | Notification events | Runner timer + `notification_subscribe` | `subscribe(callback)`, `EVENT`, `tests/notification_events.lua` |
 | [!] | Notification actions / Bundle data | — | Actions need Lua-callback lifetime design; Bundle needs a kernel key-enumeration API |
@@ -265,7 +265,7 @@ be read back from it unaided.
 | [x] | `tests/grid.lua` | Grid tracks and cell placement |
 | [x] | `tests/notification.lua` | Send, get, list, dismiss and missing id |
 | [x] | `tests/notification_events.lua` | Subscribe, posted/dismissed/cleared order and cancel |
-| [x] | `tests/app.lua` | App list, running state, current app and the unknown-app start path |
+| [x] | `tests/app.lua` | App list (hidden apps included), running state, current app, start/stop error paths and the current-app stop guard |
 | [x] | `tests/object_api.lua` | Core sizing/margins/outline/shadow/text/transforms/states/flags/children, Arc and Spinbox |
 | [x] | `tests/widget_batch2.lua` | LED, Table, Scale, ImageButton, Chart, Calendar, Keyboard, ButtonMatrix |
 | [x] | `tests/widget_batch3.lua` | Tabview, Tileview |

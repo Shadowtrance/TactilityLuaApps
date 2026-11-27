@@ -36,9 +36,12 @@ Status: partially implemented (2026-11-21)
   scanner now mirrors the internal one: bus chips plus a grid with device names.
 - `tactility.app` is hand-written: `list()` enumerates the registered
   manifests (the visitor runs under the app ledger lock, so only copies),
-  `is_running(id)`, `current()` and `start(id, args?)`. Starting returns the new
-  instance id immediately; the app gets its own task and window. Verified with
-  `tests/app.lua`.
+  `is_running(id)`, `current()`, `start(id, args?)`, `stop(instance_id_or_id)`,
+  `install(path)` and `uninstall(package_id)`. Starting returns the new instance
+  id immediately; the app gets its own task and window. `stop` accepts an
+  instance id or an app id and refuses the app that runs the script. `install`
+  and `uninstall` block while the package is processed; `uninstall` refuses the
+  Lua runtime package. Verified with `tests/app.lua`.
 - `tactility.notification` is hand-written: `send{...}`, `list`, `get`,
   `dismiss`, `dismiss_all`, `dismiss_non_sticky` and `count`, with `SEVERITY`
   and `SOURCE` constants. The runner adds `subscribe(callback)` and `EVENT`:

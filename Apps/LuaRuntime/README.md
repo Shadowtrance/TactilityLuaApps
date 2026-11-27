@@ -249,8 +249,10 @@ the peripheral when the handle is collected, so an explicit `close` is optional.
 `tactility.app` lists every registered app (`list()` returns `{ id, name,
 category, hidden }`), reports whether one is running (`is_running(id)`), returns
 the topmost app id (`current()`) and launches one (`start(id, args?)`, which
-returns the new instance id). Starting an app returns as soon as it is
-scheduled; its window opens like any launcher start.
+returns the new instance id). `stop(instance_id_or_id)` closes a running app and
+refuses the app that runs the script; `install(path)` and `uninstall(package_id)`
+manage `.app` packages. Starting an app returns as soon as it is scheduled; its
+window opens like any launcher start.
 
 ### Widgets
 
