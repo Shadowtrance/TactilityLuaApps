@@ -234,12 +234,17 @@ local longitude_field = lvgl.TextArea(longitude_row, {
     text = string.format("%.4f", custom_longitude),
 })
 
--- The keyboard appears only while a coordinate field is being edited.
-local keyboard = lvgl.Keyboard(settings_view, {
-    w = lvgl.PCT(100),
-    h = lvgl.theme_lerp(140, 230),
-})
-keyboard:add_flag(lvgl.FLAG.HIDDEN)
+-- The on-screen keyboard is only for touch-only devices; a hardware keyboard makes
+-- it redundant (and on a small screen it would cover the fields).
+local hardware_keyboard = lvgl.hardware_keyboard_available()
+local keyboard = nil
+if not hardware_keyboard then
+    keyboard = lvgl.Keyboard(settings_view, {
+        w = lvgl.PCT(100),
+        h = lvgl.theme_lerp(140, 230),
+    })
+    keyboard:add_flag(lvgl.FLAG.HIDDEN)
+end
 
 local units_row = lvgl.Object(settings_view, {
     w = lvgl.PCT(100),
@@ -371,7 +376,9 @@ local function show_custom_fields(visible)
         custom_fields:remove_flag(lvgl.FLAG.HIDDEN)
     else
         custom_fields:add_flag(lvgl.FLAG.HIDDEN)
-        keyboard:add_flag(lvgl.FLAG.HIDDEN)
+        if keyboard then
+            keyboard:add_flag(lvgl.FLAG.HIDDEN)
+        end
     end
 end
 
@@ -394,7 +401,9 @@ local function toggle_settings()
         settings_visible = false
         settings_view:add_flag(lvgl.FLAG.HIDDEN)
         main_view:remove_flag(lvgl.FLAG.HIDDEN)
-        keyboard:add_flag(lvgl.FLAG.HIDDEN)
+        if keyboard then
+            keyboard:add_flag(lvgl.FLAG.HIDDEN)
+        end
     else
         settings_visible = true
         sync_settings_view()
@@ -450,8 +459,10 @@ end)
 
 local function bind_keyboard(field)
     return function()
-        keyboard:set_textarea(field)
-        keyboard:remove_flag(lvgl.FLAG.HIDDEN)
+        if keyboard then
+            keyboard:set_textarea(field)
+            keyboard:remove_flag(lvgl.FLAG.HIDDEN)
+        end
     end
 end
 
@@ -459,10 +470,12 @@ search_field:on(lvgl.EVENT.CLICKED, bind_keyboard(search_field))
 name_field:on(lvgl.EVENT.CLICKED, bind_keyboard(name_field))
 latitude_field:on(lvgl.EVENT.CLICKED, bind_keyboard(latitude_field))
 longitude_field:on(lvgl.EVENT.CLICKED, bind_keyboard(longitude_field))
-keyboard:on(lvgl.EVENT.READY, function()
-    keyboard:set_textarea(nil)
-    keyboard:add_flag(lvgl.FLAG.HIDDEN)
-end)
+if keyboard then
+    keyboard:on(lvgl.EVENT.READY, function()
+        keyboard:set_textarea(nil)
+        keyboard:add_flag(lvgl.FLAG.HIDDEN)
+    end)
+end
 
 search_button:on(lvgl.EVENT.CLICKED, function()
     local query = search_field:text()
