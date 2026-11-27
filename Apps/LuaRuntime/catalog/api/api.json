@@ -1,6 +1,6 @@
 {
   "title": "Tactility Lua API",
-  "entry_count": 645,
+  "entry_count": 648,
   "modules": [
     {
       "name": "tactility.app",
@@ -1194,6 +1194,24 @@
           "description": "Starts an asynchronous request. Options are `url` (required), `method`,\n`headers`, `body`, `timeout_ms` and `max_bytes`. The callback receives\n`{ status, body, length, content_type }`, or `nil, reason` for a transport\nfailure. Up to four requests may run at once.",
           "source": "lua_runner/main/Source/luavgl/http.cpp",
           "line": 358
+        }
+      ]
+    },
+    {
+      "name": "tactility.ui",
+      "title": "App UI",
+      "summary": "Access to the runner's own toolbar.",
+      "entries": [
+        {
+          "id": "tactility.ui.toolbar",
+          "name": "toolbar",
+          "owner": "tactility.ui",
+          "kind": "function",
+          "signature": "tactility.ui.toolbar() -> lvgl.Toolbar | nil",
+          "group": "Toolbar",
+          "description": "Returns the runner's own toolbar, so scripts can add refresh or settings actions with lvgl.toolbar.add_text_action()/add_icon_action().",
+          "source": "lua_runner/main/Source/luavgl/bindings.cpp",
+          "line": 0
         }
       ]
     },
@@ -2784,7 +2802,7 @@
           "group": "toolbar",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/toolbar.cpp",
-          "line": 227
+          "line": 260
         },
         {
           "id": "lvgl.toolbar.set_title",
@@ -2795,7 +2813,7 @@
           "group": "toolbar",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/toolbar.cpp",
-          "line": 249
+          "line": 282
         },
         {
           "id": "lvgl.toolbar.set_nav_action",
@@ -2806,7 +2824,7 @@
           "group": "toolbar",
           "description": "Replaces the leading navigation action.\n\nRarely needed: a fresh toolbar already has a working close button that returns to the\nlauncher, so an app only calls this to do something else on back.\n\nCalled as `set_nav_action(toolbar, callback)` or, to change the icon too,\n`set_nav_action(toolbar, icon, callback)`. The icon is an LVGL symbol string such as\n`lvgl.SYMBOL.CLOSE` - an arbitrary string is treated as an image path and silently\nrenders as nothing, which is exactly the mistake this signature avoids.",
           "source": "lua_runner/main/Source/luavgl/toolbar.cpp",
-          "line": 267
+          "line": 300
         },
         {
           "id": "lvgl.toolbar.add_text_action",
@@ -2817,7 +2835,18 @@
           "group": "toolbar",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/toolbar.cpp",
-          "line": 310
+          "line": 343
+        },
+        {
+          "id": "lvgl.toolbar.add_icon_action",
+          "name": "add_icon_action",
+          "owner": "lvgl.toolbar",
+          "kind": "function",
+          "signature": "lvgl.toolbar:add_icon_action(icon, callback)",
+          "group": "toolbar",
+          "description": "A toolbar button showing a shared icon.",
+          "source": "lua_runner/main/Source/luavgl/toolbar.cpp",
+          "line": 365
         },
         {
           "id": "lvgl.toolbar.add_spinner",
@@ -2828,7 +2857,7 @@
           "group": "toolbar",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/toolbar.cpp",
-          "line": 330
+          "line": 388
         },
         {
           "id": "lvgl.toolbar.clear_actions",
@@ -2839,7 +2868,7 @@
           "group": "toolbar",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/toolbar.cpp",
-          "line": 342
+          "line": 399
         },
         {
           "id": "lvgl.Widget:value",
@@ -3227,6 +3256,17 @@
           "line": 1320
         },
         {
+          "id": "lvgl.Widget:set_textarea",
+          "name": "set_textarea",
+          "owner": "lvgl.Widget",
+          "kind": "method",
+          "signature": "keyboard:set_textarea(textarea | nil)",
+          "group": "Widget methods",
+          "description": "Binds the keyboard to a field.",
+          "source": "lua_runner/main/Source/luavgl/widgets.cpp",
+          "line": 1334
+        },
+        {
           "id": "lvgl.Widget:keyboard_mode",
           "name": "keyboard_mode",
           "owner": "lvgl.Widget",
@@ -3235,7 +3275,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1333
+          "line": 1351
         },
         {
           "id": "lvgl.Widget:keyboard_popovers",
@@ -3246,7 +3286,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1338
+          "line": 1355
         },
         {
           "id": "lvgl.Widget:set_image_src",
@@ -3257,7 +3297,7 @@
           "group": "Widget methods",
           "description": "; left/right may be nil.",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1364
+          "line": 1381
         },
         {
           "id": "lvgl.Widget:set_image_state",
@@ -3268,7 +3308,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1380
+          "line": 1397
         },
         {
           "id": "lvgl.Widget:button_text",
@@ -3279,7 +3319,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1391
+          "line": 1408
         },
         {
           "id": "lvgl.Widget:selected_button",
@@ -3290,7 +3330,7 @@
           "group": "Widget methods",
           "description": "Returns the selected button as a 1-based number, or nil.",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1409
+          "line": 1426
         },
         {
           "id": "lvgl.Widget:select_button",
@@ -3301,7 +3341,7 @@
           "group": "Widget methods",
           "description": "; nil or 0 clears the selection.",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1423
+          "line": 1440
         },
         {
           "id": "lvgl.Widget:set_button_ctrl",
@@ -3312,7 +3352,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1438
+          "line": 1455
         },
         {
           "id": "lvgl.Widget:clear_button_ctrl",
@@ -3323,7 +3363,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1455
+          "line": 1472
         },
         {
           "id": "lvgl.Widget:has_button_ctrl",
@@ -3334,7 +3374,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1472
+          "line": 1489
         },
         {
           "id": "lvgl.Widget:set_button_width",
@@ -3345,7 +3385,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1490
+          "line": 1507
         },
         {
           "id": "lvgl.Widget:add_tab",
@@ -3356,7 +3396,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1680
+          "line": 1697
         },
         {
           "id": "lvgl.Widget:set_tab_text",
@@ -3367,7 +3407,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1688
+          "line": 1705
         },
         {
           "id": "lvgl.Widget:active",
@@ -3378,7 +3418,7 @@
           "group": "Widget methods",
           "description": "The active tab as a 1-based number, or nil when the tabview has no tabs.",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1531
+          "line": 1548
         },
         {
           "id": "lvgl.Widget:set_active",
@@ -3389,7 +3429,7 @@
           "group": "Widget methods",
           "description": "; 1-based, like every other Lua index here.",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1544
+          "line": 1561
         },
         {
           "id": "lvgl.Widget:tab_count",
@@ -3400,7 +3440,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1558
+          "line": 1575
         },
         {
           "id": "lvgl.Widget:tab_button",
@@ -3411,7 +3451,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1566
+          "line": 1583
         },
         {
           "id": "lvgl.Widget:content",
@@ -3422,7 +3462,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1583
+          "line": 1600
         },
         {
           "id": "lvgl.Widget:tab_bar",
@@ -3433,7 +3473,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1589
+          "line": 1606
         },
         {
           "id": "lvgl.Widget:add_tab_with_icon",
@@ -3444,7 +3484,7 @@
           "group": "Widget methods",
           "description": "`icon` is a `lvgl.ICON.*` glyph.",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1614
+          "line": 1631
         },
         {
           "id": "lvgl.Widget:set_tab_badge",
@@ -3455,7 +3495,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1631
+          "line": 1648
         },
         {
           "id": "lvgl.Widget:set_tab_hidden",
@@ -3466,7 +3506,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1638
+          "line": 1655
         },
         {
           "id": "lvgl.Widget:set_mode",
@@ -3477,7 +3517,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1645
+          "line": 1662
         },
         {
           "id": "lvgl.Widget:set_selected",
@@ -3488,7 +3528,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1658
+          "line": 1675
         },
         {
           "id": "lvgl.Widget:selected",
@@ -3499,7 +3539,7 @@
           "group": "Widget methods",
           "description": "The selected tab as a 1-based number, or nil when there are no tabs.",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1666
+          "line": 1683
         },
         {
           "id": "lvgl.Widget:set_text",
@@ -3510,7 +3550,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1698
+          "line": 1715
         },
         {
           "id": "lvgl.Widget:set_level",
@@ -3521,7 +3561,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1705
+          "line": 1722
         },
         {
           "id": "lvgl.Widget:set_points",
@@ -3543,7 +3583,7 @@
           "group": "Widget methods",
           "description": "0-based coordinates, like `grid_cell()`.",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1721
+          "line": 1738
         },
         {
           "id": "lvgl.Widget:set_tile",
@@ -3554,7 +3594,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1736
+          "line": 1753
         },
         {
           "id": "lvgl.Widget:goto_tile",
@@ -3565,7 +3605,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1747
+          "line": 1764
         },
         {
           "id": "lvgl.Widget:active_tile",
@@ -3576,7 +3616,7 @@
           "group": "Widget methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
-          "line": 1762
+          "line": 1779
         },
         {
           "id": "lvgl.Widget:add_text",

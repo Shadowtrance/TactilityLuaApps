@@ -134,6 +134,7 @@ static void create_widgets(lv_obj_t* parent, void* user_data) {
 
     lv_obj_t* toolbar = lvgl_toolbar_create(parent, context->name);
     lvgl_toolbar_set_nav_action(toolbar, LV_SYMBOL_CLOSE, on_close, context);
+    luavgl_set_toolbar(toolbar);
 
     lv_obj_t* content = lv_obj_create(parent);
     lv_obj_set_width(content, LV_PCT(100));

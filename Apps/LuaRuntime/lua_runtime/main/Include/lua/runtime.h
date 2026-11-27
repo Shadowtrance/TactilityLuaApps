@@ -43,8 +43,11 @@ struct LuaRuntime;
  * `lua/` directory that holds the entry script.
  *
  * Version 6 adds `tactility.json` and the asynchronous `tactility.http`.
+ *
+ * Version 7 exposes the runner's own toolbar as `tactility.ui.toolbar()`, so
+ * scripts can add actions with `lvgl.toolbar.add_text_action/add_icon_action`.
  */
-#define LUA_RUNTIME_API_VERSION 6
+#define LUA_RUNTIME_API_VERSION 7
 
 /**
  * @brief Create a Lua runtime with the standard library loaded.

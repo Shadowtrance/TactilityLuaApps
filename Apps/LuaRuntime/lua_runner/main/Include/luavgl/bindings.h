@@ -44,6 +44,12 @@ error_t luavgl_bindings_open(struct LuaRuntime* runtime, struct _lv_obj_t* root)
 void luavgl_bindings_close(struct LuaRuntime* runtime);
 
 /**
+ * @brief Give the bindings the runner's own toolbar, so scripts can add actions to it
+ * with `lvgl.toolbar.add_text_action()`/`add_icon_action()` via `tactility.ui.toolbar()`.
+ */
+void luavgl_set_toolbar(struct _lv_obj_t* toolbar);
+
+/**
  * @brief Process pending file pickers: cancel requests and deliver results.
  *
  * Call from the app's own loop, with the LVGL lock held, after the script has been

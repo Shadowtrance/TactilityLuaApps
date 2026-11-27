@@ -1330,8 +1330,25 @@ int keyboard_textarea(lua_State* state) {
     return 1;
 }
 
-int keyboard_mode(lua_State* state) {
-    lua_pushinteger(state, lv_keyboard_get_mode(check_widget_of(state, 1, &lv_keyboard_class, "keyboard")));
+/** `keyboard:set_textarea(textarea | nil)` - binds the keyboard to a field. */
+int keyboard_set_textarea(lua_State* state) {
+    auto* keyboard = check_widget_of(state, 1, &lv_keyboard_class, "keyboard");
+
+    if (lua_isnoneornil(state, 2)) {
+        lv_keyboard_set_textarea(keyboard, nullptr);
+    } else {
+        lv_obj_t* textarea = luavgl_check_object(state, 2);
+        if (!lv_obj_check_type(textarea, &lv_textarea_class)) {
+            return luaL_error(state, "set_textarea expects a text area or nil");
+        }
+        lv_keyboard_set_textarea(keyboard, textarea);
+    }
+
+    lua_settop(state, 1);
+    return 1;
+}
+
+int keyboard_mode(lua_State* state) {    lua_pushinteger(state, lv_keyboard_get_mode(check_widget_of(state, 1, &lv_keyboard_class, "keyboard")));
     return 1;
 }
 
@@ -1808,6 +1825,7 @@ const luaL_Reg widget_methods[] = {
     { "shown", calendar_shown },
     { "pressed", calendar_pressed },
     { "textarea", keyboard_textarea },
+    { "set_textarea", keyboard_set_textarea },
     { "keyboard_mode", keyboard_mode },
     { "keyboard_popovers", keyboard_popovers },
     { "set_image_src", imagebutton_set_image_src },

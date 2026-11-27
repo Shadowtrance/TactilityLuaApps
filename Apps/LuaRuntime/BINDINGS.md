@@ -55,6 +55,12 @@ Status: partially implemented (2026-11-21)
   response; transport failures pass `nil, reason`. Up to four requests can be
   active, request bodies are capped at 64 KB and responses at 1 MB. ESP32 only; the
   simulator returns an error. Verified with `tests/http.lua` and the Weather app.
+- `tactility.ui.toolbar()` returns the runner's toolbar object (or nil). It is a
+  normal `lvgl` object, so `lvgl.toolbar.add_text_action()` and the new
+  `lvgl.toolbar.add_icon_action()` add actions to the real toolbar; their
+  callbacks are stored and detached with the runtime. `keyboard:set_textarea(field)`
+  binds the on-screen keyboard to a text field. Both are exercised by the Weather
+  app's settings view.
 - `tactility.fs.pick_file(options?, callback)`, `pick_files(options?, callback)`
   and `pick_folder(callback)` start `tactility.fileselection` as a modal child. The
   result arrives in a callback from the runner's app loop, with the LVGL lock held,

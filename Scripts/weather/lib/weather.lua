@@ -36,6 +36,60 @@ function M.condition(code)
     return CONDITIONS[code] or ("Weather code " .. tostring(code))
 end
 
+local function url_encode(value)
+    return (value:gsub("([^%w%-%._~])", function(character)
+        return string.format("%%%02X", string.byte(character))
+    end))
+end
+
+-- Resolves a place name to a named coordinate through Open-Meteo's geocoder.
+function M.geocode(query, callback)
+    local handle = tactility.http.request({
+        url = "https://geocoding-api.open-meteo.com/v1/search?name=" .. url_encode(query) ..
+              "&count=1&language=en&format=json",
+        timeout_ms = 15000,
+        max_bytes = 16384,
+        headers = { Accept = "application/json" },
+    }, function(response, reason)
+        if response == nil then
+            callback(nil, reason)
+            return
+        end
+        if response.status ~= 200 then
+            callback(nil, "HTTP " .. tostring(response.status))
+            return
+        end
+
+        local data, error = tactility.json.decode(response.body)
+        if data == nil then
+            callback(nil, error)
+            return
+        end
+
+        local result = data.results and data.results[1]
+        if result == nil then
+            callback(nil, "No place found")
+            return
+        end
+
+        local name = result.name or query
+        if result.country then
+            name = name .. ", " .. result.country
+        end
+
+        callback({
+            name = name,
+            latitude = tonumber(result.latitude),
+            longitude = tonumber(result.longitude),
+        })
+    end)
+
+    if handle == nil then
+        callback(nil, "could not start the search")
+    end
+    return handle
+end
+
 local function url_for(city)
     return string.format(
         "https://api.open-meteo.com/v1/forecast" ..

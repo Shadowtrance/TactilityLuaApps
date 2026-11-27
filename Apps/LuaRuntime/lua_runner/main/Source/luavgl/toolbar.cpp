@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include <luavgl/object_private.h>
 
+#include <lvgl/fonts.h>
 #include <lvgl/widgets/toolbar.h>
 
 extern "C" {
@@ -45,12 +46,26 @@ void push_nav_callbacks(lua_State* state) {
  *
  * **Stopping an app from a handler is asynchronous.** `tt_app_stop()` only posts to the
  * loader's dispatcher thread, so this callback returns first and the app is torn down
- * afterwards - which also means the widget stays alive and clickable throughout. Each
- * callback is therefore one-shot: see the removal below.
+ * afterwards - which also means the widget stays alive and clickable throughout. The
+ * navigation/close action is therefore one-shot. Added toolbar actions (refresh,
+ * settings, ...) are repeatable and keep their callback until the runtime closes.
  *
  * The stack is balanced before the call rather than after, since the handler may have
  * started tearing this state down by the time it returns.
  */
+char REPEATABLE_ACTIONS_KEY = 0;
+
+void push_repeatable_actions(lua_State* state) {
+    lua_pushlightuserdata(state, &REPEATABLE_ACTIONS_KEY);
+    lua_rawget(state, LUA_REGISTRYINDEX);
+    if (!lua_istable(state, -1)) {
+        lua_pop(state, 1);
+        lua_newtable(state);
+        lua_pushlightuserdata(state, &REPEATABLE_ACTIONS_KEY);
+        lua_pushvalue(state, -2);
+        lua_rawset(state, LUA_REGISTRYINDEX);
+    }
+}
 /** Carries a pending handler from the LVGL event to the async call that runs it. */
 struct PendingAction {
     lua_State* state;
@@ -94,6 +109,11 @@ void run_pending_action(void* context) {
         return; // the runtime went away between the press and now
     }
 
+    push_repeatable_actions(state);
+    lua_pushlightuserdata(state, target);
+    const bool repeatable = lua_toboolean(state, -1) != 0;
+    lua_pop(state, 2);
+
     push_nav_callbacks(state);
 
     lua_pushlightuserdata(state, target);
@@ -102,12 +122,14 @@ void run_pending_action(void* context) {
         return;
     }
 
-    // One-shot: remove before running. Stopping an app is asynchronous, so the widget
+    // The navigation action is one-shot: stopping an app is asynchronous, so the widget
     // stays alive and clickable throughout the teardown, and a second press must not
-    // re-enter a runtime that is being destroyed.
-    lua_pushlightuserdata(state, target);
-    lua_pushnil(state);
-    lua_rawset(state, -4);
+    // re-enter a runtime that is being destroyed. Added actions keep their callback.
+    if (!repeatable) {
+        lua_pushlightuserdata(state, target);
+        lua_pushnil(state);
+        lua_rawset(state, -4);
+    }
 
     lua_insert(state, -2);
     lua_pop(state, 1); // the table, leaving the function
@@ -209,13 +231,24 @@ void remove_existing_nav_action(lv_obj_t* toolbar) {
 }
 
 /** Stores `function_index` as the callback for `object`, tracking it for detach. */
-void store_callback(lua_State* state, lv_obj_t* object, int function_index) {
+void store_callback(lua_State* state, lv_obj_t* object, int function_index, bool repeatable) {
     push_nav_callbacks(state);
 
     lua_pushlightuserdata(state, object);
     lua_pushvalue(state, function_index);
     lua_rawset(state, -3);
 
+    lua_pop(state, 1);
+
+    push_repeatable_actions(state);
+    lua_pushlightuserdata(state, object);
+    if (repeatable) {
+        lua_pushboolean(state, 1);
+        lua_rawset(state, -3);
+    } else {
+        lua_pushnil(state);
+        lua_rawset(state, -3);
+    }
     lua_pop(state, 1);
 
     // The widget the callback lives on can outlive this runtime - a toolbar belongs to
@@ -297,7 +330,7 @@ int toolbar_set_nav_action(lua_State* state) {
         return luaL_error(state, "could not locate the toolbar's nav button");
     }
 
-    store_callback(state, target, callback_index);
+    store_callback(state, target, callback_index, false);
 
     // Track the toolbar too: detach walks each tracked widget's subtree, so tracking the
     // root guarantees every internal child is reached whatever the toolbar does with them.
@@ -317,8 +350,9 @@ int toolbar_add_text_action(lua_State* state) {
         return luaL_error(state, "failed to add toolbar action");
     }
 
-    // Keyed by the button, since each action needs its own callback
-    store_callback(state, button, 3);
+    // Keyed by the button, since each action needs its own callback. Added actions
+    // repeat; only the navigation/close action is one-shot.
+    store_callback(state, button, 3, true);
 
     // As above: tracking the toolbar means detach sweeps its whole subtree
     luavgl_track_event_target(state, toolbar);
@@ -327,8 +361,31 @@ int toolbar_add_text_action(lua_State* state) {
     return 1;
 }
 
-int toolbar_add_spinner(lua_State* state) {
+/** `toolbar:add_icon_action(icon, callback)` - a toolbar button showing a shared icon. */
+int toolbar_add_icon_action(lua_State* state) {
     auto* toolbar = luavgl_check_object(state, 1);
+    const char* icon = luaL_checkstring(state, 2);
+    luaL_checktype(state, 3, LUA_TFUNCTION);
+
+    auto* button = lvgl_toolbar_add_text_button_action(toolbar, icon, on_action, state);
+    if (button == nullptr) {
+        return luaL_error(state, "failed to add toolbar action");
+    }
+
+    // The toolbar creates a label for the text; give it the icon font so the glyph
+    // is not rendered as a missing character in the body font.
+    lv_obj_t* label = lv_obj_get_child(button, 0);
+    if (label != nullptr) {
+        lv_obj_set_style_text_font(label, lvgl_get_shared_icon_default_font(), LV_PART_MAIN);
+    }
+
+    store_callback(state, button, 3, true);
+    luavgl_track_event_target(state, toolbar);
+    luavgl_push_object(state, button);
+    return 1;
+}
+
+int toolbar_add_spinner(lua_State* state) {    auto* toolbar = luavgl_check_object(state, 1);
 
     auto* spinner = lvgl_toolbar_add_spinner_action(toolbar);
     if (spinner == nullptr) {
@@ -374,6 +431,7 @@ const luaL_Reg toolbar_functions[] = {
     { "set_title", toolbar_set_title },
     { "set_nav_action", toolbar_set_nav_action },
     { "add_text_action", toolbar_add_text_action },
+    { "add_icon_action", toolbar_add_icon_action },
     { "add_spinner", toolbar_add_spinner },
     { "clear_actions", toolbar_clear_actions },
     { nullptr, nullptr }

@@ -65,6 +65,7 @@ MODULE_INFO: dict[str, tuple[str, str]] = {
     "tactility": ("Runtime", "Runtime-wide helpers."),
     "tactility.json": ("JSON", "Encode and decode JSON with the cJSON module."),
     "tactility.http": ("HTTP", "Asynchronous HTTP requests on a worker task."),
+    "tactility.ui": ("App UI", "Access to the runner's own toolbar."),
     "lua": ("Script loading", "The module system for multi-file scripts."),
     "tactility.gpio": ("GPIO", "Pins through the kernel GPIO controllers."),
     "tactility.i2c": ("I2C", "Register and block transfers through the I2C controllers."),
@@ -206,6 +207,20 @@ MANUAL_ENTRIES = [
         "source": "lua_runtime/main/Source/lua/json.cpp",
         "line": 0,
         "group": "Values",
+    },
+    {
+        "id": "tactility.ui.toolbar",
+        "name": "toolbar",
+        "owner": "tactility.ui",
+        "kind": "function",
+        "signature": "tactility.ui.toolbar() -> lvgl.Toolbar | nil",
+        "description": (
+            "Returns the runner's own toolbar, so scripts can add refresh or settings "
+            "actions with lvgl.toolbar.add_text_action()/add_icon_action()."
+        ),
+        "source": "lua_runner/main/Source/luavgl/bindings.cpp",
+        "line": 0,
+        "group": "Toolbar",
     },
 ]
 

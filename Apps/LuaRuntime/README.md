@@ -133,9 +133,10 @@ The editor still edits one file at a time; this is the runtime side, and a
 multi-file browser is the next editor step.
 
 `Scripts/weather` is a complete packaged example: `main.lua` plus two modules,
-Open-Meteo over `tactility.http`, `tactility.json` for the payload, a city
-picker, Celsius/Fahrenheit, a refresh interval, saved settings and a 4/5-day
-forecast that adapts to the screen height.
+Open-Meteo over `tactility.http`, `tactility.json` for the payload, toolbar
+refresh/settings actions, a place search (Open-Meteo geocoder) with custom
+coordinates and a name, Celsius/Fahrenheit, a refresh interval, saved settings
+and a 4/5-day forecast that adapts to the screen height.
 
 The runner and the runtime must agree on Lua's number layout: a script package
 embeds its own runner, and the Lua C API passes `lua_Integer` values by width.
@@ -276,6 +277,20 @@ This is an ESP32 feature; the simulator returns an error.
 tables and back. Arrays are 1-based, objects are string-keyed, and JSON `null` is
 `tactility.json.null` so array slots do not collapse. Input and output are capped
 at 512 KB and nesting at 64 levels; failures return `nil, reason`.
+
+The runner's own toolbar is available to scripts, so actions belong in the real
+toolbar instead of a second bar in the content area:
+
+```lua
+local toolbar = tactility.ui.toolbar()
+lvgl.toolbar.add_icon_action(toolbar, lvgl.ICON.REFRESH, refresh)
+lvgl.toolbar.add_icon_action(toolbar, lvgl.ICON.SETTINGS, open_settings)
+```
+
+`add_text_action` and `add_icon_action` return the action button; callbacks are
+detached when the script closes. `keyboard:set_textarea(field)` binds an on-screen
+keyboard to a text field, which the Weather settings view uses for custom
+coordinates.
 
 `tactility.system.memory()` returns `{ internal = usage, external = usage }`
 with `free`, `total`, `used` and `percent` values. External is all zeroes on a

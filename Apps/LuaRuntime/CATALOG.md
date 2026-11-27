@@ -78,7 +78,7 @@ test that proves it.
 | [x] | Timers | `lvgl.Timer`, pause/resume/delete |
 | [x] | Input groups | `lvgl.Group`, add/remove, focus next/prev, freeze, editing, wrap, default, attach/detach keypads and encoders |
 | [x] | Numeric animations | `lvgl.Anim`, `ANIM_PATH`, `ANIM_INFINITE`; C frame callbacks, no Lua frame callbacks |
-| [x] | Toolbar | Title and navigation action |
+| [x] | Toolbar | Title, navigation action, script text/icon actions on the runner toolbar, spinner |
 | [x] | Flex layout | `flex_flow`, `flex_align`, `flex_grow`, padding/gap |
 | [x] | Grid layout | `grid()`, `grid_cell()`, `GRID_CONTENT`, `GRID_FR` |
 | [x] | Layout control | `layout = lvgl.LAYOUT.NONE/FLEX/GRID`; `NONE` enables absolute children |
@@ -117,7 +117,7 @@ test that proves it.
 | [x] | `tick_count`, `major_tick_every`, `label_show`, `scale_angle`, `scale_rotation`, `scale_mode`, `text_src`, `post_draw`, `ticks_on_top` (scale) |
 | [x] | `chart_type`, `point_count`, `update_mode`, `div_lines`, `axis_range` (chart) |
 | [x] | `today`, `shown_date`, `day_names` (calendar) |
-| [x] | `textarea`, `keyboard_mode`, `popovers` (keyboard) |
+| [x] | `textarea`, `keyboard_mode`, `popovers`, `set_textarea` (keyboard) |
 | [x] | `map`, `ctrl_map`, `one_checked`, `selected_button` (button matrix) |
 | [x] | `active_tab`, `tab_bar_position`, `tab_bar_size` (tabview) |
 
@@ -218,7 +218,7 @@ be read back from it unaided.
 | [ ] | GPS viewer | `gps` + UI | Needs GPS capability |
 | [ ] | IMU viewer | `device`/sensor API | Needs sensor capability |
 | [ ] | Music player | audio + `fs` | Needs audio stream |
-| [x] | Weather | `Scripts/weather`: `require`, HTTP, JSON, city/units/interval settings | Packaged example; 4 days on short screens |
+| [x] | Weather | `Scripts/weather`: `require`, HTTP, JSON, toolbar actions, geocoding/custom location, units/interval | Packaged example; 4 days on short screens |
 | [ ] | App hub / installs | `http` + app lifecycle | Bigger scope |
 | [-] | Camera / Doom | camera / heavy port | Not a Lua demo target |
 

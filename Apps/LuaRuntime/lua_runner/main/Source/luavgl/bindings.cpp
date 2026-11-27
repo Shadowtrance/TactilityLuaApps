@@ -465,6 +465,40 @@ const Constant BUTTONMATRIX_CTRL_CONSTANTS[] = {
 
 } // namespace
 
+namespace {
+
+lv_obj_t* runner_toolbar = nullptr;
+
+/** `tactility.ui.toolbar()` - the runner's own toolbar, or nil. */
+int ui_toolbar(lua_State* state) {
+    if (runner_toolbar == nullptr) {
+        lua_pushnil(state);
+        return 1;
+    }
+    luavgl_push_object(state, runner_toolbar);
+    return 1;
+}
+
+void add_ui_api(lua_State* state) {
+    lua_getglobal(state, "tactility");
+    if (!lua_istable(state, -1)) {
+        lua_pop(state, 1);
+        return;
+    }
+
+    lua_newtable(state);
+    lua_pushcfunction(state, ui_toolbar);
+    lua_setfield(state, -2, "toolbar");
+    lua_setfield(state, -2, "ui");
+    lua_pop(state, 1);
+}
+
+} // namespace
+
+extern "C" void luavgl_set_toolbar(struct _lv_obj_t* toolbar) {
+    runner_toolbar = toolbar;
+}
+
 extern "C" error_t luavgl_bindings_open(struct LuaRuntime* runtime, lv_obj_t* root) {
     auto* state = static_cast<lua_State*>(lua_runtime_get_state(runtime));
 
@@ -561,11 +595,14 @@ extern "C" error_t luavgl_bindings_open(struct LuaRuntime* runtime, lv_obj_t* ro
     luavgl_open_anim(state);
     luavgl_open_style(state);
 
+    add_ui_api(state);
+
     lua_setglobal(state, "lvgl");
 
     return ERROR_NONE;
 }
 
 extern "C" void luavgl_bindings_close(struct LuaRuntime* runtime) {
+    runner_toolbar = nullptr;
     luavgl_detach_all(static_cast<lua_State*>(lua_runtime_get_state(runtime)));
 }
