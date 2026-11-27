@@ -61,7 +61,7 @@ local file = io.open(app_dir .. "/assets/data.txt", "r")
 | `--description` | launcher description |
 | `--platform` | target platform, repeatable (default `esp32p4`) |
 | `--runner` | alternate `lua_runner.elf` |
-| `--icon`, `--mono-icon` | launcher icons |
+| `--icon`, `--mono-icon` | launcher icons (a `--directory` package uses its own `icon.svg`/`icon_mono.svg` when present) |
 | `--assets DIR` | copy a folder to `assets/` |
 | `--ram` | `requires.ram` (default `1M`) |
 | `--requires-api` | minimum Lua runtime API written as `lua.runtime.api` (default from the runtime header) |

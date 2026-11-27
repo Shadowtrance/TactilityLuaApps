@@ -86,6 +86,14 @@ jobs:
               "${platforms[@]}" \
               --output "scripts_out/$name.app"
           done
+          for directory in Scripts/*/; do
+            [[ -f "${directory}main.lua" ]] || continue
+            name="$(basename "$directory")"
+            python3 Apps/LuaRuntime/tools/lua-app/make_lua_app.py \
+              --directory "$directory" \
+              "${platforms[@]}" \
+              --output "scripts_out/$name.app"
+          done
       - name: Upload script packages
         uses: actions/upload-artifact@v4
         with:

@@ -171,6 +171,7 @@ def main():
         parser.error("pass exactly one of --script or --directory")
 
     lua_entries = []
+    script_directory = None
     if args.script:
         script = Path(args.script).expanduser()
         if not script.is_file():
@@ -178,16 +179,16 @@ def main():
         stem = script.stem
         lua_entries.append(("main.lua", script))
     else:
-        directory = Path(args.directory).expanduser()
-        if not directory.is_dir():
-            fail(f"{directory}: no such directory")
-        script = directory / "main.lua"
+        script_directory = Path(args.directory).expanduser()
+        if not script_directory.is_dir():
+            fail(f"{script_directory}: no such directory")
+        script = script_directory / "main.lua"
         if not script.is_file():
             fail(f"{script}: a script directory must contain main.lua")
-        stem = directory.name
-        for path in sorted(directory.rglob("*")):
+        stem = script_directory.name
+        for path in sorted(script_directory.rglob("*")):
             if path.is_file():
-                lua_entries.append((path.relative_to(directory).as_posix(), path))
+                lua_entries.append((path.relative_to(script_directory).as_posix(), path))
 
     name = args.name or titleize(stem)
     app_id = args.id or f"tactility.lua.{slugify(stem)}"
@@ -213,8 +214,20 @@ def main():
             )
         runners[platform] = runner
 
-    icon = Path(args.icon).expanduser() if args.icon else RUNTIME_DIR / "icon.svg"
-    mono_icon = Path(args.mono_icon).expanduser() if args.mono_icon else RUNTIME_DIR / "icon_mono.svg"
+    icon = Path(args.icon).expanduser() if args.icon else None
+    mono_icon = Path(args.mono_icon).expanduser() if args.mono_icon else None
+    if icon is None and script_directory is not None:
+        candidate = script_directory / "icon.svg"
+        if candidate.is_file():
+            icon = candidate
+    if mono_icon is None and script_directory is not None:
+        candidate = script_directory / "icon_mono.svg"
+        if candidate.is_file():
+            mono_icon = candidate
+    if icon is None:
+        icon = RUNTIME_DIR / "icon.svg"
+    if mono_icon is None:
+        mono_icon = RUNTIME_DIR / "icon_mono.svg"
     for path, label in ((icon, "colour icon"), (mono_icon, "mono icon")):
         if not path.is_file():
             fail(f"{path}: no such {label}")
