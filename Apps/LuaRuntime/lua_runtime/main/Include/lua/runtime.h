@@ -41,8 +41,10 @@ struct LuaRuntime;
  *
  * Version 5 adds the per-app `require` search path: modules load from the
  * `lua/` directory that holds the entry script.
+ *
+ * Version 6 adds `tactility.json` and the asynchronous `tactility.http`.
  */
-#define LUA_RUNTIME_API_VERSION 5
+#define LUA_RUNTIME_API_VERSION 6
 
 /**
  * @brief Create a Lua runtime with the standard library loaded.

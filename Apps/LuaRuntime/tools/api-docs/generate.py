@@ -63,6 +63,8 @@ MODULE_INFO: dict[str, tuple[str, str]] = {
     "tactility.wifi": ("Wi-Fi", "Radio and station state, and network scans."),
     "tactility.raw": ("Raw escape hatch", "Call exported SDK symbols without a typed binding."),
     "tactility": ("Runtime", "Runtime-wide helpers."),
+    "tactility.json": ("JSON", "Encode and decode JSON with the cJSON module."),
+    "tactility.http": ("HTTP", "Asynchronous HTTP requests on a worker task."),
     "lua": ("Script loading", "The module system for multi-file scripts."),
     "tactility.gpio": ("GPIO", "Pins through the kernel GPIO controllers."),
     "tactility.i2c": ("I2C", "Register and block transfers through the I2C controllers."),
@@ -81,6 +83,9 @@ TABLE_TARGETS: dict[str, tuple[str, str, str]] = {
     "device_functions": ("tactility.device", ".", "function"),
     "device_methods": ("tactility.Device", ":", "method"),
     "display_functions": ("tactility.display", ".", "function"),
+    "json_functions": ("tactility.json", ".", "function"),
+    "http_functions": ("tactility.http", ".", "function"),
+    "http_methods": ("tactility.http.Request", ":", "method"),
     "log_functions": ("tactility.log", ".", "function"),
     "notification_functions": ("tactility.notification", ".", "function"),
     "power_functions": ("tactility.power", ".", "function"),
@@ -107,6 +112,7 @@ GROUP_BY_OWNER: dict[str, str] = {
     "tactility.Device": "Device methods",
     "tactility.spi.SpiDevice": "SpiDevice methods",
     "tactility.notification.Subscription": "Subscriptions",
+    "tactility.http.Request": "Request methods",
     "lvgl.Object": "Object methods",
     "lvgl.Widget": "Widget methods",
     "lvgl.Animation": "Animation methods",
@@ -187,6 +193,20 @@ MANUAL_ENTRIES = [
         "line": 193,
         "group": "Modules",
     },
+    {
+        "id": "tactility.json.null",
+        "name": "null",
+        "owner": "tactility.json",
+        "kind": "constant",
+        "signature": "tactility.json.null",
+        "description": (
+            "The decoded JSON null value. Kept distinct from Lua nil so object fields "
+            "and array slots do not disappear; encode() writes it back as null."
+        ),
+        "source": "lua_runtime/main/Source/lua/json.cpp",
+        "line": 0,
+        "group": "Values",
+    },
 ]
 
 # Owners with a type suffix are methods on the handle that the module returns.
@@ -194,6 +214,7 @@ OWNER_MODULES: dict[str, str] = {
     "tactility.Device": "tactility.device",
     "tactility.spi.SpiDevice": "tactility.spi",
     "tactility.notification.Subscription": "tactility.notification",
+    "tactility.http.Request": "tactility.http",
     "lvgl.Object": "lvgl",
     "lvgl.Widget": "lvgl",
     "lvgl.Animation": "lvgl",

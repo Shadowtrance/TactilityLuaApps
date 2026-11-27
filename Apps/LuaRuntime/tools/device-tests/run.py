@@ -39,6 +39,11 @@ MANIFEST = ROOT / "manifest.properties"
 APP_ID = "tactility.lua.sweep"
 DEFAULT_SETTLE_SECONDS = 4.5
 
+# Network tests need more than the usual settle time for DNS, TLS and the body.
+SETTLE_OVERRIDES = {
+    "http": 25.0,
+}
+
 # Tests that report success synchronously and abort on failure. When the harness
 # timer's marker is missing from the serial capture, the runner's
 # "script evaluated (N-byte result)" line is a safe fallback.
@@ -52,6 +57,7 @@ MARKERLESS_TESTS = {
     "fs",
     "gpio",
     "i2c",
+    "json",
     "line",
     "notification",
     "object_api",
@@ -227,7 +233,7 @@ def run_device(device: Device, tests: list[Path], shell, options) -> int:
             try:
                 retry(lambda: shell.install(device.host, 6667, str(package_path)))
                 retry(lambda: shell.run(device.host, 6667, APP_ID))
-                time.sleep(options.settle)
+                time.sleep(max(options.settle, SETTLE_OVERRIDES.get(test.stem, 0.0)))
                 text = capture.text()
             except BaseException as error:  # noqa: BLE001
                 failures += 1

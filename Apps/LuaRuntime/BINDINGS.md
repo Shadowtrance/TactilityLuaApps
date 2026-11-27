@@ -42,6 +42,19 @@ Status: partially implemented (2026-11-21)
   instance id or an app id and refuses the app that runs the script. `install`
   and `uninstall` block while the package is processed; `uninstall` refuses the
   Lua runtime package. Verified with `tests/app.lua`.
+- `tactility.json` is hand-written on cJSON: `decode(text)` and `encode(value)`
+  map objects to string-keyed tables and arrays to 1-based sequences. JSON `null`
+  is the sentinel `tactility.json.null` rather than nil, so array slots and object
+  fields keep their position. Input/output is capped at 512 KB, nesting at 64
+  levels, and failures return `nil, reason`. Verified with `tests/json.lua`.
+- `tactility.http.request(options, callback)` is asynchronous: a worker task
+  performs the request with the ESP-IDF HTTP client and certificate bundle, and
+  the runner's app loop delivers the callback with the LVGL lock held. Options are
+  `url`, `method`, `headers`, `body`, `timeout_ms` and `max_bytes`; the response is
+  `{ status, body, length, content_type }`. A received error status is still a
+  response; transport failures pass `nil, reason`. Up to four requests can be
+  active, request bodies are capped at 64 KB and responses at 1 MB. ESP32 only; the
+  simulator returns an error. Verified with `tests/http.lua` and the Weather app.
 - `tactility.fs.pick_file(options?, callback)`, `pick_files(options?, callback)`
   and `pick_folder(callback)` start `tactility.fileselection` as a modal child. The
   result arrives in a callback from the runner's app loop, with the LVGL lock held,
@@ -50,11 +63,11 @@ Status: partially implemented (2026-11-21)
   `cancel()`/`is_active()` at once; `cancel()` requests cancellation and the
   callback then receives `nil, "cancelled"`.
   Options are an `extensions` array (with or without a leading dot) and `allow_new`
-  for save-as flows. Cancelling calls back with `nil, "cancelled"`. A selection
-  that would not fit the 1024-byte result buffer is refused by the dialog. These
-  live in the runner (`luavgl`) rather than the runtime module because polling for
-  the result needs an LVGL timer, the same reason `notification.subscribe()` lives
-  there. Uses `app_start_context_*`/`app_start_with_context()` and
+  for save-as flows. A selection that would not fit the 1024-byte result buffer is
+  refused by the dialog. These live in the runner (`luavgl`) rather than the
+  runtime module because the callback has to run where scripts run, the same reason
+  `notification.subscribe()` lives there. Uses
+  `app_start_context_*`/`app_start_with_context()` and
   `app_event_subscribe_with_app_id()`, not the deprecated
   `app_start_for_result_with_streams()`. Option validation is covered by
   `tests/fs.lua`; the interactive flow is manual.

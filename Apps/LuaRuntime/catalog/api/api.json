@@ -1,6 +1,6 @@
 {
   "title": "Tactility Lua API",
-  "entry_count": 639,
+  "entry_count": 645,
   "modules": [
     {
       "name": "tactility.app",
@@ -1114,6 +1114,86 @@
           "description": "Bytes the script's runtime has allocated through the kernel allocator.",
           "source": "lua_runtime/main/Source/lua/bindings.cpp",
           "line": 22
+        }
+      ]
+    },
+    {
+      "name": "tactility.json",
+      "title": "JSON",
+      "summary": "Encode and decode JSON with the cJSON module.",
+      "entries": [
+        {
+          "id": "tactility.json.decode",
+          "name": "decode",
+          "owner": "tactility.json",
+          "kind": "function",
+          "signature": "tactility.json.decode(text) -> table | nil, reason",
+          "group": "Functions",
+          "description": "Parses JSON into Lua tables. Arrays are 1-based and JSON null is\n`tactility.json.null`, so array slots keep their position.",
+          "source": "lua_runtime/main/Source/lua/json.cpp",
+          "line": 125
+        },
+        {
+          "id": "tactility.json.encode",
+          "name": "encode",
+          "owner": "tactility.json",
+          "kind": "function",
+          "signature": "tactility.json.encode(value) -> string | nil, reason",
+          "group": "Functions",
+          "description": "Serializes Lua tables. A table with only consecutive integer keys becomes a\nJSON array, any other table becomes an object, and `tactility.json.null`\nbecomes null.",
+          "source": "lua_runtime/main/Source/lua/json.cpp",
+          "line": 286
+        },
+        {
+          "id": "tactility.json.null",
+          "name": "null",
+          "owner": "tactility.json",
+          "kind": "constant",
+          "signature": "tactility.json.null",
+          "group": "Values",
+          "description": "The decoded JSON null value. Kept distinct from Lua nil so object fields and array slots do not disappear; encode() writes it back as null.",
+          "source": "lua_runtime/main/Source/lua/json.cpp",
+          "line": 0
+        }
+      ]
+    },
+    {
+      "name": "tactility.http",
+      "title": "HTTP",
+      "summary": "Asynchronous HTTP requests on a worker task.",
+      "entries": [
+        {
+          "id": "tactility.http.Request:cancel",
+          "name": "cancel",
+          "owner": "tactility.http.Request",
+          "kind": "method",
+          "signature": "tactility.http.Request:cancel()",
+          "group": "Request methods",
+          "description": "Asks the worker to stop early.",
+          "source": "lua_runner/main/Source/luavgl/http.cpp",
+          "line": 518
+        },
+        {
+          "id": "tactility.http.Request:is_active",
+          "name": "is_active",
+          "owner": "tactility.http.Request",
+          "kind": "method",
+          "signature": "tactility.http.Request:is_active()",
+          "group": "Request methods",
+          "description": "True until the callback has run.",
+          "source": "lua_runner/main/Source/luavgl/http.cpp",
+          "line": 528
+        },
+        {
+          "id": "tactility.http.request",
+          "name": "request",
+          "owner": "tactility.http",
+          "kind": "function",
+          "signature": "tactility.http.request(options, callback) -> handle | nil, reason",
+          "group": "Functions",
+          "description": "Starts an asynchronous request. Options are `url` (required), `method`,\n`headers`, `body`, `timeout_ms` and `max_bytes`. The callback receives\n`{ status, body, length, content_type }`, or `nil, reason` for a transport\nfailure. Up to four requests may run at once.",
+          "source": "lua_runner/main/Source/luavgl/http.cpp",
+          "line": 358
         }
       ]
     },

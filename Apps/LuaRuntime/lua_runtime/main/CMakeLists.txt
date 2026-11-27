@@ -19,5 +19,5 @@ endif ()
 tactility_component_register(
     SRCS ${SOURCE_FILES}
     INCLUDE_DIRS Include Private Source/lua "${BINDINGS_GENERATED_DIR}" ${LUA_INCLUDE_DIRS}
-    REQUIRES lua notification-module
+    REQUIRES lua notification-module cjson-module
 )

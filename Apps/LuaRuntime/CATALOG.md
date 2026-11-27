@@ -147,9 +147,9 @@ test that proves it.
 | [ ] | `gps` | — | GPS viewer clone |
 | [ ] | `bluetooth` | — | |
 | [ ] | `location` | — | Maps clone |
-| [ ] | `http` | — | Weather/app-hub clones |
+| [x] | `http` | Async worker task, ESP-IDF client + cert bundle, `request` handle | `tests/http.lua`, Weather app |
 | [ ] | `crypt` | — | |
-| [ ] | `cjson` | — | HTTP/API payloads |
+| [x] | `cjson` | `tactility.json.decode/encode`, null sentinel, 512 KB/64 depth | `tests/json.lua` |
 | [ ] | `binfont` | — | Custom fonts |
 | [ ] | `graphics` (PPA/SVG) | — | |
 | [ ] | `service` | — | Battery/status services |
@@ -218,7 +218,7 @@ be read back from it unaided.
 | [ ] | GPS viewer | `gps` + UI | Needs GPS capability |
 | [ ] | IMU viewer | `device`/sensor API | Needs sensor capability |
 | [ ] | Music player | audio + `fs` | Needs audio stream |
-| [ ] | Weather | `http` + `cjson` | Needs both |
+| [x] | Weather | `Scripts/weather`: `require`, HTTP, JSON, city/units/interval settings | Packaged example; 4 days on short screens |
 | [ ] | App hub / installs | `http` + app lifecycle | Bigger scope |
 | [-] | Camera / Doom | camera / heavy port | Not a Lua demo target |
 
@@ -269,6 +269,8 @@ be read back from it unaided.
 | [x] | `tests/notification_events.lua` | Subscribe, posted/dismissed/cleared order and cancel |
 | [x] | `tests/picker.lua` | Async picker registration, `cancel()` and the `nil, "cancelled"` callback |
 | [x] | `tests/require.lua` | Flat, nested, dotted and cached modules, missing module and cycle |
+| [x] | `tests/json.lua` | Decode/encode, arrays, null, mixed keys, NUL, depth limit |
+| [x] | `tests/http.lua` | HTTPS GET to Open-Meteo plus JSON decoding |
 | [x] | `tests/app.lua` | App list (hidden apps included), running state, current app, start/stop error paths and the current-app stop guard |
 | [x] | `tests/object_api.lua` | Core sizing/margins/outline/shadow/text/transforms/states/flags/children, Arc and Spinbox |
 | [x] | `tests/widget_batch2.lua` | LED, Table, Scale, ImageButton, Chart, Calendar, Keyboard, ButtonMatrix |

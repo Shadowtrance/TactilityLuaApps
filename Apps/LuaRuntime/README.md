@@ -132,6 +132,11 @@ Modules are cached, cycles are reported as errors, and C modules are disabled.
 The editor still edits one file at a time; this is the runtime side, and a
 multi-file browser is the next editor step.
 
+`Scripts/weather` is a complete packaged example: `main.lua` plus two modules,
+Open-Meteo over `tactility.http`, `tactility.json` for the payload, a city
+picker, Celsius/Fahrenheit, a refresh interval, saved settings and a 4/5-day
+forecast that adapts to the screen height.
+
 The runner and the runtime must agree on Lua's number layout: a script package
 embeds its own runner, and the Lua C API passes `lua_Integer` values by width.
 0.1.24 moved integers to 64-bit (floats stay 32-bit), so a package built against
@@ -243,6 +248,34 @@ the app's own task with the LVGL lock held, so it can create widgets. Cancelling
 The call returns a handle with `cancel()` and `is_active()`; the picker is
 asynchronous because the callback must not run before the script has finished, and
 blocking would freeze the UI.
+
+`tactility.http.request(options, callback)` fetches a URL without blocking the UI:
+
+```lua
+tactility.http.request({
+    url = "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m",
+    headers = { Accept = "application/json" },
+    timeout_ms = 20000,
+    max_bytes = 32768,
+}, function(response, reason)
+    if response then
+        local data = tactility.json.decode(response.body)
+        tactility.log.info("weather", data.current.temperature_2m .. " C")
+    end
+end)
+```
+
+The request runs on its own task; the callback runs from the app loop with the
+LVGL lock held, so it may update widgets. `response` is
+`{ status, body, length, content_type }`; a received 4xx/5xx is still a response,
+while transport failures pass `nil, reason`. Up to four requests may be active,
+request bodies are capped at 64 KB and responses at `max_bytes` (1 MB hard limit).
+This is an ESP32 feature; the simulator returns an error.
+
+`tactility.json.decode(text)` and `tactility.json.encode(value)` map JSON to Lua
+tables and back. Arrays are 1-based, objects are string-keyed, and JSON `null` is
+`tactility.json.null` so array slots do not collapse. Input and output are capped
+at 512 KB and nesting at 64 levels; failures return `nil, reason`.
 
 `tactility.system.memory()` returns `{ internal = usage, external = usage }`
 with `free`, `total`, `used` and `percent` values. External is all zeroes on a
