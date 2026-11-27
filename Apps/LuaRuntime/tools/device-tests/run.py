@@ -49,6 +49,7 @@ MARKERLESS_TESTS = {
     "uart",
     "bindings",
     "display",
+    "fs",
     "gpio",
     "i2c",
     "line",

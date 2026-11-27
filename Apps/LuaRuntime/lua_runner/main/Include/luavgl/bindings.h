@@ -43,6 +43,17 @@ error_t luavgl_bindings_open(struct LuaRuntime* runtime, struct _lv_obj_t* root)
  */
 void luavgl_bindings_close(struct LuaRuntime* runtime);
 
+/**
+ * @brief Process pending file pickers: cancel requests and deliver results.
+ *
+ * Call from the app's own loop, with the LVGL lock held, after the script has been
+ * evaluated. Starting or stopping apps from the LVGL task deadlocks against the
+ * lock that task holds, so pickers cannot be polled from an LVGL timer.
+ *
+ * @param runtime the runtime whose pickers should be processed
+ */
+void luavgl_pickers_poll(struct LuaRuntime* runtime);
+
 #ifdef __cplusplus
 }
 #endif

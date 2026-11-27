@@ -174,7 +174,10 @@ is the next step. Notification send/list/dismiss are hand-written and do not
 expose actions or Bundle data yet; the runner adds `subscribe(callback)` for the
 posted/dismissed/cleared/updated event stream, delivered on the LVGL task. See
 [BINDINGS.md](BINDINGS.md) for the design and
-[tools/lua-bindings](tools/lua-bindings/README.md) for the generator.
+[tools/lua-bindings](tools/lua-bindings/README.md) for the generator. The
+searchable reference is generated from these bindings:
+<https://tactilityproject.github.io/TactilityLuaApps/api/> (rebuild with
+`py tools\api-docs\generate.py`).
 
 `tactility.display` finds the active panel and drives its backlight:
 
@@ -188,6 +191,29 @@ tactility.display.set_brightness_percent(60)
 `brightness_percent()` uses the same 10%-step mapping as the Display settings
 screen; 0% is the dimmest level that keeps the backlight on. `has_backlight()`
 is false on a panel without one, and the brightness calls return `nil, reason`.
+
+`tactility.fs` reads and writes whole files and lists directories. Picking a
+path opens the firmware's file selection dialog, and reports back through a
+callback:
+
+```lua
+tactility.fs.pick_file({ extensions = { "txt", "lua" } }, function(path, reason)
+    if path then
+        tactility.log.info("picked", path)
+    end
+end)
+
+tactility.fs.pick_folder(function(folder) end)
+tactility.fs.pick_files({ allow_new = true }, function(paths) end)
+```
+
+`pick_file` and `pick_folder` pass one path; `pick_files` passes an array.
+`allow_new` permits a name that does not exist yet (save-as). The callback runs on
+the app's own task with the LVGL lock held, so it can create widgets. Cancelling
+(with `cancel()` or the dialog's close button) calls back with `nil, "cancelled"`.
+The call returns a handle with `cancel()` and `is_active()`; the picker is
+asynchronous because the callback must not run before the script has finished, and
+blocking would freeze the UI.
 
 `tactility.system.memory()` returns `{ internal = usage, external = usage }`
 with `free`, `total`, `used` and `percent` values. External is all zeroes on a

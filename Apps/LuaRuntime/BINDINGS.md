@@ -42,6 +42,22 @@ Status: partially implemented (2026-11-21)
   instance id or an app id and refuses the app that runs the script. `install`
   and `uninstall` block while the package is processed; `uninstall` refuses the
   Lua runtime package. Verified with `tests/app.lua`.
+- `tactility.fs.pick_file(options?, callback)`, `pick_files(options?, callback)`
+  and `pick_folder(callback)` start `tactility.fileselection` as a modal child. The
+  result arrives in a callback from the runner's app loop, with the LVGL lock held,
+  instead of a return value: the script is evaluated under the LVGL lock, so
+  blocking for the picker would freeze the display. The call returns a handle with
+  `cancel()`/`is_active()` at once; `cancel()` requests cancellation and the
+  callback then receives `nil, "cancelled"`.
+  Options are an `extensions` array (with or without a leading dot) and `allow_new`
+  for save-as flows. Cancelling calls back with `nil, "cancelled"`. A selection
+  that would not fit the 1024-byte result buffer is refused by the dialog. These
+  live in the runner (`luavgl`) rather than the runtime module because polling for
+  the result needs an LVGL timer, the same reason `notification.subscribe()` lives
+  there. Uses `app_start_context_*`/`app_start_with_context()` and
+  `app_event_subscribe_with_app_id()`, not the deprecated
+  `app_start_for_result_with_streams()`. Option validation is covered by
+  `tests/fs.lua`; the interactive flow is manual.
 - `tactility.notification` is hand-written: `send{...}`, `list`, `get`,
   `dismiss`, `dismiss_all`, `dismiss_non_sticky` and `count`, with `SEVERITY`
   and `SOURCE` constants. The runner adds `subscribe(callback)` and `EVENT`:

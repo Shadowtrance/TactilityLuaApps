@@ -35,8 +35,11 @@ struct LuaRuntime;
  *
  * Version 3 adds the `tactility.notification` capability (send/list/get/dismiss)
  * and I2C block transfers (`read`, `write`, `write_read`).
+ *
+ * Version 4 adds the app lifecycle (`tactility.app.stop/install/uninstall`) and
+ * the file/folder picker (`tactility.fs.pick_file/pick_files/pick_folder`).
  */
-#define LUA_RUNTIME_API_VERSION 3
+#define LUA_RUNTIME_API_VERSION 4
 
 /**
  * @brief Create a Lua runtime with the standard library loaded.

@@ -156,7 +156,8 @@ test that proves it.
 | [ ] | `bundle` / properties files | — | |
 | [x] | `app` | hand-written | `tests/app.lua` |
 | [x] | App lifecycle | list/start/stop/is_running/current/install/uninstall from Lua; stop refuses the running script, uninstall refuses the runtime |
-| [ ] | Dialogs / file picker / input dialog | — | App cloning and settings UIs |
+| [ ] | Dialogs / input dialog | — | App cloning and settings UIs |
+| [x] | File picker | `tactility.fs.pick_file/pick_files/pick_folder` with a callback | `tests/fs.lua` option errors, `tests/picker.lua` cancel/release; selection flow manual |
 | [x] | Notification events | Runner timer + `notification_subscribe` | `subscribe(callback)`, `EVENT`, `tests/notification_events.lua` |
 | [!] | Notification actions / Bundle data | — | Actions need Lua-callback lifetime design; Bundle needs a kernel key-enumeration API |
 | [ ] | Clipboard | — | |
@@ -176,7 +177,8 @@ test that proves it.
 ### Current `fs` surface
 
 `read`, `write`, `append`, `exists`, `is_file`, `is_directory`, `size`, `list`,
-`make_directory`, `remove`, `mounts`, `user_data_path`.
+`make_directory`, `remove`, `mounts`, `user_data_path`, `pick_file`,
+`pick_files`, `pick_folder`.
 
 ### Current `notification` surface
 
@@ -265,6 +267,7 @@ be read back from it unaided.
 | [x] | `tests/grid.lua` | Grid tracks and cell placement |
 | [x] | `tests/notification.lua` | Send, get, list, dismiss and missing id |
 | [x] | `tests/notification_events.lua` | Subscribe, posted/dismissed/cleared order and cancel |
+| [x] | `tests/picker.lua` | Async picker registration, `cancel()` and the `nil, "cancelled"` callback |
 | [x] | `tests/app.lua` | App list (hidden apps included), running state, current app, start/stop error paths and the current-app stop guard |
 | [x] | `tests/object_api.lua` | Core sizing/margins/outline/shadow/text/transforms/states/flags/children, Arc and Spinbox |
 | [x] | `tests/widget_batch2.lua` | LED, Table, Scale, ImageButton, Chart, Calendar, Keyboard, ButtonMatrix |
@@ -305,6 +308,8 @@ be read back from it unaided.
 | [x] | `tools/symbol-audit/symbol_audit.py` | Compares runner undefined symbols with module export tables; `--fix` |
 | [x] | Generated coverage report | `catalog/sdk-coverage.md` |
 | [x] | Machine-readable inventory | `catalog/sdk-symbols.csv`, `.json` |
+| [x] | `tools/api-docs/generate.py` | Searchable reference from the bindings, doc comments and constants; `--check` runs in CI |
+| [x] | Generated API reference | `catalog/api/index.html` + `api.json`, published at `/api/` |
 | [ ] | CI `--check` | Fail when an IDL symbol disappears or a runner symbol is unexported |
 | [ ] | SDK-bump diff | Highlight new/unbound exports |
 
@@ -318,3 +323,15 @@ py Apps\LuaRuntime\tools\sdk-catalog\catalog.py --check
 The generator uses the firmware tree for exact export tables and falls back to
 SDK headers for modules without one. See
 [`catalog/README.md`](catalog/README.md).
+
+## Regenerating the API reference
+
+```powershell
+py Apps\LuaRuntime\tools\api-docs\generate.py
+py Apps\LuaRuntime\tools\api-docs\generate.py --check
+```
+
+The page is assembled from `bindings/*.toml` and the `luaL_Reg` tables in the
+runtime and runner, so it cannot list a function that the code does not have.
+Doc comments above the C functions become descriptions. The Pages workflow
+copies it to `/api/`.

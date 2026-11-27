@@ -347,7 +347,9 @@ int main(int argc, char* argv[]) {
 
     bool should_close = false;
     while (!should_close) {
-        task_event_group_wait_any(&event_group, NULL, portMAX_DELAY);
+        // A timeout rather than portMAX_DELAY: picker results are processed here, on
+        // the app task, because starting or stopping apps from the LVGL task deadlocks.
+        task_event_group_wait_any(&event_group, NULL, pdMS_TO_TICKS(200));
 
         struct AppEvent event;
         while (app_event_poll(&sub, &event) == ERROR_NONE) {
@@ -355,6 +357,12 @@ int main(int argc, char* argv[]) {
                 should_close = true;
                 break;
             }
+        }
+
+        if (!should_close && context.runtime != NULL && context.luavgl_open) {
+            lvgl_lock();
+            luavgl_pickers_poll(context.runtime);
+            lvgl_unlock();
         }
     }
 

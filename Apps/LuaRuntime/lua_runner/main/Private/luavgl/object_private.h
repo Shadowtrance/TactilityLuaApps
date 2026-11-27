@@ -86,6 +86,18 @@ void luavgl_open_notification(lua_State* state);
 /** Cancels every notification subscription of this runtime. Called from luavgl_detach_all(). */
 void luavgl_delete_all_notification_subscriptions(lua_State* state);
 
+/**
+ * Adds `tactility.fs.pick_file()`, `pick_files()` and `pick_folder()`.
+ *
+ * Like the notification subscription these need LVGL: the result is polled from an
+ * LVGL timer and the callback runs on the LVGL task. The runtime module is
+ * LVGL-free, so the picker lives in the runner.
+ */
+void luavgl_open_picker(lua_State* state);
+
+/** Cancels every live picker of this runtime. Called from luavgl_detach_all(). */
+void luavgl_delete_all_pickers(lua_State* state);
+
 /** Adds the `Group` constructor and its metatable. `lvgl` table must be on top. */
 void luavgl_open_group(lua_State* state);
 
