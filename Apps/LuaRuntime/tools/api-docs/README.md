@@ -1,7 +1,7 @@
 # api-docs
 
 Generates the searchable Lua API reference published at
-<https://tactilityproject.github.io/TactilityLuaApps/api/>.
+<https://shadowtrance.github.io/TactilityLuaApps/api/>.
 
 The entries come from the binding sources, not a second list:
 

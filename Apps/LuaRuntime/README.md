@@ -176,7 +176,7 @@ posted/dismissed/cleared/updated event stream, delivered on the LVGL task. See
 [BINDINGS.md](BINDINGS.md) for the design and
 [tools/lua-bindings](tools/lua-bindings/README.md) for the generator. The
 searchable reference is generated from these bindings:
-<https://tactilityproject.github.io/TactilityLuaApps/api/> (rebuild with
+<https://shadowtrance.github.io/TactilityLuaApps/api/> (rebuild with
 `py tools\api-docs\generate.py`).
 
 `tactility.display` finds the active panel and drives its backlight:

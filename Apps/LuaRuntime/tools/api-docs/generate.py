@@ -771,8 +771,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   <div class="meta">
     <span><strong id="shown">__COUNT__</strong> shown</span>
     <span>Generated from the binding sources</span>
-    <span><a href="https://github.com/TactilityProject/TactilityLuaApps/blob/main/Apps/LuaRuntime/README.md">README</a></span>
-    <span><a href="https://github.com/TactilityProject/TactilityLuaApps/blob/main/Apps/LuaRuntime/CATALOG.md">Coverage</a></span>
+    <span><a href="https://github.com/Shadowtrance/TactilityLuaApps/blob/main/Apps/LuaRuntime/README.md">README</a></span>
+    <span><a href="https://github.com/Shadowtrance/TactilityLuaApps/blob/main/Apps/LuaRuntime/CATALOG.md">Coverage</a></span>
   </div>
   <div class="chips" id="chips"></div>
   <div id="list"></div>
@@ -903,7 +903,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
           const where = document.createElement("div");
           where.className = "where";
           const link = document.createElement("a");
-          link.href = "https://github.com/TactilityProject/TactilityLuaApps/blob/main/Apps/LuaRuntime/"
+          link.href = "https://github.com/Shadowtrance/TactilityLuaApps/blob/main/Apps/LuaRuntime/"
             + entry.source + (entry.line ? "#L" + entry.line : "");
           link.target = "_blank";
           link.rel = "noreferrer";
