@@ -53,6 +53,8 @@ jobs:
         with:
           path: ~/.tactility/sdk
           key: tactility-sdk-${{ steps.target.outputs.version }}-${{ steps.target.outputs.commit }}
+      - name: Check the API reference
+        run: python3 Apps/LuaRuntime/tools/api-docs/generate.py --check
       - name: Build Lua Runtime
         uses: TactilityProject/TactilityAppPublisher/.github/actions/build-app@main
         with:
@@ -126,6 +128,7 @@ jobs:
           python3 .apppublisher/apppublisher.py publish pages release_files \
             --sdk "$SDK" --out site --prefix apps
           sed -i "s/__SDK__/$SDK/g" site/index.html
+          cp -r Apps/LuaRuntime/catalog/api site/api
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
