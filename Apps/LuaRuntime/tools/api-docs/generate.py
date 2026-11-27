@@ -63,6 +63,7 @@ MODULE_INFO: dict[str, tuple[str, str]] = {
     "tactility.wifi": ("Wi-Fi", "Radio and station state, and network scans."),
     "tactility.raw": ("Raw escape hatch", "Call exported SDK symbols without a typed binding."),
     "tactility": ("Runtime", "Runtime-wide helpers."),
+    "lua": ("Script loading", "The module system for multi-file scripts."),
     "tactility.gpio": ("GPIO", "Pins through the kernel GPIO controllers."),
     "tactility.i2c": ("I2C", "Register and block transfers through the I2C controllers."),
     "tactility.adc": ("ADC", "Raw conversions from configured ADC channels."),
@@ -170,6 +171,21 @@ MANUAL_ENTRIES = [
         "source": "lua_runner/main/Source/luavgl/notification_events.cpp",
         "line": 253,
         "group": "Functions",
+    },
+    {
+        "id": "require",
+        "name": "require",
+        "owner": "lua",
+        "kind": "function",
+        "signature": "require(name) -> module",
+        "description": (
+            "Loads <entry dir>/<name>.lua or <entry dir>/<name>/init.lua, where the "
+            "entry dir is lua/ inside a package. Dots map to directories, modules are "
+            "cached, cycles raise an error, and C modules are disabled."
+        ),
+        "source": "lua_runtime/main/Source/lua/runtime.cpp",
+        "line": 193,
+        "group": "Modules",
     },
 ]
 

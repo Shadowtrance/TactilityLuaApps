@@ -1,6 +1,6 @@
 {
   "title": "Tactility Lua API",
-  "entry_count": 638,
+  "entry_count": 639,
   "modules": [
     {
       "name": "tactility.app",
@@ -1114,6 +1114,24 @@
           "description": "Bytes the script's runtime has allocated through the kernel allocator.",
           "source": "lua_runtime/main/Source/lua/bindings.cpp",
           "line": 22
+        }
+      ]
+    },
+    {
+      "name": "lua",
+      "title": "Script loading",
+      "summary": "The module system for multi-file scripts.",
+      "entries": [
+        {
+          "id": "require",
+          "name": "require",
+          "owner": "lua",
+          "kind": "function",
+          "signature": "require(name) -> module",
+          "group": "Modules",
+          "description": "Loads <entry dir>/<name>.lua or <entry dir>/<name>/init.lua, where the entry dir is lua/ inside a package. Dots map to directories, modules are cached, cycles raise an error, and C modules are disabled.",
+          "source": "lua_runtime/main/Source/lua/runtime.cpp",
+          "line": 193
         }
       ]
     },
