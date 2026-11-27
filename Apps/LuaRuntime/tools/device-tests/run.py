@@ -56,6 +56,7 @@ MARKERLESS_TESTS = {
     "notification",
     "object_api",
     "raw",
+    "require",
     "system",
     "tabs_statusline",
     "teardown",

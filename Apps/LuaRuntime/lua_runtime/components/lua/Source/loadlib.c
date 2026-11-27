@@ -647,15 +647,26 @@ static void findloader (lua_State *L, const char *name) {
 }
 
 
+/* Marks a module that is currently loading, so a require() cycle is reported
+** instead of recursing until the task stack overflows. Lua 5.5's require does
+** not keep this sentinel; the address is private to this file. */
+static const char require_sentinel;
+
+
 static int ll_require (lua_State *L) {
   const char *name = luaL_checkstring(L, 1);
   lua_settop(L, 1);  /* LOADED table will be at index 2 */
   lua_getfield(L, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
   lua_getfield(L, 2, name);  /* LOADED[name] */
-  if (lua_toboolean(L, -1))  /* is it there? */
+  if (lua_toboolean(L, -1)) {  /* is it there? */
+    if (lua_touserdata(L, -1) == (void*)&require_sentinel)
+      return luaL_error(L, "loop or previous error loading module '%s'", name);
     return 1;  /* package is already loaded */
+  }
   /* else must load package */
   lua_pop(L, 1);  /* remove 'getfield' result */
+  lua_pushlightuserdata(L, (void*)&require_sentinel);
+  lua_setfield(L, 2, name);  /* LOADED[name] = sentinel */
   findloader(L, name);
   lua_rotate(L, -2, 1);  /* function <-> loader data */
   lua_pushvalue(L, 1);  /* name is 1st argument to module loader */

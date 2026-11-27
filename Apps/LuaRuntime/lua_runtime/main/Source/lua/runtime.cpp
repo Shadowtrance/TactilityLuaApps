@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <cstring>
 #include <new>
+#include <string>
 
 extern "C" {
 #include <lauxlib.h>
@@ -171,8 +172,42 @@ error_t lua_runtime_eval(struct LuaRuntime* runtime, const char* code, const cha
     return protected_call(runtime, 0);
 }
 
+/**
+ * Points `require` at the directory that holds the entry script.
+ *
+ * A package keeps its modules in `lua/` next to `main.lua`, so the search path is
+ * exactly that directory: `<dir>/?.lua` for plain modules and `<dir>/?/init.lua`
+ * for a module directory. `package.cpath` is emptied because C modules cannot be
+ * loaded from a side-loaded app, and leaving the default would only add a failed
+ * `dlopen` to every missing-module error.
+ */
+static void configure_module_search(lua_State* state, const char* script_path) {
+    const char* slash = std::strrchr(script_path, '/');
+    const char* backslash = std::strrchr(script_path, '\\');
+    if (backslash != nullptr && (slash == nullptr || backslash > slash)) {
+        slash = backslash;
+    }
+
+    const size_t directory_length = (slash != nullptr) ? static_cast<size_t>(slash - script_path) : 1;
+    const char* directory_start = (slash != nullptr) ? script_path : ".";
+    std::string directory(directory_start, directory_length);
+
+    std::string pattern = directory + "/?.lua;" + directory + "/?/init.lua";
+
+    lua_getglobal(state, "package");
+    if (lua_istable(state, -1)) {
+        lua_pushlstring(state, pattern.c_str(), pattern.size());
+        lua_setfield(state, -2, "path");
+        lua_pushliteral(state, "");
+        lua_setfield(state, -2, "cpath");
+    }
+    lua_pop(state, 1);
+}
+
 error_t lua_runtime_eval_file(struct LuaRuntime* runtime, const char* path, const char* arg) {
     runtime->error_message[0] = '\0';
+
+    configure_module_search(runtime->state, path);
 
     if (luaL_loadfile(runtime->state, path) != LUA_OK) {
         store_error_from_stack(runtime);

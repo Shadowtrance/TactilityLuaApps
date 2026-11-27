@@ -30,7 +30,7 @@ test that proves it.
 | [x] | Toolbar close actions | Runner and companion emit `APP_EVENT_CLOSE` |
 | [x] | Missing-export failure | Module load fails at install, not at script runtime |
 | [x] | Companion runtime-version display | Browser title shows the installed package version |
-| [ ] | `require` / multi-file scripts | Scripts are single-file today |
+| [x] | `require` / multi-file scripts | Modules resolve from the entry script's directory; `--directory` packaging |
 | [x] | Package asset API (images) | `...` gives the install dir; absolute paths get the `A:` LVGL prefix; PNG decodes through lodepng |
 | [ ] | Sandbox / permissions | A script has full ELF-app access |
 | [-] | Firmware fork | Not needed with the external-module design |
@@ -47,7 +47,7 @@ test that proves it.
 | [~] | `coroutine` | Available; not yet used by an example |
 | [!] | `io.tmpfile()` | Needs a writable `/tmp`; not mounted |
 | [!] | `os.tmpname()` | Returns a `/tmp/...` name that cannot be opened |
-| [ ] | `require` search path | No module search yet |
+| [x] | `require` search path | Scoped to the entry script's directory; editor view still single-file |
 | [ ] | `debug` library policy | Decide whether to expose it |
 | [ ] | UTF-8 / locale regression test | `setlocale` export is present |
 
@@ -248,7 +248,7 @@ be read back from it unaided.
 | [x] | Search / filter | Toolbar search toggles an inline App Hub-style row; live, case-insensitive filtering |
 | [ ] | Syntax highlighting / line numbers | Editor is plain text |
 | [x] | Runtime version display | Browser title shows the installed package version; the runner explains an API mismatch |
-| [ ] | Multi-file project view | `require` prerequisite |
+| [ ] | Multi-file project view | Runtime `require` is in; browsing/creating module files is not |
 
 ## 7. Tests
 
@@ -268,6 +268,7 @@ be read back from it unaided.
 | [x] | `tests/notification.lua` | Send, get, list, dismiss and missing id |
 | [x] | `tests/notification_events.lua` | Subscribe, posted/dismissed/cleared order and cancel |
 | [x] | `tests/picker.lua` | Async picker registration, `cancel()` and the `nil, "cancelled"` callback |
+| [x] | `tests/require.lua` | Flat, nested, dotted and cached modules, missing module and cycle |
 | [x] | `tests/app.lua` | App list (hidden apps included), running state, current app, start/stop error paths and the current-app stop guard |
 | [x] | `tests/object_api.lua` | Core sizing/margins/outline/shadow/text/transforms/states/flags/children, Arc and Spinbox |
 | [x] | `tests/widget_batch2.lua` | LED, Table, Scale, ImageButton, Chart, Calendar, Keyboard, ButtonMatrix |

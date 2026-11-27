@@ -103,6 +103,35 @@ The Lua Runtime package must be installed: its module supplies the interpreter.
 When the runner changes, re-run the packaging tool to refresh the copy inside
 each script package (the script itself does not need rebuilding).
 
+## Multi-file scripts
+
+A directory with `main.lua` at its root can split code into modules:
+
+```text
+my_app/
+  main.lua
+  lib/api.lua
+  lib/ui.lua
+```
+
+```lua
+local api = require("lib.api")   -- my_app/lib/api.lua
+local ui = require("lib.ui")
+```
+
+Package the whole directory:
+
+```powershell
+py Apps\LuaRuntime\tools\lua-app\make_lua_app.py --directory my_app --name "My App"
+```
+
+`require` searches only the directory that holds the entry script (`.../lua`
+inside a package). Names are relative to it: dots become directory separators
+(`require("lib.api")` → `lib/api.lua`), and `.../lib/api/init.lua` works too.
+Modules are cached, cycles are reported as errors, and C modules are disabled.
+The editor still edits one file at a time; this is the runtime side, and a
+multi-file browser is the next editor step.
+
 The runner and the runtime must agree on Lua's number layout: a script package
 embeds its own runner, and the Lua C API passes `lua_Integer` values by width.
 0.1.24 moved integers to 64-bit (floats stay 32-bit), so a package built against

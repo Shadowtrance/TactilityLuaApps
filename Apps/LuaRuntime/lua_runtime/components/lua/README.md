@@ -19,8 +19,9 @@ define `main()` and neither is useful when embedding.
 
 ## Local changes
 
-`Include/luaconf.h` is the only modified file. The changes are bracketed by
-`TACTILITY BEGIN` / `TACTILITY END` comments so they are easy to find when updating:
+`Include/luaconf.h` and `Source/loadlib.c` are the modified files. The changes are
+bracketed by `TACTILITY BEGIN` / `TACTILITY END` comments (or a marked comment in
+`loadlib.c`) so they are easy to find when updating:
 
 - `LUA_USE_POSIX` (and `LUA_USE_DLOPEN`, `LUA_READLINELIB`) are undefined on ESP32, which
   drops `popen`, `system` and the other process-spawning parts of the standard library
@@ -29,6 +30,9 @@ define `main()` and neither is useful when embedding.
   RISC-V ESP32 targets have no 64-bit FPU, so the default 64-bit doubles are slow and cost
   twice the memory per value. Note it is tested with `#if defined()`, so it must be left
   *undefined* elsewhere - defining it to 0 would enable it everywhere.
+- `Source/loadlib.c` marks a module with a sentinel while it is loading, so a `require()`
+  cycle raises "loop or previous error loading module" instead of recursing until the
+  task stack overflows. Lua 5.5's `require` does not keep that sentinel.
 
 Espressif's own `espressif/lua` component makes the same `LUA_32BITS` choice, via header
 injection rather than an edit. That approach is cleaner but ESP-only; this copy also has

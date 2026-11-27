@@ -10,8 +10,11 @@ its module provides the Lua interpreter that lua_runner resolves at load time.
 
 Examples:
     py make_lua_app.py --script demo.lua
-    py make_lua_app.py --script demo.lua --name "Lua Dashboard" --id tactility.lua.dashboard
+    py make_lua_app.py --directory demo/ --name "Lua Dashboard" --id tactility.lua.dashboard
     py make_lua_app.py --script demo.lua --platform esp32p4 --output dist/demo.app
+
+A `--directory` package expects `main.lua` at its root and copies the whole tree
+to `lua/`, so modules can use `require` with the same relative names.
 
 Without --version/--code, the leading `-- @version x.y.z` and `-- @code n`
 comments in the script are used, defaulting to 0.1.0/1. Explicit arguments win.
@@ -127,9 +130,13 @@ def read_script_metadata(script):
 def main():
     parser = argparse.ArgumentParser(
         prog="make_lua_app",
-        description="package a Lua script as an installable Tactility app",
+        description="package a Lua script or script directory as an installable Tactility app",
     )
-    parser.add_argument("--script", required=True, help="the Lua script to run (copied to lua/main.lua)")
+    parser.add_argument("--script", help="a single Lua script (copied to lua/main.lua)")
+    parser.add_argument(
+        "--directory",
+        help="a script directory with main.lua and modules (copied to lua/, preserving subdirectories)",
+    )
     parser.add_argument("--name", help="app name (default: derived from the script file name)")
     parser.add_argument("--id", help="app and package id (default: tactility.lua.<script name>)")
     parser.add_argument(
@@ -160,11 +167,28 @@ def main():
     parser.add_argument("--output", help="output .app file (default: <id>.app)")
     args = parser.parse_args()
 
-    script = Path(args.script).expanduser()
-    if not script.is_file():
-        fail(f"{script}: no such file")
+    if bool(args.script) == bool(args.directory):
+        parser.error("pass exactly one of --script or --directory")
 
-    stem = script.stem
+    lua_entries = []
+    if args.script:
+        script = Path(args.script).expanduser()
+        if not script.is_file():
+            fail(f"{script}: no such file")
+        stem = script.stem
+        lua_entries.append(("main.lua", script))
+    else:
+        directory = Path(args.directory).expanduser()
+        if not directory.is_dir():
+            fail(f"{directory}: no such directory")
+        script = directory / "main.lua"
+        if not script.is_file():
+            fail(f"{script}: a script directory must contain main.lua")
+        stem = directory.name
+        for path in sorted(directory.rglob("*")):
+            if path.is_file():
+                lua_entries.append((path.relative_to(directory).as_posix(), path))
+
     name = args.name or titleize(stem)
     app_id = args.id or f"tactility.lua.{slugify(stem)}"
     validate_id(app_id)
@@ -206,7 +230,6 @@ def main():
 
     icon_data = icon.read_bytes()
     mono_icon_data = mono_icon.read_bytes()
-    script_data = script.read_bytes()
 
     assets = Path(args.assets).expanduser() if args.assets else None
     if assets is not None and not assets.is_dir():
@@ -227,23 +250,28 @@ def main():
         f"app.0.id={app_id}",
         f"app.0.name={name}",
         "app.0.binary=lua_runner",
+        # Module loading nests the Lua parser inside require(), and the scheduler's
+        # default stack is too small for that on ESP targets. ESP-IDF counts bytes.
+        "app.0.stack.depth=32768",
         f"lua.runtime.api={runtime_api}",
         f"requires.ram={args.ram}",
         "",
     ]).encode("utf-8")
 
     with tarfile.open(output, "w") as package:
-        def add_bytes(name, data, mode=0o644):
+        def add_bytes(name, data, mode=0o644, mtime=None):
             info = tarfile.TarInfo(name)
             info.size = len(data)
             info.mode = mode
-            info.mtime = int(script.stat().st_mtime)
+            info.mtime = int(mtime if mtime is not None else script.stat().st_mtime)
             package.addfile(info, io.BytesIO(data))
 
         add_bytes("manifest.properties", manifest)
         add_bytes("icon.svg", icon_data)
         add_bytes("icon_mono.svg", mono_icon_data)
-        add_bytes("lua/main.lua", script_data)
+
+        for relative, path in lua_entries:
+            add_bytes(f"lua/{relative}", path.read_bytes(), mtime=path.stat().st_mtime)
 
         for platform, runner in runners.items():
             binary = runner.read_bytes()

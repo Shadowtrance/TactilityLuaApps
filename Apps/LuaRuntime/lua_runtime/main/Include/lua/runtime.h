@@ -38,8 +38,11 @@ struct LuaRuntime;
  *
  * Version 4 adds the app lifecycle (`tactility.app.stop/install/uninstall`) and
  * the file/folder picker (`tactility.fs.pick_file/pick_files/pick_folder`).
+ *
+ * Version 5 adds the per-app `require` search path: modules load from the
+ * `lua/` directory that holds the entry script.
  */
-#define LUA_RUNTIME_API_VERSION 4
+#define LUA_RUNTIME_API_VERSION 5
 
 /**
  * @brief Create a Lua runtime with the standard library loaded.
