@@ -791,7 +791,7 @@
     {
       "name": "tactility.settings",
       "title": "Settings",
-      "summary": "Key/value storage owned by the running app.",
+      "summary": "Key/value storage owned by the running app, saved in its appdata folder.",
       "entries": [
         {
           "id": "tactility.settings.get",
@@ -802,7 +802,7 @@
           "group": "Functions",
           "description": "Returns the stored string, or the given default when absent.\n\nEverything is stored as a string; a script that wants a number uses tonumber(). Typed\ngetters would need the type recorded per key, which is not worth it for the handful of\nvalues an app keeps.",
           "source": "lua_runtime/main/Source/lua/settings.cpp",
-          "line": 277
+          "line": 303
         },
         {
           "id": "tactility.settings.set",
@@ -813,7 +813,7 @@
           "group": "Functions",
           "description": "",
           "source": "lua_runtime/main/Source/lua/settings.cpp",
-          "line": 302
+          "line": 328
         },
         {
           "id": "tactility.settings.remove",
@@ -824,7 +824,7 @@
           "group": "Functions",
           "description": "",
           "source": "lua_runtime/main/Source/lua/settings.cpp",
-          "line": 336
+          "line": 362
         },
         {
           "id": "tactility.settings.has",
@@ -835,7 +835,7 @@
           "group": "Functions",
           "description": "",
           "source": "lua_runtime/main/Source/lua/settings.cpp",
-          "line": 363
+          "line": 389
         },
         {
           "id": "tactility.settings.keys",
@@ -846,7 +846,7 @@
           "group": "Functions",
           "description": "Every key in the namespace, so a script can enumerate what it stored.",
           "source": "lua_runtime/main/Source/lua/settings.cpp",
-          "line": 383
+          "line": 409
         },
         {
           "id": "tactility.settings.clear",
@@ -857,7 +857,7 @@
           "group": "Functions",
           "description": "Drops the whole namespace.",
           "source": "lua_runtime/main/Source/lua/settings.cpp",
-          "line": 402
+          "line": 428
         }
       ]
     },

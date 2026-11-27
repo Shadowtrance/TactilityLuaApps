@@ -138,6 +138,12 @@ refresh/settings actions, a place search (Open-Meteo geocoder) with custom
 coordinates and a name, Celsius/Fahrenheit, a refresh interval, saved settings
 and a 4/5-day forecast that adapts to the screen height.
 
+`tactility.settings` keeps each app's values in that app's user-data directory:
+`<data>/appdata/<app id>/<namespace>.properties`. A packaged app therefore owns
+its file, the file survives reinstalling or updating the app, and the same key in
+two apps cannot collide. The value is the id from the app's manifest, so Weather
+stores under `tactility.lua.weather`.
+
 The runner and the runtime must agree on Lua's number layout: a script package
 embeds its own runner, and the Lua C API passes `lua_Integer` values by width.
 0.1.24 moved integers to 64-bit (floats stay 32-bit), so a package built against
@@ -575,6 +581,8 @@ runtime gains something a packaged app depends on.
 - `notification.lua` — send, get, list, dismiss and missing-id handling.
 - `notification_events.lua` — subscribe, posted/dismissed/cleared order and cancel.
 - `bindings.lua` — fs, time, device, settings, power and Wi-Fi smoke test.
+- `settings.lua` — multi-key round trip, replacement, `keys`/`has`/`remove`/`clear`,
+  and repeated writes after the file already exists (the FAT rename case).
 - `raw.lua` — `tactility.raw.call` symbol lookup and missing-symbol error.
 
 Run the whole suite on connected devices (serial + development server):

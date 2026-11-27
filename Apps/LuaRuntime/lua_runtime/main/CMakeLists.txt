@@ -29,7 +29,8 @@ tactility_component_register(
         "${BINDINGS_GENERATED_DIR}"
         ${LUA_INCLUDE_DIRS}
         # The POSIX SDK's component helper does not propagate REQUIRES include paths,
-        # so add the module header directory explicitly. It exists on every platform.
+        # so add the module header directories explicitly. They exist on every platform.
+        "${TACTILITY_SDK_INCLUDE_PATH}/Modules/app-module/include"
         "${TACTILITY_SDK_INCLUDE_PATH}/Modules/cjson-module/include"
-    REQUIRES lua notification-module cjson-module
+    REQUIRES lua notification-module cjson-module app-module
 )

@@ -57,7 +57,10 @@ MODULE_INFO: dict[str, tuple[str, str]] = {
         "Post and dismiss notifications, and subscribe to the event stream.",
     ),
     "tactility.power": ("Power", "Battery state and charging control."),
-    "tactility.settings": ("Settings", "Key/value storage owned by the running app."),
+    "tactility.settings": (
+        "Settings",
+        "Key/value storage owned by the running app, saved in its appdata folder.",
+    ),
     "tactility.system": ("System", "Memory, storage and task snapshots."),
     "tactility.time": ("Time", "Uptime, wall clock and sleeping."),
     "tactility.wifi": ("Wi-Fi", "Radio and station state, and network scans."),

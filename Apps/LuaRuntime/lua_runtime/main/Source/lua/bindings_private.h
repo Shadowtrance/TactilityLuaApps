@@ -29,7 +29,7 @@ void lua_bindings_open_log(lua_State* state);
 void lua_bindings_open_device(lua_State* state);
 void lua_bindings_open_fs(lua_State* state);
 void lua_bindings_open_json(lua_State* state);
-void lua_bindings_open_settings(lua_State* state);
+void lua_bindings_open_settings(lua_State* state, const char* data_directory);
 void lua_bindings_open_time(lua_State* state);
 void lua_bindings_open_power(lua_State* state);
 void lua_bindings_open_display(lua_State* state);

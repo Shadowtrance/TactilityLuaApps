@@ -3,6 +3,9 @@
 #include <lua/module_state.h>
 #include <lua/runtime_private.h>
 
+#include <app/manager.h>
+#include <app/paths.h>
+
 #include <tactility/log.h>
 #include <tactility/memory.h>
 
@@ -138,6 +141,20 @@ struct LuaRuntime* lua_runtime_alloc(void) {
     // Lets a runner or packaged app tell which module it is talking to.
     lua_pushinteger(runtime->state, LUA_RUNTIME_API_VERSION);
     lua_setglobal(runtime->state, "_LUA_RUNTIME_API");
+
+    // The runtime is created while its owning app starts, so the topmost app is the
+    // one whose settings the script should share. `tactility.settings` stores its
+    // files under this directory rather than in one shared folder.
+    AppId app_id;
+    if (app_manager_get_topmost_app_id(app_id, sizeof(app_id)) == ERROR_NONE) {
+        if (app_paths_get_user_data_directory(
+                app_id,
+                runtime->data_directory,
+                sizeof(runtime->data_directory)
+            ) != ERROR_NONE) {
+            runtime->data_directory[0] = '\0';
+        }
+    }
 
     return runtime;
 }

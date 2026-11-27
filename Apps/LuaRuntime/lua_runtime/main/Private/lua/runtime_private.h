@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
+#include <tactility/paths.h>
+
 extern "C" {
 #include <lua.h>
 }
@@ -21,4 +23,13 @@ struct LuaRuntime {
     /** Bytes currently held by the Lua heap, tracked by the runtime's allocator. */
     size_t memory_used = 0;
     char error_message[ERROR_MESSAGE_CAPACITY] = {};
+    /**
+     * The app's user-data directory, captured when the runtime is created.
+     *
+     * Captured rather than looked up per call: the topmost app can change while a script
+     * runs (a picker, for example), and settings must keep going to the app that owns
+     * them. Empty when the runtime has no app context, in which case settings fall back
+     * to the legacy shared directory.
+     */
+    char data_directory[FILE_MAX_PATH_STRING_LENGTH] = {};
 };

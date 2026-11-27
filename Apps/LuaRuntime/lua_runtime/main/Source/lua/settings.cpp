@@ -17,13 +17,17 @@ extern "C" {
 namespace {
 
 /**
- * Key/value persistence, one file per namespace under the service user-data directory.
+ * Key/value persistence, one file per namespace under the running app's user-data
+ * directory (`<data>/appdata/<app id>`).
  *
- * File-backed rather than NVS-backed because `lua-module` is a kernel module: the
+ * File-backed rather than NVS-backed because `lua_runtime` is a kernel module: the
  * `Preferences` API that ELF apps reach through `tt_preferences.h` is C++ in the
  * Tactility layer, which the kernel cannot depend on. `gps-module` solves the same
  * problem the same way (see Modules/gps-module/source/gps_settings.cpp), and this
  * inherits the useful property that settings survive an OS upgrade.
+ *
+ * The directory is resolved when the runtime is created, so every script an app runs
+ * shares that app's settings and cannot see another app's.
  *
  * Format is `key=value` lines. Values are stored escaped so that newlines and the
  * separator survive a round trip - a naive properties file silently corrupts both.
@@ -79,19 +83,32 @@ void ensure_directory_exists(const char* path) {
     ::mkdir(buffer, 0777);
 }
 
-bool get_storage_path(const char* name_space, char* out_path, size_t out_path_size) {
-    char root[FILE_MAX_PATH_STRING_LENGTH];
-    if (paths_get_data_path(root, sizeof(root)) != ERROR_NONE) {
-        return false;
-    }
-
-    // The service-module path helper is not among the modules an external
-    // module can rely on being started, so the runtime owns a directory under
-    // the data path instead.
+bool get_storage_path(
+    const char* data_directory,
+    const char* name_space,
+    char* out_path,
+    size_t out_path_size
+) {
     char directory[192];
-    const int directory_length = std::snprintf(directory, sizeof(directory), "%s/lua", root);
-    if (directory_length <= 0 || static_cast<size_t>(directory_length) >= sizeof(directory)) {
-        return false;
+
+    if (data_directory != nullptr && data_directory[0] != '\0') {
+        const int length = std::snprintf(directory, sizeof(directory), "%s", data_directory);
+        if (length <= 0 || static_cast<size_t>(length) >= sizeof(directory)) {
+            return false;
+        }
+    } else {
+        // A runtime created outside an app (the POSIX simulator, or a module test) has
+        // no app data directory. Keep the old shared location working rather than
+        // failing every settings call there.
+        char root[FILE_MAX_PATH_STRING_LENGTH];
+        if (paths_get_data_path(root, sizeof(root)) != ERROR_NONE) {
+            return false;
+        }
+
+        const int length = std::snprintf(directory, sizeof(directory), "%s/lua", root);
+        if (length <= 0 || static_cast<size_t>(length) >= sizeof(directory)) {
+            return false;
+        }
     }
 
     ensure_directory_exists(directory);
@@ -239,10 +256,16 @@ bool store(const char* path, const Entries& entries) {
         return false;
     }
 
-    // rename() is atomic on the filesystems in use here, so the switch is all-or-nothing
+    // rename() replaces atomically on POSIX filesystems, but the device's FAT
+    // implementation refuses when the destination exists. The temporary file is
+    // complete at this point, so fall back to remove-then-rename. A power loss in that
+    // tiny window costs the settings file, not a half-written one.
     if (::rename(temporary_path.c_str(), path) != 0) {
-        ::unlink(temporary_path.c_str());
-        return false;
+        ::unlink(path);
+        if (::rename(temporary_path.c_str(), path) != 0) {
+            ::unlink(temporary_path.c_str());
+            return false;
+        }
     }
 
     return true;
@@ -264,7 +287,10 @@ bool check_arguments(lua_State* state, char* out_path, size_t out_path_size, con
         }
     }
 
-    return get_storage_path(name_space, out_path, out_path_size);
+    // The directory travels as an upvalue because the lua_State has no link back to
+    // the runtime that owns it.
+    const char* data_directory = lua_tostring(state, lua_upvalueindex(1));
+    return get_storage_path(data_directory, name_space, out_path, out_path_size);
 }
 
 /**
@@ -430,7 +456,9 @@ const luaL_Reg settings_functions[] = {
 
 }
 
-void lua_bindings_open_settings(lua_State* state) {
-    luaL_newlib(state, settings_functions);
+void lua_bindings_open_settings(lua_State* state, const char* data_directory) {
+    luaL_newlibtable(state, settings_functions);
+    lua_pushstring(state, (data_directory != nullptr) ? data_directory : "");
+    luaL_setfuncs(state, settings_functions, 1);
     lua_setfield(state, -2, "settings"); // tactility.settings
 }

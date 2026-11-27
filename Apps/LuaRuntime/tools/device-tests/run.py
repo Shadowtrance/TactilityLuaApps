@@ -63,6 +63,7 @@ MARKERLESS_TESTS = {
     "object_api",
     "raw",
     "require",
+    "settings",
     "system",
     "tabs_statusline",
     "teardown",
