@@ -600,6 +600,7 @@ void luavgl_detach_all(lua_State* state) {
     // Subscriptions own their timers, so cancel them before the general timer sweep.
     luavgl_delete_all_notification_subscriptions(state);
     luavgl_delete_all_pickers(state);
+    luavgl_delete_all_dialogs(state);
     luavgl_delete_all_http(state);
 
     // Timers first: they have no widget to anchor them, so nothing else would ever notice

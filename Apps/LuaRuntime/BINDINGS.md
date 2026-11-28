@@ -62,21 +62,27 @@ Status: partially implemented (2026-11-21)
   binds the on-screen keyboard to a text field. Both are exercised by the Weather
   app's settings view.
 - `tactility.fs.pick_file(options?, callback)`, `pick_files(options?, callback)`
-  and `pick_folder(callback)` start `tactility.fileselection` as a modal child. The
-  result arrives in a callback from the runner's app loop, with the LVGL lock held,
-  instead of a return value: the script is evaluated under the LVGL lock, so
-  blocking for the picker would freeze the display. The call returns a handle with
-  `cancel()`/`is_active()` at once; `cancel()` requests cancellation and the
-  callback then receives `nil, "cancelled"`.
-  Options are an `extensions` array (with or without a leading dot) and `allow_new`
-  for save-as flows. A selection that would not fit the 1024-byte result buffer is
-  refused by the dialog. These live in the runner (`luavgl`) rather than the
-  runtime module because the callback has to run where scripts run, the same reason
-  `notification.subscribe()` lives there. Uses
-  `app_start_context_*`/`app_start_with_context()` and
-  `app_event_subscribe_with_app_id()`, not the deprecated
-  `app_start_for_result_with_streams()`. Option validation is covered by
-  `tests/fs.lua`; the interactive flow is manual.
+  and `pick_folder(callback)` show the window manager's own modal file dialog and
+  return a handle with `cancel()`/`is_active()` at once. There is no child app to
+  start, so the runner can show the picker over its own window and the simulator
+  supports it too. The result arrives in a callback from the runner's app loop,
+  with the LVGL lock held, instead of a return value: the script is evaluated
+  under the LVGL lock, so blocking for the dialog would freeze the display.
+  Options are an `extensions` array (with or without a leading dot), `path` for
+  the starting directory, `name` for a prefilled save-as name and `allow_new` for
+  save-as flows. `cancel()` requests cancellation and the callback then receives
+  `nil, "cancelled"`. A selection that would not fit the dialog's own limits is
+  refused by the firmware.
+- `tactility.ui.alert(options, callback?)`, `input(options, callback?)` and
+  `select(options, callback?)` use the window manager's alert, input and
+  selection dialogs. `alert` takes `title`, `message` and `buttons` and calls
+  `callback(index)` (1-based), or `nil, "cancelled"` when dismissed. `input` takes
+  `title`, `message`, `text`, `ok` and `cancel` and calls `callback(text)` or
+  `nil, "cancelled"`. `select` takes `title`, `items` and optional `icons` and
+  calls `callback(index)`. Each returns a handle with `dismiss()`/`is_active()`;
+  `tactility.ui.dismiss()` closes the visible dialog. Results are delivered by
+  the runner's app loop with the LVGL lock held. Verified with `tests/dialogs.lua`
+  and `tests/picker.lua`; the interactive flows are manual.
 - `tactility.notification` is hand-written: `send{...}`, `list`, `get`,
   `dismiss`, `dismiss_all`, `dismiss_non_sticky` and `count`, with `SEVERITY`
   and `SOURCE` constants. The runner adds `subscribe(callback)` and `EVENT`:

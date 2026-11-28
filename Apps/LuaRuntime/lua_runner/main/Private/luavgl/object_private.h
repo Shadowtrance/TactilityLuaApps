@@ -95,6 +95,9 @@ void luavgl_delete_all_notification_subscriptions(lua_State* state);
  */
 void luavgl_open_picker(lua_State* state);
 
+/** Adds `tactility.ui.alert/input/select/dismiss()`. */
+void luavgl_open_dialogs(lua_State* state);
+
 /** Adds `tactility.http.request()`. ESP32 only; the simulator returns an error. */
 void luavgl_open_http(lua_State* state);
 
@@ -103,6 +106,9 @@ void luavgl_delete_all_http(lua_State* state);
 
 /** Cancels every live picker of this runtime. Called from luavgl_detach_all(). */
 void luavgl_delete_all_pickers(lua_State* state);
+
+/** Abandons every live dialog of this runtime. Called from luavgl_detach_all(). */
+void luavgl_delete_all_dialogs(lua_State* state);
 
 /** Adds the `Group` constructor and its metatable. `lvgl` table must be on top. */
 void luavgl_open_group(lua_State* state);

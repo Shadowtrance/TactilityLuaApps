@@ -26,7 +26,7 @@ test that proves it.
 | [x] | Script folder `<storage>/lua` | Configurable; persisted in appdata |
 | [x] | Package v3 output | Launcher tile, manifest, icons, module |
 | [x] | On-device Export | Tar writer + `app_install()` |
-| [x] | Runtime API guard | `LUA_RUNTIME_API_VERSION` = 3 |
+| [x] | Runtime API guard | `LUA_RUNTIME_API_VERSION` = 7 |
 | [x] | Toolbar close actions | Runner and companion emit `APP_EVENT_CLOSE` |
 | [x] | Missing-export failure | Module load fails at install, not at script runtime |
 | [x] | Companion runtime-version display | Browser title shows the installed package version |
@@ -68,6 +68,7 @@ test that proves it.
 | [x] | `Chart`, `Calendar` | Batch 2 display widgets |
 | [x] | `Keyboard`, `ButtonMatrix` | Batch 2 input widgets |
 | [x] | `Tabview`, `Tileview` | Composite widgets with page/tile helpers |
+| [ ] | `TileGrid`, `PathBar`, `Files` | New firmware widgets; Lua bindings and designer support planned |
 | [x] | Widget exclusion policy | Only 9.6 widgets that are enabled and not deprecated |
 | [x] | `set{}` property dispatcher | 115 properties; see table below |
 | [x] | Object states/flags/children | `add_state`, `remove_state`, `has_state`, `child_count`, `child` |
@@ -142,7 +143,7 @@ test that proves it.
 | [x] | `adc` | generated (`adc.toml`) | `tests/adc.lua` |
 | [x] | `spi` | generated (`spi.toml`) + custom | `tests/spi.lua` |
 | [ ] | `i2s` / audio | — | Player/recorder clones |
-| [ ] | `display` / touch / backlight | — | |
+| [x] | `display` / touch / backlight | hand-written; panel geometry, shape and brightness percentage | `tests/display.lua` |
 | [ ] | `camera` | — | |
 | [ ] | `gps` | — | GPS viewer clone |
 | [ ] | `bluetooth` | — | |
@@ -156,8 +157,8 @@ test that proves it.
 | [ ] | `bundle` / properties files | — | |
 | [x] | `app` | hand-written | `tests/app.lua` |
 | [x] | App lifecycle | list/start/stop/is_running/current/install/uninstall from Lua; stop refuses the running script, uninstall refuses the runtime |
-| [ ] | Dialogs / input dialog | — | App cloning and settings UIs |
-| [x] | File picker | `tactility.fs.pick_file/pick_files/pick_folder` with a callback | `tests/fs.lua` option errors, `tests/picker.lua` cancel/release; selection flow manual |
+| [x] | Dialogs / input dialog | `tactility.ui.alert/input/select`, native window-manager dialogs | `tests/dialogs.lua`; interactive flows manual |
+| [x] | File picker | `tactility.fs.pick_file/pick_files/pick_folder` with a callback, served by the native file dialog | `tests/fs.lua` option errors, `tests/picker.lua` cancel/release; selection flow manual |
 | [x] | Notification events | Runner timer + `notification_subscribe` | `subscribe(callback)`, `EVENT`, `tests/notification_events.lua` |
 | [!] | Notification actions / Bundle data | — | Actions need Lua-callback lifetime design; Bundle needs a kernel key-enumeration API |
 | [ ] | Clipboard | — | |
@@ -263,6 +264,8 @@ be read back from it unaided.
 | [x] | `tests/spi.lua` | SPI discovery, constants, invalid CS, try_lock/unlock and a persistent handle |
 | [x] | `tests/icons.lua` | Shared icon table, including the latest firmware additions |
 | [x] | `tests/bindings.lua` | fs, time, device, settings, power, Wi-Fi |
+| [x] | `tests/settings.lua` | Multi-key round trip, replacement, keys/has/remove/clear and repeated writes |
+| [x] | `tests/dialogs.lua` | Native alert/input/select option validation and dismissing an alert |
 | [x] | `tests/raw.lua` | Symbol lookup and missing symbol |
 | [x] | `tests/grid.lua` | Grid tracks and cell placement |
 | [x] | `tests/notification.lua` | Send, get, list, dismiss and missing id |

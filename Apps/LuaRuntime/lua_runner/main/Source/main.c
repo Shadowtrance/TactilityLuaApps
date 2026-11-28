@@ -363,6 +363,7 @@ int main(int argc, char* argv[]) {
         if (!should_close && context.runtime != NULL && context.luavgl_open) {
             lvgl_lock();
             luavgl_pickers_poll(context.runtime);
+            luavgl_dialogs_poll(context.runtime);
             luavgl_http_poll(context.runtime);
             lvgl_unlock();
         }

@@ -1,6 +1,6 @@
 {
   "title": "Tactility Lua API",
-  "entry_count": 648,
+  "entry_count": 656,
   "modules": [
     {
       "name": "tactility.app",
@@ -486,9 +486,9 @@
           "kind": "function",
           "signature": "tactility.fs.pick_file(options?, callback) -> handle | nil, reason",
           "group": "Functions",
-          "description": "Shows a file dialog as a modal child. The callback receives the picked path, or\n`nil, reason` when the person cancels. `options.extensions` limits the list and\n`options.allow_new` permits a name that does not exist yet (save-as).",
+          "description": "Shows the native file dialog. The callback receives the picked path, or\n`nil, \"cancelled\"` when the person cancels. `options.extensions` limits the list,\n`options.path` sets the starting directory, `options.name` prefills a save-as name\nand `options.allow_new` permits a name that does not exist yet.",
           "source": "lua_runner/main/Source/luavgl/picker.cpp",
-          "line": 411
+          "line": 373
         },
         {
           "id": "tactility.fs.pick_files",
@@ -499,7 +499,7 @@
           "group": "Functions",
           "description": "Like pick_file(), but the callback receives an array of paths.",
           "source": "lua_runner/main/Source/luavgl/picker.cpp",
-          "line": 420
+          "line": 382
         },
         {
           "id": "tactility.fs.pick_folder",
@@ -510,7 +510,7 @@
           "group": "Functions",
           "description": "Shows the folder picker; the callback receives the folder that was shown when\nSelect was pressed.",
           "source": "lua_runner/main/Source/luavgl/picker.cpp",
-          "line": 430
+          "line": 392
         }
       ]
     },
@@ -1200,8 +1200,52 @@
     {
       "name": "tactility.ui",
       "title": "App UI",
-      "summary": "Access to the runner's own toolbar.",
+      "summary": "The runner's own toolbar and native dialogs.",
       "entries": [
+        {
+          "id": "tactility.ui.alert",
+          "name": "alert",
+          "owner": "tactility.ui",
+          "kind": "function",
+          "signature": "tactility.ui.alert(...)",
+          "group": "Functions",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/dialogs.cpp",
+          "line": 429
+        },
+        {
+          "id": "tactility.ui.input",
+          "name": "input",
+          "owner": "tactility.ui",
+          "kind": "function",
+          "signature": "tactility.ui.input(...)",
+          "group": "Functions",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/dialogs.cpp",
+          "line": 487
+        },
+        {
+          "id": "tactility.ui.select",
+          "name": "select",
+          "owner": "tactility.ui",
+          "kind": "function",
+          "signature": "tactility.ui.select(...)",
+          "group": "Functions",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/dialogs.cpp",
+          "line": 528
+        },
+        {
+          "id": "tactility.ui.dismiss",
+          "name": "dismiss",
+          "owner": "tactility.ui",
+          "kind": "function",
+          "signature": "tactility.ui.dismiss(...)",
+          "group": "Functions",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/dialogs.cpp",
+          "line": 578
+        },
         {
           "id": "tactility.ui.toolbar",
           "name": "toolbar",
@@ -7306,6 +7350,64 @@
           "source": "lua_runner/main/Source/luavgl/bindings.cpp",
           "line": 0,
           "value": "LV_BUTTONMATRIX_BUTTON_NONE"
+        }
+      ]
+    },
+    {
+      "name": "tactility.fs.Picker",
+      "title": "tactility.fs.Picker",
+      "summary": "",
+      "entries": [
+        {
+          "id": "tactility.fs.Picker:cancel",
+          "name": "cancel",
+          "owner": "tactility.fs.Picker",
+          "kind": "method",
+          "signature": "tactility.fs.Picker:cancel(...)",
+          "group": "Picker methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/picker.cpp",
+          "line": 279
+        },
+        {
+          "id": "tactility.fs.Picker:is_active",
+          "name": "is_active",
+          "owner": "tactility.fs.Picker",
+          "kind": "method",
+          "signature": "tactility.fs.Picker:is_active(...)",
+          "group": "Picker methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/picker.cpp",
+          "line": 290
+        }
+      ]
+    },
+    {
+      "name": "tactility.ui.Dialog",
+      "title": "tactility.ui.Dialog",
+      "summary": "",
+      "entries": [
+        {
+          "id": "tactility.ui.Dialog:dismiss",
+          "name": "dismiss",
+          "owner": "tactility.ui.Dialog",
+          "kind": "method",
+          "signature": "tactility.ui.Dialog:dismiss(...)",
+          "group": "Dialog methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/dialogs.cpp",
+          "line": 379
+        },
+        {
+          "id": "tactility.ui.Dialog:is_active",
+          "name": "is_active",
+          "owner": "tactility.ui.Dialog",
+          "kind": "method",
+          "signature": "tactility.ui.Dialog:is_active(...)",
+          "group": "Dialog methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/dialogs.cpp",
+          "line": 388
         }
       ]
     }

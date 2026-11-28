@@ -63,6 +63,9 @@ void luavgl_pickers_poll(struct LuaRuntime* runtime);
 /** Processes completed HTTP requests; call with the LVGL lock held. */
 void luavgl_http_poll(struct LuaRuntime* runtime);
 
+/** Processes completed UI dialogs; call with the LVGL lock held. */
+void luavgl_dialogs_poll(struct LuaRuntime* runtime);
+
 #ifdef __cplusplus
 }
 #endif

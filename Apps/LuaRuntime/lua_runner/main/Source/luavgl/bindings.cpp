@@ -596,6 +596,7 @@ extern "C" error_t luavgl_bindings_open(struct LuaRuntime* runtime, lv_obj_t* ro
     luavgl_open_style(state);
 
     add_ui_api(state);
+    luavgl_open_dialogs(state);
 
     lua_setglobal(state, "lvgl");
 

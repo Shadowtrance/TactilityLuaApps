@@ -298,6 +298,13 @@ detached when the script closes. `keyboard:set_textarea(field)` binds an on-scre
 keyboard to a text field, which the Weather settings view uses for custom
 coordinates.
 
+`tactility.ui.alert`, `tactility.ui.input` and `tactility.ui.select` show the
+firmware's own modal dialogs, and `tactility.fs.pick_file`/`pick_files`/`pick_folder`
+show its native file picker. Both return a handle with `dismiss()`/`cancel()` and
+`is_active()`; results arrive through the runner's app loop with the LVGL lock held,
+so the callback can update widgets. None of these starts another app, so they also
+work in the simulator.
+
 `tactility.system.memory()` returns `{ internal = usage, external = usage }`
 with `free`, `total`, `used` and `percent` values. External is all zeroes on a
 board without PSRAM. `tactility.system.storage(path?)` finds the mounted file
@@ -583,6 +590,7 @@ runtime gains something a packaged app depends on.
 - `bindings.lua` — fs, time, device, settings, power and Wi-Fi smoke test.
 - `settings.lua` — multi-key round trip, replacement, `keys`/`has`/`remove`/`clear`,
   and repeated writes after the file already exists (the FAT rename case).
+- `dialogs.lua` — native alert/input/select option validation and dismissing an alert.
 - `raw.lua` — `tactility.raw.call` symbol lookup and missing-symbol error.
 
 Run the whole suite on connected devices (serial + development server):

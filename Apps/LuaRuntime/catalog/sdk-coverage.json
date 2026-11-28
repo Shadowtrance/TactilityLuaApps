@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-11-23T16:38:22",
+  "generated_at": "2026-11-28T11:22:34",
   "sdk": "C:\\Users\\teron\\.tactility\\sdk\\0.8.0-dev\\platform-esp32p4\\TactilitySDK",
   "firmware": "C:\\Users\\teron\\espidf-projects\\TactilityWork",
   "sdk_version": "0.8.0-dev",
   "idf_version": "6.1",
-  "sdk_commit": "8220768cf35fdcfe20d6b31ee44b5e5a11edf56c",
-  "firmware_commit": "8220768c",
+  "sdk_commit": "89dbd91f335b6f718d2f1fe8c23ea70feb81ab4b",
+  "firmware_commit": "89dbd91f",
   "firmware_dirty": true,
   "symbols": [
     {
@@ -29,6 +29,14 @@
       "name": "WIFI_TYPE",
       "status": "bound",
       "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "adc_controller_read_raw",
+      "status": "bound",
+      "header": "tactility/drivers/adc_controller.h",
       "source": "export",
       "note": ""
     },
@@ -226,7 +234,23 @@
     },
     {
       "module": "TactilityKernel",
+      "name": "file_system_for_each_mounted",
+      "status": "bound",
+      "header": "tactility/filesystem/file_system.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
       "name": "file_system_get_path",
+      "status": "bound",
+      "header": "tactility/filesystem/file_system.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "file_system_get_usage",
       "status": "bound",
       "header": "tactility/filesystem/file_system.h",
       "source": "export",
@@ -389,6 +413,102 @@
       "name": "power_supply_supports_quick_charge",
       "status": "bound",
       "header": "tactility/drivers/power_supply.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "spi_controller_add_device",
+      "status": "bound",
+      "header": "tactility/drivers/spi_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "spi_controller_remove_device",
+      "status": "bound",
+      "header": "tactility/drivers/spi_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "spi_controller_transmit",
+      "status": "bound",
+      "header": "tactility/drivers/spi_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "task_event_group_construct",
+      "status": "bound",
+      "header": "tactility/concurrent/task_event_group.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "task_event_group_destruct",
+      "status": "bound",
+      "header": "tactility/concurrent/task_event_group.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "uart_controller_get_available",
+      "status": "bound",
+      "header": "tactility/drivers/uart_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "uart_controller_get_config",
+      "status": "bound",
+      "header": "tactility/drivers/uart_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "uart_controller_is_open",
+      "status": "bound",
+      "header": "tactility/drivers/uart_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "uart_controller_read_bytes",
+      "status": "bound",
+      "header": "tactility/drivers/uart_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "uart_controller_read_until",
+      "status": "bound",
+      "header": "tactility/drivers/uart_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "uart_controller_set_config",
+      "status": "bound",
+      "header": "tactility/drivers/uart_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "uart_controller_write_bytes",
+      "status": "bound",
+      "header": "tactility/drivers/uart_controller.h",
       "source": "export",
       "note": ""
     },
@@ -602,7 +722,79 @@
     },
     {
       "module": "TactilityKernel",
+      "name": "spi_controller_lock",
+      "status": "generated",
+      "header": "tactility/drivers/spi_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "spi_controller_try_lock",
+      "status": "generated",
+      "header": "tactility/drivers/spi_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "spi_controller_unlock",
+      "status": "generated",
+      "header": "tactility/drivers/spi_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "uart_controller_close",
+      "status": "generated",
+      "header": "tactility/drivers/uart_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "uart_controller_flush_input",
+      "status": "generated",
+      "header": "tactility/drivers/uart_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "uart_controller_open",
+      "status": "generated",
+      "header": "tactility/drivers/uart_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "uart_controller_read_byte",
+      "status": "generated",
+      "header": "tactility/drivers/uart_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "uart_controller_write_byte",
+      "status": "generated",
+      "header": "tactility/drivers/uart_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
       "name": "ADC_CONTROLLER_TYPE",
+      "status": "unbound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "ANTENNA_SWITCH_TYPE",
       "status": "unbound",
       "header": "",
       "source": "export",
@@ -954,9 +1146,17 @@
     },
     {
       "module": "TactilityKernel",
-      "name": "adc_controller_read_raw",
+      "name": "antenna_switch_get_antenna",
       "status": "unbound",
-      "header": "tactility/drivers/adc_controller.h",
+      "header": "tactility/drivers/antenna_switch.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "antenna_switch_set_antenna",
+      "status": "unbound",
+      "header": "tactility/drivers/antenna_switch.h",
       "source": "export",
       "note": ""
     },
@@ -2394,14 +2594,6 @@
     },
     {
       "module": "TactilityKernel",
-      "name": "file_system_for_each_mounted",
-      "status": "unbound",
-      "header": "tactility/filesystem/file_system.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
       "name": "file_system_mount",
       "status": "unbound",
       "header": "tactility/filesystem/file_system.h",
@@ -2421,6 +2613,38 @@
       "name": "file_touch",
       "status": "unbound",
       "header": "tactility/filesystem/file.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "firmware_for_each",
+      "status": "unbound",
+      "header": "tactility/firmware/firmware.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "firmware_get",
+      "status": "unbound",
+      "header": "tactility/firmware/firmware.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "firmware_register",
+      "status": "unbound",
+      "header": "tactility/firmware/firmware.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "firmware_unregister",
+      "status": "unbound",
+      "header": "tactility/firmware/firmware.h",
       "source": "export",
       "note": ""
     },
@@ -2787,6 +3011,22 @@
     {
       "module": "TactilityKernel",
       "name": "memory_calloc_with_policy",
+      "status": "unbound",
+      "header": "tactility/memory.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "memory_external_largest_block",
+      "status": "unbound",
+      "header": "tactility/memory.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "memory_heap_largest_block",
       "status": "unbound",
       "header": "tactility/memory.h",
       "source": "export",
@@ -3370,6 +3610,14 @@
     },
     {
       "module": "TactilityKernel",
+      "name": "radio_get_antenna",
+      "status": "unbound",
+      "header": "tactility/drivers/radio.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
       "name": "radio_get_modulation",
       "status": "unbound",
       "header": "tactility/drivers/radio.h",
@@ -3475,6 +3723,14 @@
     {
       "module": "TactilityKernel",
       "name": "radio_rx_event_unsubscribe",
+      "status": "unbound",
+      "header": "tactility/drivers/radio.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "radio_set_antenna",
       "status": "unbound",
       "header": "tactility/drivers/radio.h",
       "source": "export",
@@ -3674,22 +3930,6 @@
     },
     {
       "module": "TactilityKernel",
-      "name": "spi_controller_add_device",
-      "status": "unbound",
-      "header": "tactility/drivers/spi_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "spi_controller_lock",
-      "status": "unbound",
-      "header": "tactility/drivers/spi_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
       "name": "spi_controller_lock_bus_of",
       "status": "unbound",
       "header": "tactility/drivers/spi_controller.h",
@@ -3706,38 +3946,6 @@
     },
     {
       "module": "TactilityKernel",
-      "name": "spi_controller_remove_device",
-      "status": "unbound",
-      "header": "tactility/drivers/spi_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "spi_controller_transmit",
-      "status": "unbound",
-      "header": "tactility/drivers/spi_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "spi_controller_try_lock",
-      "status": "unbound",
-      "header": "tactility/drivers/spi_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "spi_controller_unlock",
-      "status": "unbound",
-      "header": "tactility/drivers/spi_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
       "name": "spi_controller_unlock_bus_of",
       "status": "unbound",
       "header": "tactility/drivers/spi_controller.h",
@@ -3747,22 +3955,6 @@
     {
       "module": "TactilityKernel",
       "name": "task_event_group_claim_bit",
-      "status": "unbound",
-      "header": "tactility/concurrent/task_event_group.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "task_event_group_construct",
-      "status": "unbound",
-      "header": "tactility/concurrent/task_event_group.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "task_event_group_destruct",
       "status": "unbound",
       "header": "tactility/concurrent/task_event_group.h",
       "source": "export",
@@ -4125,102 +4317,6 @@
       "name": "trackball_settings_get_default",
       "status": "unbound",
       "header": "tactility/drivers/trackball.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "uart_controller_close",
-      "status": "unbound",
-      "header": "tactility/drivers/uart_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "uart_controller_flush_input",
-      "status": "unbound",
-      "header": "tactility/drivers/uart_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "uart_controller_get_available",
-      "status": "unbound",
-      "header": "tactility/drivers/uart_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "uart_controller_get_config",
-      "status": "unbound",
-      "header": "tactility/drivers/uart_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "uart_controller_is_open",
-      "status": "unbound",
-      "header": "tactility/drivers/uart_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "uart_controller_open",
-      "status": "unbound",
-      "header": "tactility/drivers/uart_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "uart_controller_read_byte",
-      "status": "unbound",
-      "header": "tactility/drivers/uart_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "uart_controller_read_bytes",
-      "status": "unbound",
-      "header": "tactility/drivers/uart_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "uart_controller_read_until",
-      "status": "unbound",
-      "header": "tactility/drivers/uart_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "uart_controller_set_config",
-      "status": "unbound",
-      "header": "tactility/drivers/uart_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "uart_controller_write_byte",
-      "status": "unbound",
-      "header": "tactility/drivers/uart_controller.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "uart_controller_write_bytes",
-      "status": "unbound",
-      "header": "tactility/drivers/uart_controller.h",
       "source": "export",
       "note": ""
     },
@@ -4770,6 +4866,110 @@
     },
     {
       "module": "app-module",
+      "name": "app_install",
+      "status": "bound",
+      "header": "app/install.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "app-module",
+      "name": "app_manager_find_running_instance",
+      "status": "bound",
+      "header": "app/manager.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "app-module",
+      "name": "app_manager_for_each_manifest",
+      "status": "bound",
+      "header": "app/manager.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "app-module",
+      "name": "app_manager_get_topmost_app_id",
+      "status": "bound",
+      "header": "app/manager.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "app-module",
+      "name": "app_manager_is_running",
+      "status": "bound",
+      "header": "app/manager.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "app-module",
+      "name": "app_manager_stop",
+      "status": "bound",
+      "header": "app/manager.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "app-module",
+      "name": "app_paths_get_user_data_directory",
+      "status": "bound",
+      "header": "app/paths.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "app-module",
+      "name": "app_scheduler_current_app_id",
+      "status": "bound",
+      "header": "app/scheduler.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "app-module",
+      "name": "app_start",
+      "status": "bound",
+      "header": "app/start.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "app-module",
+      "name": "app_start_context_from_id",
+      "status": "bound",
+      "header": "app/start.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "app-module",
+      "name": "app_start_context_set_arguments",
+      "status": "bound",
+      "header": "app/start.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "app-module",
+      "name": "app_start_with_context",
+      "status": "bound",
+      "header": "app/start.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "app-module",
+      "name": "app_uninstall",
+      "status": "bound",
+      "header": "app/install.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "app-module",
       "name": "app_dir_get_cwd",
       "status": "unbound",
       "header": "app/dir.h",
@@ -4898,14 +5098,6 @@
     },
     {
       "module": "app-module",
-      "name": "app_install",
-      "status": "unbound",
-      "header": "app/install.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "app-module",
       "name": "app_io_await",
       "status": "unbound",
       "header": "app/io.h",
@@ -5018,22 +5210,6 @@
     },
     {
       "module": "app-module",
-      "name": "app_manager_find_running_instance",
-      "status": "unbound",
-      "header": "app/manager.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "app-module",
-      "name": "app_manager_for_each_manifest",
-      "status": "unbound",
-      "header": "app/manager.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "app-module",
       "name": "app_manager_for_each_package",
       "status": "unbound",
       "header": "app/manager.h",
@@ -5043,14 +5219,6 @@
     {
       "module": "app-module",
       "name": "app_manager_get_state",
-      "status": "unbound",
-      "header": "app/manager.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "app-module",
-      "name": "app_manager_get_topmost_app_id",
       "status": "unbound",
       "header": "app/manager.h",
       "source": "export",
@@ -5090,14 +5258,6 @@
     },
     {
       "module": "app-module",
-      "name": "app_manager_is_running",
-      "status": "unbound",
-      "header": "app/manager.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "app-module",
       "name": "app_manager_remove",
       "status": "unbound",
       "header": "app/manager.h",
@@ -5115,14 +5275,6 @@
     {
       "module": "app-module",
       "name": "app_manager_remove_package_listener",
-      "status": "unbound",
-      "header": "app/manager.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "app-module",
-      "name": "app_manager_stop",
       "status": "unbound",
       "header": "app/manager.h",
       "source": "export",
@@ -5226,14 +5378,6 @@
     },
     {
       "module": "app-module",
-      "name": "app_paths_get_user_data_directory",
-      "status": "unbound",
-      "header": "app/paths.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "app-module",
       "name": "app_paths_get_user_data_path",
       "status": "unbound",
       "header": "app/paths.h",
@@ -5242,25 +5386,9 @@
     },
     {
       "module": "app-module",
-      "name": "app_scheduler_current_app_id",
-      "status": "unbound",
-      "header": "app/scheduler.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "app-module",
       "name": "app_signal_send",
       "status": "unbound",
       "header": "app/signal.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "app-module",
-      "name": "app_start",
-      "status": "unbound",
-      "header": "app/start.h",
       "source": "export",
       "note": ""
     },
@@ -5275,22 +5403,6 @@
     {
       "module": "app-module",
       "name": "app_start_context_for_manifest",
-      "status": "unbound",
-      "header": "app/start.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "app-module",
-      "name": "app_start_context_from_id",
-      "status": "unbound",
-      "header": "app/start.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "app-module",
-      "name": "app_start_context_set_arguments",
       "status": "unbound",
       "header": "app/start.h",
       "source": "export",
@@ -5347,14 +5459,6 @@
     {
       "module": "app-module",
       "name": "app_start_for_result_with_streams",
-      "status": "unbound",
-      "header": "app/start.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "app-module",
-      "name": "app_start_with_context",
       "status": "unbound",
       "header": "app/start.h",
       "source": "export",
@@ -5421,14 +5525,6 @@
       "name": "app_stream_write",
       "status": "unbound",
       "header": "app/stream.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "app-module",
-      "name": "app_uninstall",
-      "status": "unbound",
-      "header": "app/install.h",
       "source": "export",
       "note": ""
     },
@@ -5738,6 +5834,182 @@
     },
     {
       "module": "cjson-module",
+      "name": "cJSON_AddItemToArray",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_AddItemToObject",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_CreateArray",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_CreateFalse",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_CreateNull",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_CreateNumber",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_CreateObject",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_CreateString",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_CreateTrue",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_Delete",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_GetArraySize",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_GetErrorPtr",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_IsArray",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_IsBool",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_IsNull",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_IsNumber",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_IsObject",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_IsString",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_IsTrue",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_ParseWithLength",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_PrintUnformatted",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
+      "name": "cJSON_free",
+      "status": "bound",
+      "header": "cJSON.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "cjson-module",
       "name": "cJSON_AddArrayToObject",
       "status": "unbound",
       "header": "cJSON.h",
@@ -5771,22 +6043,6 @@
     {
       "module": "cjson-module",
       "name": "cJSON_AddItemReferenceToObject",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
-      "name": "cJSON_AddItemToArray",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
-      "name": "cJSON_AddItemToObject",
       "status": "unbound",
       "header": "cJSON.h",
       "source": "export",
@@ -5858,14 +6114,6 @@
     },
     {
       "module": "cjson-module",
-      "name": "cJSON_CreateArray",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
       "name": "cJSON_CreateArrayReference",
       "status": "unbound",
       "header": "cJSON.h",
@@ -5890,14 +6138,6 @@
     },
     {
       "module": "cjson-module",
-      "name": "cJSON_CreateFalse",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
       "name": "cJSON_CreateFloatArray",
       "status": "unbound",
       "header": "cJSON.h",
@@ -5907,30 +6147,6 @@
     {
       "module": "cjson-module",
       "name": "cJSON_CreateIntArray",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
-      "name": "cJSON_CreateNull",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
-      "name": "cJSON_CreateNumber",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
-      "name": "cJSON_CreateObject",
       "status": "unbound",
       "header": "cJSON.h",
       "source": "export",
@@ -5954,14 +6170,6 @@
     },
     {
       "module": "cjson-module",
-      "name": "cJSON_CreateString",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
       "name": "cJSON_CreateStringArray",
       "status": "unbound",
       "header": "cJSON.h",
@@ -5971,22 +6179,6 @@
     {
       "module": "cjson-module",
       "name": "cJSON_CreateStringReference",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
-      "name": "cJSON_CreateTrue",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
-      "name": "cJSON_Delete",
       "status": "unbound",
       "header": "cJSON.h",
       "source": "export",
@@ -6066,22 +6258,6 @@
     },
     {
       "module": "cjson-module",
-      "name": "cJSON_GetArraySize",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
-      "name": "cJSON_GetErrorPtr",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
       "name": "cJSON_GetNumberValue",
       "status": "unbound",
       "header": "cJSON.h",
@@ -6130,22 +6306,6 @@
     },
     {
       "module": "cjson-module",
-      "name": "cJSON_IsArray",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
-      "name": "cJSON_IsBool",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
       "name": "cJSON_IsFalse",
       "status": "unbound",
       "header": "cJSON.h",
@@ -6162,47 +6322,7 @@
     },
     {
       "module": "cjson-module",
-      "name": "cJSON_IsNull",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
-      "name": "cJSON_IsNumber",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
-      "name": "cJSON_IsObject",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
       "name": "cJSON_IsRaw",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
-      "name": "cJSON_IsString",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
-      "name": "cJSON_IsTrue",
       "status": "unbound",
       "header": "cJSON.h",
       "source": "export",
@@ -6219,14 +6339,6 @@
     {
       "module": "cjson-module",
       "name": "cJSON_Parse",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
-      "name": "cJSON_ParseWithLength",
       "status": "unbound",
       "header": "cJSON.h",
       "source": "export",
@@ -6267,14 +6379,6 @@
     {
       "module": "cjson-module",
       "name": "cJSON_PrintPreallocated",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
-      "name": "cJSON_PrintUnformatted",
       "status": "unbound",
       "header": "cJSON.h",
       "source": "export",
@@ -6331,14 +6435,6 @@
     {
       "module": "cjson-module",
       "name": "cJSON_Version",
-      "status": "unbound",
-      "header": "cJSON.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "cjson-module",
-      "name": "cJSON_free",
       "status": "unbound",
       "header": "cJSON.h",
       "source": "export",
@@ -6586,7 +6682,7 @@
     },
     {
       "module": "http-module",
-      "name": "select",
+      "name": "esp_crt_bundle_attach",
       "status": "bound",
       "header": "",
       "source": "export",
@@ -6594,8 +6690,104 @@
     },
     {
       "module": "http-module",
-      "name": "esp_crt_bundle_attach",
-      "status": "unbound",
+      "name": "esp_http_client_cleanup",
+      "status": "bound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "esp_http_client_close",
+      "status": "bound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "esp_http_client_fetch_headers",
+      "status": "bound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "esp_http_client_get_content_length",
+      "status": "bound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "esp_http_client_get_header",
+      "status": "bound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "esp_http_client_get_status_code",
+      "status": "bound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "esp_http_client_init",
+      "status": "bound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "esp_http_client_open",
+      "status": "bound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "esp_http_client_read",
+      "status": "bound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "esp_http_client_set_header",
+      "status": "bound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "esp_http_client_set_method",
+      "status": "bound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "esp_http_client_write",
+      "status": "bound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "select",
+      "status": "bound",
       "header": "",
       "source": "export",
       "note": ""
@@ -6618,22 +6810,6 @@
     },
     {
       "module": "http-module",
-      "name": "esp_http_client_cleanup",
-      "status": "unbound",
-      "header": "",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "esp_http_client_close",
-      "status": "unbound",
-      "header": "",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
       "name": "esp_http_client_delete_all_headers",
       "status": "unbound",
       "header": "",
@@ -6643,14 +6819,6 @@
     {
       "module": "http-module",
       "name": "esp_http_client_delete_header",
-      "status": "unbound",
-      "header": "",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "esp_http_client_fetch_headers",
       "status": "unbound",
       "header": "",
       "source": "export",
@@ -6682,23 +6850,7 @@
     },
     {
       "module": "http-module",
-      "name": "esp_http_client_get_content_length",
-      "status": "unbound",
-      "header": "",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
       "name": "esp_http_client_get_errno",
-      "status": "unbound",
-      "header": "",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "esp_http_client_get_header",
       "status": "unbound",
       "header": "",
       "source": "export",
@@ -6715,14 +6867,6 @@
     {
       "module": "http-module",
       "name": "esp_http_client_get_post_field",
-      "status": "unbound",
-      "header": "",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "esp_http_client_get_status_code",
       "status": "unbound",
       "header": "",
       "source": "export",
@@ -6762,14 +6906,6 @@
     },
     {
       "module": "http-module",
-      "name": "esp_http_client_init",
-      "status": "unbound",
-      "header": "",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
       "name": "esp_http_client_is_chunked_response",
       "status": "unbound",
       "header": "",
@@ -6786,23 +6922,7 @@
     },
     {
       "module": "http-module",
-      "name": "esp_http_client_open",
-      "status": "unbound",
-      "header": "",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
       "name": "esp_http_client_perform",
-      "status": "unbound",
-      "header": "",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "esp_http_client_read",
       "status": "unbound",
       "header": "",
       "source": "export",
@@ -6835,22 +6955,6 @@
     {
       "module": "http-module",
       "name": "esp_http_client_set_authtype",
-      "status": "unbound",
-      "header": "",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "esp_http_client_set_header",
-      "status": "unbound",
-      "header": "",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "esp_http_client_set_method",
       "status": "unbound",
       "header": "",
       "source": "export",
@@ -6914,14 +7018,6 @@
     },
     {
       "module": "http-module",
-      "name": "esp_http_client_write",
-      "status": "unbound",
-      "header": "",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
       "name": "esp_netif_get_handle_from_ifkey",
       "status": "unbound",
       "header": "",
@@ -6933,6 +7029,118 @@
       "name": "esp_netif_get_ip_info",
       "status": "unbound",
       "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_alloc",
+      "status": "unbound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_cancel",
+      "status": "unbound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_close",
+      "status": "unbound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_free",
+      "status": "unbound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_get_content_length",
+      "status": "unbound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_get_failure",
+      "status": "unbound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_get_header",
+      "status": "unbound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_get_status_code",
+      "status": "unbound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_open",
+      "status": "unbound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_read",
+      "status": "unbound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_reset",
+      "status": "unbound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_set_certificate",
+      "status": "unbound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_set_header",
+      "status": "unbound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_set_timeout",
+      "status": "unbound",
+      "header": "http/client.h",
       "source": "export",
       "note": ""
     },
@@ -11290,6 +11498,14 @@
     },
     {
       "module": "lvgl-module",
+      "name": "lv_button_class",
+      "status": "unbound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
       "name": "lv_buttonmatrix_get_one_checked",
       "status": "unbound",
       "header": "widgets/lv_buttonmatrix.h",
@@ -11301,6 +11517,14 @@
       "name": "lv_buttonmatrix_set_button_ctrl_all",
       "status": "unbound",
       "header": "widgets/lv_buttonmatrix.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lv_canvas_class",
+      "status": "unbound",
+      "header": "",
       "source": "export",
       "note": ""
     },
@@ -12018,6 +12242,14 @@
     },
     {
       "module": "lvgl-module",
+      "name": "lv_list_class",
+      "status": "unbound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
       "name": "lv_list_create",
       "status": "unbound",
       "header": "widgets/lv_list.h",
@@ -12053,6 +12285,14 @@
       "name": "lv_obj_align_to",
       "status": "unbound",
       "header": "core/lv_obj_pos.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lv_obj_class",
+      "status": "unbound",
+      "header": "",
       "source": "export",
       "note": ""
     },
@@ -12155,6 +12395,14 @@
     {
       "module": "lvgl-module",
       "name": "lv_obj_get_style_text_color",
+      "status": "unbound",
+      "header": "core/lv_obj_style_gen.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lv_obj_get_style_text_font",
       "status": "unbound",
       "header": "core/lv_obj_style_gen.h",
       "source": "export",
@@ -12626,6 +12874,14 @@
     },
     {
       "module": "lvgl-module",
+      "name": "lv_spangroup_class",
+      "status": "unbound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
       "name": "lv_spangroup_create",
       "status": "unbound",
       "header": "widgets/lv_span.h",
@@ -13082,6 +13338,94 @@
     },
     {
       "module": "lvgl-module",
+      "name": "lvgl_files_create",
+      "status": "unbound",
+      "header": "lvgl/widgets/files.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_files_entry_is_directory",
+      "status": "unbound",
+      "header": "lvgl/widgets/files.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_files_entry_is_link",
+      "status": "unbound",
+      "header": "lvgl/widgets/files.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_files_find_entry",
+      "status": "unbound",
+      "header": "lvgl/widgets/files.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_files_find_tile",
+      "status": "unbound",
+      "header": "lvgl/widgets/files.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_files_get_entry_count",
+      "status": "unbound",
+      "header": "lvgl/widgets/files.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_files_get_path",
+      "status": "unbound",
+      "header": "lvgl/widgets/files.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_files_get_tile_grid",
+      "status": "unbound",
+      "header": "lvgl/widgets/files.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_files_is_loading",
+      "status": "unbound",
+      "header": "lvgl/widgets/files.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_files_reload",
+      "status": "unbound",
+      "header": "lvgl/widgets/files.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_files_set_path",
+      "status": "unbound",
+      "header": "lvgl/widgets/files.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
       "name": "lvgl_focus_container_create",
       "status": "unbound",
       "header": "lvgl/widgets/focus_container.h",
@@ -13357,6 +13701,38 @@
       "name": "lvgl_obj_add_edge_padding",
       "status": "unbound",
       "header": "lvgl/insets.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_path_bar_create",
+      "status": "unbound",
+      "header": "lvgl/widgets/path_bar.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_path_bar_focus_parent_segment",
+      "status": "unbound",
+      "header": "lvgl/widgets/path_bar.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_path_bar_get_parent_segment",
+      "status": "unbound",
+      "header": "lvgl/widgets/path_bar.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_path_bar_set_path",
+      "status": "unbound",
+      "header": "lvgl/widgets/path_bar.h",
       "source": "export",
       "note": ""
     },
@@ -13730,6 +14106,134 @@
     },
     {
       "module": "lvgl-module",
+      "name": "lvgl_tile_grid_add_item",
+      "status": "unbound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_create",
+      "status": "unbound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_find_tile",
+      "status": "unbound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_get_card_icon_size",
+      "status": "unbound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_get_page",
+      "status": "unbound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_get_tile_icon_size",
+      "status": "unbound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_get_tile_item",
+      "status": "unbound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_get_tiles",
+      "status": "unbound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_next_page",
+      "status": "unbound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_previous_page",
+      "status": "unbound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_replace_empty_fallback",
+      "status": "unbound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_request_repopulate",
+      "status": "unbound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_request_repopulate_selecting_first",
+      "status": "unbound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_set_icon_color",
+      "status": "unbound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_set_style",
+      "status": "unbound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_show_first_page",
+      "status": "unbound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
       "name": "lvgl_toolbar_add_dropdown_action",
       "status": "unbound",
       "header": "lvgl/widgets/toolbar.h",
@@ -13781,6 +14285,62 @@
       "name": "lvgl_unlock",
       "status": "unbound",
       "header": "lvgl/lvgl.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-window-manager-module",
+      "name": "window_manager_alert_dialog",
+      "status": "bound",
+      "header": "lvgl_window_manager/dialog.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-window-manager-module",
+      "name": "window_manager_dialog_dismiss",
+      "status": "bound",
+      "header": "lvgl_window_manager/dialog.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-window-manager-module",
+      "name": "window_manager_file_dialog",
+      "status": "bound",
+      "header": "lvgl_window_manager/dialog.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-window-manager-module",
+      "name": "window_manager_input_dialog",
+      "status": "bound",
+      "header": "lvgl_window_manager/dialog.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-window-manager-module",
+      "name": "window_manager_remove",
+      "status": "bound",
+      "header": "lvgl_window_manager/window_manager.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-window-manager-module",
+      "name": "window_manager_selection_dialog",
+      "status": "bound",
+      "header": "lvgl_window_manager/dialog.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-window-manager-module",
+      "name": "window_manager_selection_dialog_with_icons",
+      "status": "bound",
+      "header": "lvgl_window_manager/dialog.h",
       "source": "export",
       "note": ""
     },
@@ -13929,14 +14489,6 @@
       "note": ""
     },
     {
-      "module": "lvgl-window-manager-module",
-      "name": "window_manager_remove",
-      "status": "unbound",
-      "header": "lvgl_window_manager/window_manager.h",
-      "source": "export",
-      "note": ""
-    },
-    {
       "module": "notification-module",
       "name": "notification_context_destroy",
       "status": "bound",
@@ -14034,6 +14586,14 @@
     },
     {
       "module": "notification-module",
+      "name": "notification_poll",
+      "status": "bound",
+      "header": "notification/notification.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "notification-module",
       "name": "notification_release",
       "status": "bound",
       "header": "notification/notification.h",
@@ -14043,6 +14603,22 @@
     {
       "module": "notification-module",
       "name": "notification_send",
+      "status": "bound",
+      "header": "notification/notification.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "notification-module",
+      "name": "notification_subscribe",
+      "status": "bound",
+      "header": "notification/notification.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "notification-module",
+      "name": "notification_unsubscribe",
       "status": "bound",
       "header": "notification/notification.h",
       "source": "export",
@@ -14106,14 +14682,6 @@
     },
     {
       "module": "notification-module",
-      "name": "notification_poll",
-      "status": "unbound",
-      "header": "notification/notification.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "notification-module",
       "name": "notification_preload",
       "status": "unbound",
       "header": "notification/notification.h",
@@ -14123,22 +14691,6 @@
     {
       "module": "notification-module",
       "name": "notification_set_source_enabled",
-      "status": "unbound",
-      "header": "notification/notification.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "notification-module",
-      "name": "notification_subscribe",
-      "status": "unbound",
-      "header": "notification/notification.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "notification-module",
-      "name": "notification_unsubscribe",
       "status": "unbound",
       "header": "notification/notification.h",
       "source": "export",
@@ -14245,6 +14797,14 @@
       "name": "esp32_spi_get_cs_pin",
       "status": "declared",
       "header": "tactility/drivers/esp32_spi.h",
+      "source": "header",
+      "note": ""
+    },
+    {
+      "module": "platform-esp32",
+      "name": "esp32_system_firmware_register",
+      "status": "declared",
+      "header": "tactility/firmware/esp32_system_firmware.h",
       "source": "header",
       "note": ""
     },
