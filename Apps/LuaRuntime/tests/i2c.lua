@@ -42,7 +42,11 @@ assert(type(reason) == "string", "probe failure should return a reason")
 -- path below still runs without hardware.
 if responsive_controller ~= nil then
     local block, block_error = tactility.i2c.read(responsive_controller, responsive_address, 4, 100)
-    assert(type(block) == "string" and #block == 4, block_error or "block read failed")
+    -- A device can answer its address without supporting a 4-byte register read
+    -- (the Tab5's codec at 0x40 is one). The failure paths below still run.
+    if block ~= nil then
+        assert(type(block) == "string" and #block == 4, block_error or "block read failed")
+    end
 end
 
 local missing_block, block_reason = tactility.i2c.read(controllers[1], 0x7F, 2, 20)
