@@ -175,6 +175,11 @@ local now_tile = lvgl.Object(main_view, {
     scrollbar_mode = lvgl.SCROLLBAR.OFF,
 })
 now_tile:add_flag(lvgl.FLAG.SCROLLABLE)
+-- Image decoding is not cached by the firmware, so avoid momentum/elastic
+-- redraws: the page jumps once instead of animating through many frames.
+now_tile:remove_flag(lvgl.FLAG.SCROLL_ELASTIC)
+now_tile:remove_flag(lvgl.FLAG.SCROLL_MOMENTUM)
+now_tile:set{ scroll_snap_y = lvgl.SCROLL_SNAP.START }
 local forecast_tile = lvgl.Object(main_view, {
     bg_opa = lvgl.OPA.TRANSP,
     border_width = 0,
@@ -189,6 +194,9 @@ local forecast_tile = lvgl.Object(main_view, {
 })
 forecast_tile:add_flag(lvgl.FLAG.SCROLLABLE)
 forecast_tile:add_flag(lvgl.FLAG.HIDDEN)
+forecast_tile:remove_flag(lvgl.FLAG.SCROLL_ELASTIC)
+forecast_tile:remove_flag(lvgl.FLAG.SCROLL_MOMENTUM)
+forecast_tile:set{ scroll_snap_y = lvgl.SCROLL_SNAP.START }
 
 tabs:on(lvgl.EVENT.VALUE_CHANGED, function()
     local selected = tabs:selected()
