@@ -315,6 +315,12 @@ the firmware's path segments in the runner toolbar. `set_path()`,
 `focus_parent_segment()` and `parent_segment()` update and inspect it; the
 callback receives the pressed path and whether a key triggered it.
 
+`tactility.audio.status()` reports the audio stream device, whether output is
+supported and the shared volume/mute/enabled state. `tactility.audio.play_file`
+plays a 16/24/32-bit PCM WAV on a worker task and returns a handle with `stop`,
+`pause`, `resume`, `is_active`, `position`, `duration`, `volume` and `error`.
+Playback needs an output codec; devices without one report a skip in the test.
+
 `tactility.ui.alert`, `tactility.ui.input` and `tactility.ui.select` show the
 firmware's own modal dialogs, and `tactility.fs.pick_file`/`pick_files`/`pick_folder`
 show its native file picker. Both return a handle with `dismiss()`/`cancel()` and
@@ -611,6 +617,7 @@ runtime gains something a packaged app depends on.
 - `download.lua` — HTTPS download to a file, cancellation and the result shape.
 - `tile_grid.lua` — launcher grid items, styles, paging and lookup.
 - `path_bar.lua` — toolbar path segments, path updates and parent lookup.
+- `audio.lua` — WAV playback through the audio stream device (skips without output).
 - `raw.lua` — `tactility.raw.call` symbol lookup and missing-symbol error.
 
 Run the whole suite on connected devices (serial + development server):

@@ -144,7 +144,7 @@ test that proves it.
 | [ ] | `pwm` | — | |
 | [x] | `adc` | generated (`adc.toml`) | `tests/adc.lua` |
 | [x] | `spi` | generated (`spi.toml`) + custom | `tests/spi.lua` |
-| [ ] | `i2s` / audio | — | Player/recorder clones |
+| [~] | `i2s` / audio | `tactility.audio` WAV playback via `audio_stream`; raw streams and MP3 decoder next | `tests/audio.lua` |
 | [x] | `display` / touch / backlight | hand-written; panel geometry, shape and brightness percentage | `tests/display.lua` |
 | [ ] | `camera` | — | |
 | [ ] | `gps` | — | GPS viewer clone |
@@ -220,7 +220,7 @@ be read back from it unaided.
 | [ ] | Snake / 2048 / Breakout | UI + timer | Games exercise events |
 | [ ] | GPS viewer | `gps` + UI | Needs GPS capability |
 | [ ] | IMU viewer | `device`/sensor API | Needs sensor capability |
-| [ ] | Music player | audio + `fs` | Needs audio stream |
+| [~] | Music player | audio + `fs` | WAV playback in place; MP3 decoder next |
 | [x] | Weather | `Scripts/weather`: `require`, HTTP, JSON, toolbar actions, geocoding/custom location, units/interval | Packaged example; 4 days on short screens |
 | [ ] | App hub / installs | `http` + app lifecycle | Bigger scope |
 | [-] | Camera / Doom | camera / heavy port | Not a Lua demo target |
@@ -283,6 +283,7 @@ be read back from it unaided.
 | [x] | `tests/widget_batch3.lua` | Tabview, Tileview |
 | [x] | `tests/tile_grid.lua` | TileGrid items, styles, paging and lookup |
 | [x] | `tests/path_bar.lua` | PathBar segments, set_path and parent lookup |
+| [x] | `tests/audio.lua` | WAV playback through the audio stream device (skips without output) |
 | [x] | `tests/assets.lua` | Install-directory argument, PNG asset in `Image` and `ImageButton` |
 | [x] | `tests/group.lua` | Input group count/order, focus next/prev/freeze, wrap/edit/default |
 | [x] | `tests/animation.lua` | x/value/colour animations, stop, path constants, target deletion |

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-28T11:50:08",
+  "generated_at": "2026-11-28T12:02:52",
   "sdk": "C:\\Users\\teron\\.tactility\\sdk\\0.8.0-dev\\platform-esp32p4\\TactilitySDK",
   "firmware": "C:\\Users\\teron\\espidf-projects\\TactilityWork",
   "sdk_version": "0.8.0-dev",
@@ -8,6 +8,14 @@
   "firmware_commit": "89dbd91f",
   "firmware_dirty": true,
   "symbols": [
+    {
+      "module": "TactilityKernel",
+      "name": "AUDIO_STREAM_TYPE",
+      "status": "bound",
+      "header": "",
+      "source": "export",
+      "note": ""
+    },
     {
       "module": "TactilityKernel",
       "name": "DISPLAY_TYPE",
@@ -37,6 +45,70 @@
       "name": "adc_controller_read_raw",
       "status": "bound",
       "header": "tactility/drivers/adc_controller.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "audio_stream_close",
+      "status": "bound",
+      "header": "tactility/drivers/audio_stream.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "audio_stream_get_enabled",
+      "status": "bound",
+      "header": "tactility/drivers/audio_stream.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "audio_stream_get_mute",
+      "status": "bound",
+      "header": "tactility/drivers/audio_stream.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "audio_stream_get_volume",
+      "status": "bound",
+      "header": "tactility/drivers/audio_stream.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "audio_stream_is_supported",
+      "status": "bound",
+      "header": "tactility/drivers/audio_stream.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "audio_stream_open_output",
+      "status": "bound",
+      "header": "tactility/drivers/audio_stream.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "audio_stream_set_volume",
+      "status": "bound",
+      "header": "tactility/drivers/audio_stream.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "TactilityKernel",
+      "name": "audio_stream_write",
+      "status": "bound",
+      "header": "tactility/drivers/audio_stream.h",
       "source": "export",
       "note": ""
     },
@@ -810,14 +882,6 @@
     },
     {
       "module": "TactilityKernel",
-      "name": "AUDIO_STREAM_TYPE",
-      "status": "unbound",
-      "header": "",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
       "name": "BACKLIGHT_TYPE",
       "status": "unbound",
       "header": "",
@@ -1258,55 +1322,7 @@
     },
     {
       "module": "TactilityKernel",
-      "name": "audio_stream_close",
-      "status": "unbound",
-      "header": "tactility/drivers/audio_stream.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "audio_stream_get_enabled",
-      "status": "unbound",
-      "header": "tactility/drivers/audio_stream.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "audio_stream_get_mute",
-      "status": "unbound",
-      "header": "tactility/drivers/audio_stream.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "audio_stream_get_volume",
-      "status": "unbound",
-      "header": "tactility/drivers/audio_stream.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "audio_stream_is_supported",
-      "status": "unbound",
-      "header": "tactility/drivers/audio_stream.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
       "name": "audio_stream_open_input",
-      "status": "unbound",
-      "header": "tactility/drivers/audio_stream.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "audio_stream_open_output",
       "status": "unbound",
       "header": "tactility/drivers/audio_stream.h",
       "source": "export",
@@ -1339,22 +1355,6 @@
     {
       "module": "TactilityKernel",
       "name": "audio_stream_set_mute",
-      "status": "unbound",
-      "header": "tactility/drivers/audio_stream.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "audio_stream_set_volume",
-      "status": "unbound",
-      "header": "tactility/drivers/audio_stream.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "TactilityKernel",
-      "name": "audio_stream_write",
       "status": "unbound",
       "header": "tactility/drivers/audio_stream.h",
       "source": "export",

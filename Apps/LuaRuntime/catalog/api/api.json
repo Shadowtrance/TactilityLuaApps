@@ -1,6 +1,6 @@
 {
   "title": "Tactility Lua API",
-  "entry_count": 672,
+  "entry_count": 682,
   "modules": [
     {
       "name": "tactility.app",
@@ -1205,6 +1205,35 @@
           "description": "Starts an asynchronous request. Options are `url` (required), `method`,\n`headers`, `body`, `timeout_ms` and `max_bytes`. The callback receives\n`{ status, body, length, content_type }`, or `nil, reason` for a transport\nfailure. Up to four requests may run at once.",
           "source": "lua_runner/main/Source/luavgl/http.cpp",
           "line": 358
+        }
+      ]
+    },
+    {
+      "name": "tactility.audio",
+      "title": "Audio",
+      "summary": "WAV playback through the audio stream devices.",
+      "entries": [
+        {
+          "id": "tactility.audio.status",
+          "name": "status",
+          "owner": "tactility.audio",
+          "kind": "function",
+          "signature": "tactility.audio.status()",
+          "group": "Functions",
+          "description": "",
+          "source": "lua_runtime/main/Source/lua/audio.cpp",
+          "line": 331
+        },
+        {
+          "id": "tactility.audio.play_file",
+          "name": "play_file",
+          "owner": "tactility.audio",
+          "kind": "function",
+          "signature": "tactility.audio.play_file(options) -> handle | nil, reason",
+          "group": "Functions",
+          "description": "",
+          "source": "lua_runtime/main/Source/lua/audio.cpp",
+          "line": 369
         }
       ]
     },
@@ -7504,6 +7533,101 @@
           "source": "lua_runner/main/Source/luavgl/bindings.cpp",
           "line": 0,
           "value": "LV_BUTTONMATRIX_BUTTON_NONE"
+        }
+      ]
+    },
+    {
+      "name": "tactility.audio.Player",
+      "title": "tactility.audio.Player",
+      "summary": "",
+      "entries": [
+        {
+          "id": "tactility.audio.Player:stop",
+          "name": "stop",
+          "owner": "tactility.audio.Player",
+          "kind": "method",
+          "signature": "tactility.audio.Player:stop(...)",
+          "group": "Player methods",
+          "description": "",
+          "source": "lua_runtime/main/Source/lua/audio.cpp",
+          "line": 442
+        },
+        {
+          "id": "tactility.audio.Player:pause",
+          "name": "pause",
+          "owner": "tactility.audio.Player",
+          "kind": "method",
+          "signature": "tactility.audio.Player:pause(...)",
+          "group": "Player methods",
+          "description": "",
+          "source": "lua_runtime/main/Source/lua/audio.cpp",
+          "line": 448
+        },
+        {
+          "id": "tactility.audio.Player:resume",
+          "name": "resume",
+          "owner": "tactility.audio.Player",
+          "kind": "method",
+          "signature": "tactility.audio.Player:resume(...)",
+          "group": "Player methods",
+          "description": "",
+          "source": "lua_runtime/main/Source/lua/audio.cpp",
+          "line": 457
+        },
+        {
+          "id": "tactility.audio.Player:is_active",
+          "name": "is_active",
+          "owner": "tactility.audio.Player",
+          "kind": "method",
+          "signature": "tactility.audio.Player:is_active(...)",
+          "group": "Player methods",
+          "description": "",
+          "source": "lua_runtime/main/Source/lua/audio.cpp",
+          "line": 464
+        },
+        {
+          "id": "tactility.audio.Player:position",
+          "name": "position",
+          "owner": "tactility.audio.Player",
+          "kind": "method",
+          "signature": "tactility.audio.Player:position(...)",
+          "group": "Player methods",
+          "description": "",
+          "source": "lua_runtime/main/Source/lua/audio.cpp",
+          "line": 470
+        },
+        {
+          "id": "tactility.audio.Player:duration",
+          "name": "duration",
+          "owner": "tactility.audio.Player",
+          "kind": "method",
+          "signature": "tactility.audio.Player:duration(...)",
+          "group": "Player methods",
+          "description": "",
+          "source": "lua_runtime/main/Source/lua/audio.cpp",
+          "line": 476
+        },
+        {
+          "id": "tactility.audio.Player:volume",
+          "name": "volume",
+          "owner": "tactility.audio.Player",
+          "kind": "method",
+          "signature": "tactility.audio.Player:volume(...)",
+          "group": "Player methods",
+          "description": "",
+          "source": "lua_runtime/main/Source/lua/audio.cpp",
+          "line": 482
+        },
+        {
+          "id": "tactility.audio.Player:error",
+          "name": "error",
+          "owner": "tactility.audio.Player",
+          "kind": "method",
+          "signature": "tactility.audio.Player:error(...)",
+          "group": "Player methods",
+          "description": "",
+          "source": "lua_runtime/main/Source/lua/audio.cpp",
+          "line": 503
         }
       ]
     },

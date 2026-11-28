@@ -101,6 +101,13 @@ Status: partially implemented (2026-11-21)
   `on_rebuilt`; `set_path`, `focus_parent_segment` and `parent_segment` update and
   inspect it. Callbacks are queued through `lv_async_call`. Verified with
   `tests/path_bar.lua`.
+- `tactility.audio` exposes the audio stream device: `status()` reports output
+  support and the shared volume/mute/enabled state, and `play_file(options)`
+  plays a 16/24/32-bit PCM WAV on a worker task. The handle has `stop`, `pause`,
+  `resume`, `is_active`, `position`, `duration`, `volume` and `error`. The worker
+  opens the stream at the WAV's rate/channels/bits and resamples through the
+  firmware, so scripts do not touch codec hardware. Verified with
+  `tests/audio.lua` on the Tab5.
 - `tactility.notification` is hand-written: `send{...}`, `list`, `get`,
   `dismiss`, `dismiss_all`, `dismiss_non_sticky` and `count`, with `SEVERITY`
   and `SOURCE` constants. The runner adds `subscribe(callback)` and `EVENT`:
