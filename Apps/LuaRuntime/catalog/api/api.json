@@ -1,6 +1,6 @@
 {
   "title": "Tactility Lua API",
-  "entry_count": 656,
+  "entry_count": 659,
   "modules": [
     {
       "name": "tactility.app",
@@ -1160,8 +1160,19 @@
     {
       "name": "tactility.http",
       "title": "HTTP",
-      "summary": "Asynchronous HTTP requests on a worker task.",
+      "summary": "Asynchronous HTTP requests and file downloads.",
       "entries": [
+        {
+          "id": "tactility.http.download",
+          "name": "download",
+          "owner": "tactility.http",
+          "kind": "function",
+          "signature": "tactility.http.download(options, callback) -> handle | nil, reason",
+          "group": "Functions",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/download.cpp",
+          "line": 385
+        },
         {
           "id": "tactility.http.Request:cancel",
           "name": "cancel",
@@ -7379,6 +7390,35 @@
           "description": "",
           "source": "lua_runner/main/Source/luavgl/picker.cpp",
           "line": 290
+        }
+      ]
+    },
+    {
+      "name": "tactility.http.Download",
+      "title": "tactility.http.Download",
+      "summary": "",
+      "entries": [
+        {
+          "id": "tactility.http.Download:cancel",
+          "name": "cancel",
+          "owner": "tactility.http.Download",
+          "kind": "method",
+          "signature": "tactility.http.Download:cancel(...)",
+          "group": "Download methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/download.cpp",
+          "line": 512
+        },
+        {
+          "id": "tactility.http.Download:is_active",
+          "name": "is_active",
+          "owner": "tactility.http.Download",
+          "kind": "method",
+          "signature": "tactility.http.Download:is_active(...)",
+          "group": "Download methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/download.cpp",
+          "line": 525
         }
       ]
     },

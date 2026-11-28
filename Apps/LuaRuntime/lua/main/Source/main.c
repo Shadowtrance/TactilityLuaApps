@@ -41,6 +41,15 @@
 #include <time.h>
 #include <unistd.h>
 
+/** POSIX's SDK declares mkdir(path) with a default mode; ESP-IDF uses the mode argument. */
+static void make_directory(const char* path) {
+#ifdef ESP_PLATFORM
+    mkdir(path, 0777);
+#else
+    mkdir(path);
+#endif
+}
+
 /*
  * Lua companion: a themed script browser and editor.
  *
@@ -245,7 +254,7 @@ static void save_script_dir(const char* path) {
     char* separator = strrchr(directory, '/');
     if (separator != NULL) {
         *separator = '\0';
-        mkdir(directory, 0777);
+        make_directory(directory);
     }
 
     FILE* file = fopen(config_path, "w");
@@ -762,7 +771,7 @@ static void export_app_job(void* argument) {
         snprintf(message, sizeof(message), "Export failed: path too long");
         goto finish;
     }
-    mkdir(temp_dir, 0777);
+    make_directory(temp_dir);
 
     static char manifest[1024];
     snprintf(
@@ -937,7 +946,7 @@ static bool save_example_copy(struct Context* context) {
         return false;
     }
 
-    mkdir(context->script_dir, 0777);
+    make_directory(context->script_dir);
 
     const char* name = file_name(context->current_path);
     size_t stem_length = strlen(name);
@@ -1131,7 +1140,7 @@ static void create_new_script(struct Context* context, const char* requested_nam
         return;
     }
 
-    mkdir(context->script_dir, 0777);
+    make_directory(context->script_dir);
 
     struct ScriptEntry script = { 0 };
     const int path_length = snprintf(script.path, sizeof(script.path), "%s/%s.lua", context->script_dir, name);

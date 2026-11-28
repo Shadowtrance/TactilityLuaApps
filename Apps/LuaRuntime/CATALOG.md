@@ -148,7 +148,7 @@ test that proves it.
 | [ ] | `gps` | — | GPS viewer clone |
 | [ ] | `bluetooth` | — | |
 | [ ] | `location` | — | Maps clone |
-| [x] | `http` | Async worker task, ESP-IDF client + cert bundle, `request` handle | `tests/http.lua`, Weather app |
+| [x] | `http` | Async worker task, ESP-IDF client + cert bundle, `request` handle; cross-platform streaming `download` with progress and redirects | `tests/http.lua`, `tests/download.lua`, Weather app |
 | [ ] | `crypt` | — | |
 | [x] | `cjson` | `tactility.json.decode/encode`, null sentinel, 512 KB/64 depth | `tests/json.lua` |
 | [ ] | `binfont` | — | Custom fonts |
@@ -274,6 +274,7 @@ be read back from it unaided.
 | [x] | `tests/require.lua` | Flat, nested, dotted and cached modules, missing module and cycle |
 | [x] | `tests/json.lua` | Decode/encode, arrays, null, mixed keys, NUL, depth limit |
 | [x] | `tests/http.lua` | HTTPS GET to Open-Meteo plus JSON decoding |
+| [x] | `tests/download.lua` | HTTPS download to a file, cancellation and the result/progress shape |
 | [x] | `tests/app.lua` | App list (hidden apps included), running state, current app, start/stop error paths and the current-app stop guard |
 | [x] | `tests/object_api.lua` | Core sizing/margins/outline/shadow/text/transforms/states/flags/children, Arc and Spinbox |
 | [x] | `tests/widget_batch2.lua` | LED, Table, Scale, ImageButton, Chart, Calendar, Keyboard, ButtonMatrix |

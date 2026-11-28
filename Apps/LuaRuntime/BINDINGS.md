@@ -55,6 +55,14 @@ Status: partially implemented (2026-11-21)
   response; transport failures pass `nil, reason`. Up to four requests can be
   active, request bodies are capped at 64 KB and responses at 1 MB. ESP32 only; the
   simulator returns an error. Verified with `tests/http.lua` and the Weather app.
+- `tactility.http.download(options, callback)` streams a GET to `path` on a worker
+  task using the firmware's cross-platform `http_client`, so it also works in the
+  simulator. It verifies the platform's roots or `options.certificate`, follows up
+  to five redirects, and takes optional `headers`, `timeout_ms` and a `progress`
+  callback `(received, total)` delivered by the app loop. The callback receives
+  `{ status, length, path }` or `nil, reason`; `cancel()` stops it (a blocking
+  connect can take up to the timeout to return). Up to two downloads can run at
+  once. Verified with `tests/download.lua`.
 - `tactility.ui.toolbar()` returns the runner's toolbar object (or nil). It is a
   normal `lvgl` object, so `lvgl.toolbar.add_text_action()` and the new
   `lvgl.toolbar.add_icon_action()` add actions to the real toolbar; their

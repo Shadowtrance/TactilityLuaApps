@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-28T11:22:34",
+  "generated_at": "2026-11-28T11:39:23",
   "sdk": "C:\\Users\\teron\\.tactility\\sdk\\0.8.0-dev\\platform-esp32p4\\TactilitySDK",
   "firmware": "C:\\Users\\teron\\espidf-projects\\TactilityWork",
   "sdk_version": "0.8.0-dev",
@@ -6786,6 +6786,118 @@
     },
     {
       "module": "http-module",
+      "name": "http_client_alloc",
+      "status": "bound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_cancel",
+      "status": "bound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_close",
+      "status": "bound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_free",
+      "status": "bound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_get_content_length",
+      "status": "bound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_get_failure",
+      "status": "bound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_get_header",
+      "status": "bound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_get_status_code",
+      "status": "bound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_open",
+      "status": "bound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_read",
+      "status": "bound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_set_certificate",
+      "status": "bound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_set_header",
+      "status": "bound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_client_set_timeout",
+      "status": "bound",
+      "header": "http/client.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
+      "name": "http_download_start",
+      "status": "bound",
+      "header": "http/download.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "http-module",
       "name": "select",
       "status": "bound",
       "header": "",
@@ -7034,111 +7146,7 @@
     },
     {
       "module": "http-module",
-      "name": "http_client_alloc",
-      "status": "unbound",
-      "header": "http/client.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "http_client_cancel",
-      "status": "unbound",
-      "header": "http/client.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "http_client_close",
-      "status": "unbound",
-      "header": "http/client.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "http_client_free",
-      "status": "unbound",
-      "header": "http/client.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "http_client_get_content_length",
-      "status": "unbound",
-      "header": "http/client.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "http_client_get_failure",
-      "status": "unbound",
-      "header": "http/client.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "http_client_get_header",
-      "status": "unbound",
-      "header": "http/client.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "http_client_get_status_code",
-      "status": "unbound",
-      "header": "http/client.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "http_client_open",
-      "status": "unbound",
-      "header": "http/client.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "http_client_read",
-      "status": "unbound",
-      "header": "http/client.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
       "name": "http_client_reset",
-      "status": "unbound",
-      "header": "http/client.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "http_client_set_certificate",
-      "status": "unbound",
-      "header": "http/client.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "http_client_set_header",
-      "status": "unbound",
-      "header": "http/client.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "http_client_set_timeout",
       "status": "unbound",
       "header": "http/client.h",
       "source": "export",
@@ -7155,14 +7163,6 @@
     {
       "module": "http-module",
       "name": "http_download_poll",
-      "status": "unbound",
-      "header": "http/download.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "http-module",
-      "name": "http_download_start",
       "status": "unbound",
       "header": "http/download.h",
       "source": "export",

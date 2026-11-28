@@ -284,6 +284,12 @@ tables and back. Arrays are 1-based, objects are string-keyed, and JSON `null` i
 `tactility.json.null` so array slots do not collapse. Input and output are capped
 at 512 KB and nesting at 64 levels; failures return `nil, reason`.
 
+`tactility.http.download(options, callback)` streams a GET to a file with the
+firmware's cross-platform client. It supports headers, a custom certificate,
+redirects, progress through `options.progress(received, total)`, and cancellation;
+it works in the simulator too. The callback receives `{ status, length, path }` or
+`nil, reason`.
+
 The runner's own toolbar is available to scripts, so actions belong in the real
 toolbar instead of a second bar in the content area:
 
@@ -591,6 +597,7 @@ runtime gains something a packaged app depends on.
 - `settings.lua` — multi-key round trip, replacement, `keys`/`has`/`remove`/`clear`,
   and repeated writes after the file already exists (the FAT rename case).
 - `dialogs.lua` — native alert/input/select option validation and dismissing an alert.
+- `download.lua` — HTTPS download to a file, cancellation and the result shape.
 - `raw.lua` — `tactility.raw.call` symbol lookup and missing-symbol error.
 
 Run the whole suite on connected devices (serial + development server):

@@ -101,8 +101,14 @@ void luavgl_open_dialogs(lua_State* state);
 /** Adds `tactility.http.request()`. ESP32 only; the simulator returns an error. */
 void luavgl_open_http(lua_State* state);
 
+/** Adds `tactility.http.download()` to the table that luavgl_open_http() created. */
+void luavgl_open_downloads(lua_State* state);
+
 /** Abandons every live HTTP request of this runtime. Called from luavgl_detach_all(). */
 void luavgl_delete_all_http(lua_State* state);
+
+/** Abandons every live download of this runtime. Called from luavgl_delete_all_http(). */
+void luavgl_delete_all_downloads(lua_State* state);
 
 /** Cancels every live picker of this runtime. Called from luavgl_detach_all(). */
 void luavgl_delete_all_pickers(lua_State* state);

@@ -580,7 +580,10 @@ void luavgl_open_http(lua_State* state) {
     lua_pop(state, 1);
 
     add_http_api(state);
+    luavgl_open_downloads(state);
 }
+
+extern "C" void luavgl_downloads_poll(struct LuaRuntime* runtime);
 
 extern "C" extern "C" void luavgl_http_poll(struct LuaRuntime* runtime) {
     auto* state = static_cast<lua_State*>(lua_runtime_get_state(runtime));
@@ -608,6 +611,8 @@ extern "C" extern "C" void luavgl_http_poll(struct LuaRuntime* runtime) {
         }
         deliver_result(request);
     }
+
+    luavgl_downloads_poll(runtime);
 }
 
 void luavgl_delete_all_http(lua_State* state) {
@@ -627,4 +632,6 @@ void luavgl_delete_all_http(lua_State* state) {
     for (size_t i = 0; i < count; i++) {
         abandon_request(requests[i]);
     }
+
+    luavgl_delete_all_downloads(state);
 }

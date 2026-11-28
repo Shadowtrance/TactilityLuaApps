@@ -42,6 +42,7 @@ DEFAULT_SETTLE_SECONDS = 4.5
 # Network tests need more than the usual settle time for DNS, TLS and the body.
 SETTLE_OVERRIDES = {
     "http": 25.0,
+    "download": 30.0,
 }
 
 # Tests that report success synchronously and abort on failure. When the harness
