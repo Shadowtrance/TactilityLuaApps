@@ -107,7 +107,7 @@ Status: partially implemented (2026-11-21)
   `resume`, `is_active`, `position`, `duration`, `volume` and `error`. The worker
   opens the stream at the WAV's rate/channels/bits and resamples through the
   firmware, so scripts do not touch codec hardware. Verified with
-  `tests/audio.lua` on the Tab5.
+  `tests/audio.lua` on the T-Deck and Tab5.
 - `tactility.notification` is hand-written: `send{...}`, `list`, `get`,
   `dismiss`, `dismiss_all`, `dismiss_non_sticky` and `count`, with `SEVERITY`
   and `SOURCE` constants. The runner adds `subscribe(callback)` and `EVENT`:

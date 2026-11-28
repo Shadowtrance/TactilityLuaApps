@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "profile": "tab5-landscape",
+  "theme": {
+    "dark": true,
+    "mono": false,
+    "primary": "#00bbff",
+    "secondary": "#ee81c3",
+    "error": "#ef6c00",
+    "surface": "",
+    "spacing": 100,
+    "size": 100,
+    "font_size": 29,
+    "bars_mode": "auto",
+    "bars_portrait": "split",
+    "bars_landscape": "side",
+    "bars_align": "left"
+  },
+  "widgets": [
+    {
+      "id": "tilegrid_1",
+      "type": "TileGrid",
+      "parent": null,
+      "x": 24,
+      "y": 24,
+      "w": 760,
+      "h": 420,
+      "props": {
+        "w_pct": 0,
+        "h_pct": 0,
+        "w_content": false,
+        "h_content": false,
+        "flex_grow": 0,
+        "grid_col": 0,
+        "grid_row": 0,
+        "grid_col_span": 1,
+        "grid_row_span": 1,
+        "cell_col_align": "STRETCH",
+        "cell_row_align": "STRETCH",
+        "items": "APPS, One\nFOLDER, Two\nDESCRIPTION, Three\nSETTINGS, Four\nMUSIC_NOTE, Five\nIMAGE, Six\nCALENDAR_MONTH, Seven\nMAP, Eight\nWIFI, Nine\nBLUETOOTH, Ten",
+        "style": "TILE",
+        "icon_color": "DEFAULT",
+        "indicator": "BELOW",
+        "swipe": true,
+        "page": 1
+      },
+      "events": {}
+    }
+  ]
+}

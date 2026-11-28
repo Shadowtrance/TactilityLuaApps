@@ -126,7 +126,7 @@ preview changed, and a deliberate change needs `--update`.
   Checkbox, Dropdown, Roller, TextArea, Arc, Line, LED, Scale, ImageButton,
   Tabs, Statusline, Bar, List, PageIndicator, StepIndicator, Badge, Spinner,
   Image, IconButton, TextButton, Table, Chart, Calendar, Keyboard, Button
-  matrix, Tab view and Tile view. **Search widgets** filters by title or type;
+  matrix, Tab view, Tile view and Tile grid. **Search widgets** filters by title or type;
   **Esc** clears it.
 - **Table and chart data**: the Table fields are `rows`, `columns`, optional
   column widths and one `cell | cell` line per row. Chart takes a chart type, a

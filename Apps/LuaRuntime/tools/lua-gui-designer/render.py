@@ -829,6 +829,232 @@ def _draw_grid(
         )
 
 
+def _tile_grid_rows(props: dict) -> list[tuple[str, str]]:
+    rows: list[tuple[str, str]] = []
+    for line in str(props.get("items", "")).splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if "|" in line:
+            parts = [part.strip() for part in line.split("|")]
+        elif "," in line:
+            parts = [part.strip() for part in line.split(",", 1)]
+        else:
+            parts = ["", line]
+        icon = parts[0].strip().upper()
+        name = parts[1].strip() if len(parts) > 1 else ""
+        if not name:
+            name = icon
+            icon = "APPS"
+        rows.append((icon, name))
+    return rows
+
+
+def _draw_tile_grid(
+    draw: ImageDraw.ImageDraw,
+    theme: MaterialTheme,
+    scale: float,
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+    props: dict,
+) -> None:
+    rows = _tile_grid_rows(props)
+    if not rows:
+        return
+
+    spacing = max(0, min(100, int(theme.settings.spacing)))
+    size = max(0, min(100, int(theme.settings.size)))
+
+    def sdp(value: float) -> float:
+        return theme.dp(value) * scale
+
+    def slerp(compact: int, regular: int) -> int:
+        return lerp(compact, regular, spacing)
+
+    card = str(props.get("style", "TILE") or "TILE").upper() == "CARD"
+    icon_color_name = str(props.get("icon_color", "DEFAULT") or "DEFAULT").upper()
+    if icon_color_name == "PRIMARY":
+        icon_color = theme.primary
+    elif icon_color_name == "SECONDARY":
+        icon_color = theme.secondary
+    else:
+        icon_color = theme.text
+
+    font_default = theme.font_px("default") * scale
+    font_small = theme.font_px("small") * scale
+    icon_size = font_default * (1.0 if card else 2.5)
+    pad = (
+        max(sdp(2), slerp(round(sdp(4)), round(sdp(16))))
+        if card
+        else icon_size / 16
+    )
+    frame_pad = 0.0 if card else sdp(3) + sdp(1)
+    label_gap = slerp(round(sdp(1)), round(sdp(4)))
+    text_height = font_small
+    text_min_width = 6 * text_height
+    tile_min_width = (
+        12 * font_default
+        if card
+        else max(2 * icon_size, text_min_width) + 2 * pad
+    )
+    tile_height = (
+        2 * frame_pad + icon_size + 2 * pad
+        if card
+        else 2 * frame_pad + icon_size + label_gap + text_height + pad
+    )
+
+    gap = max(0, slerp(0, round(sdp(12))))
+    if card:
+        ring = sdp(1) + sdp(1) + sdp(1)
+        gap = max(gap, 2 * ring)
+
+    indicator = str(props.get("indicator", "BELOW") or "BELOW").upper()
+    dot = lerp(round(6 * scale), round(theme.dp(8) * scale), size)
+    dot_pad = slerp(round(theme.dp(2) * scale), round(theme.dp(8) * scale))
+
+    def layout(reserved_width: float, reserved_height: float):
+        available_width = w - reserved_width - 2 * gap
+        available_height = h - reserved_height - 2 * gap
+        columns = max(1, int((available_width + gap) // (tile_min_width + gap)))
+        row_count = max(1, int((available_height + gap) // (tile_height + gap)))
+        tile_width = min(
+            max(tile_min_width, (available_width - (columns - 1) * gap) / columns),
+            max(1.0, available_width),
+        )
+        left = max(gap, (w - reserved_width - columns * tile_width - (columns - 1) * gap) / 2)
+        top = max(gap, (h - reserved_height - row_count * tile_height - (row_count - 1) * gap) / 2)
+        return columns, row_count, tile_width, left, top
+
+    columns, row_count, tile_width, left, top = layout(0, 0)
+    paged = len(rows) > columns * row_count
+    reserved_width = (dot + 2 * dot_pad) * 2 if paged and indicator in ("LEFT", "RIGHT") else 0
+    reserved_height = dot + dot_pad if paged and indicator == "BELOW" else 0
+    if reserved_width or reserved_height:
+        columns, row_count, tile_width, left, top = layout(reserved_width, reserved_height)
+        paged = len(rows) > columns * row_count
+    if reserved_width:
+        # The firmware reserves a column on both sides, so the tiles stay centered.
+        left += reserved_width / 2
+
+    page_size = columns * row_count
+    page_count = max(1, (len(rows) + page_size - 1) // page_size)
+    try:
+        page = int(props.get("page", 1) or 1)
+    except (TypeError, ValueError):
+        page = 1
+    page = max(1, min(page_count, page))
+
+    visible = rows[(page - 1) * page_size:page * page_size]
+    used_rows = (len(visible) + columns - 1) // columns
+    if card:
+        top += (row_count - used_rows) * (tile_height + gap) / 2
+
+    icon_font = _icon_font(max(7, round(icon_size)))
+    label_font = _font(theme, "small", scale)
+    card_fill = theme.paper if theme.mono else theme.card
+    card_border = theme.outline_variant
+    border_width = max(1, round(theme.card_border_width() * scale))
+
+    for index, (icon_name, name) in enumerate(visible):
+        row = index // columns
+        column = index % columns
+        tx = x + left + column * (tile_width + gap)
+        ty = y + top + row * (tile_height + gap)
+        glyph = SHARED_ICONS.get(icon_name)
+
+        if card:
+            _rounded(
+                draw,
+                tx,
+                ty,
+                tx + tile_width,
+                ty + tile_height,
+                theme.radius_card() * scale,
+                fill=card_fill,
+                outline=card_border,
+                width=border_width,
+            )
+            center_y = ty + tile_height / 2
+            if glyph and icon_font is not None:
+                _text(
+                    draw,
+                    tx + pad + icon_size / 2,
+                    center_y,
+                    glyph,
+                    icon_font,
+                    icon_color,
+                    "mm",
+                )
+            label_x = tx + 2 * pad + icon_size
+            max_width = tile_width - (3 * pad + icon_size)
+            _text(
+                draw,
+                label_x,
+                center_y,
+                _fit(draw, name, label_font, max_width),
+                label_font,
+                theme.text,
+                "lm",
+            )
+        else:
+            frame_width = icon_size + 2 * frame_pad
+            if glyph and icon_font is not None:
+                _text(
+                    draw,
+                    tx + frame_width / 2,
+                    ty + frame_width / 2,
+                    glyph,
+                    icon_font,
+                    icon_color,
+                    "mm",
+                )
+            label_y = ty + frame_width + label_gap
+            _text(
+                draw,
+                tx + tile_width / 2,
+                label_y + text_height / 2,
+                _fit(draw, name, label_font, tile_width),
+                label_font,
+                theme.text,
+                "mm",
+            )
+
+    if paged and page_count > 1:
+        active = page - 1
+        dot_gap = dot * 1.6
+        if indicator == "BELOW":
+            total = page_count * dot + (page_count - 1) * (dot_gap - dot)
+            start = x + (w - total) / 2
+            cy = y + h - dot / 2 - dot_pad / 2
+        else:
+            start = x + (dot_pad if indicator == "LEFT" else w - dot_pad - dot)
+            cy = y + (h - page_count * dot - (page_count - 1) * (dot_gap - dot)) / 2 + dot / 2
+
+        for index in range(page_count):
+            if indicator == "BELOW":
+                cx = start + index * dot_gap + dot / 2
+            else:
+                cx = start + dot / 2
+                cy = y + (h - page_count * dot - (page_count - 1) * (dot_gap - dot)) / 2 + \
+                    index * dot_gap + dot / 2
+            color = theme.primary if index == active else theme.text_muted
+            if theme.mono:
+                color = theme.ink if index == active else theme.text_muted
+            if index == active:
+                draw.ellipse(
+                    [cx - dot / 2, cy - dot / 2, cx + dot / 2, cy + dot / 2],
+                    fill=color,
+                )
+            else:
+                draw.ellipse(
+                    [cx - dot / 2, cy - dot / 2, cx + dot / 2, cy + dot / 2],
+                    outline=color,
+                    width=max(1, round(scale)),
+                )
+
+
 def _draw_widget(
     draw: ImageDraw.ImageDraw,
     project: Project,
@@ -1309,6 +1535,10 @@ def _draw_widget(
                         [tab_x, bar_y, tab_x + tab_width, bar_y + thickness],
                         fill=theme.primary if not theme.mono else theme.ink,
                     )
+        return
+
+    if widget.type == "TileGrid":
+        _draw_tile_grid(draw, theme, scale, x, y, w, h, props)
         return
 
     if widget.type == "Tileview":

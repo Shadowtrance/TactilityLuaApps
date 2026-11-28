@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from icons import SHARED_ICONS
 from model import Project, WidgetNode, parse_grid_tracks
 from widgets import SPEC_BY_TYPE
 
@@ -165,6 +166,29 @@ def _geometry(widget: WidgetNode) -> list[str]:
     ]
 
 
+def _tile_grid_items(props: dict) -> list[str]:
+    items: list[str] = []
+    for line in str(props.get("items", "")).splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if "|" in line:
+            parts = [part.strip() for part in line.split("|")]
+        elif "," in line:
+            parts = [part.strip() for part in line.split(",", 1)]
+        else:
+            parts = ["", line]
+        icon = parts[0].strip().upper()
+        name = parts[1].strip() if len(parts) > 1 else ""
+        if not name:
+            name = icon
+            icon = "APPS"
+        if icon not in SHARED_ICONS:
+            icon = "DESCRIPTION"
+        items.append(f"{{ name = {lua_string(name)}, icon = lvgl.ICON.{icon} }}")
+    return items
+
+
 def _grid_tracks(value: object) -> str:
     tracks = parse_grid_tracks(value) or [("fr", 1)]
     entries = []
@@ -310,6 +334,22 @@ def _emit_widget(project: Project, widget: WidgetNode, state: _ExportState) -> N
         # The range and digit format must be in place before the value is set,
         # and Lua table iteration is unordered, so the value comes last.
         state.lines.append(f"    {var}:set{{ value = {value} }}")
+    elif widget.type == "TileGrid":
+        entries = _geometry(widget)
+        items = _tile_grid_items(props)
+        if items:
+            entries.append("items = { " + ", ".join(items) + " }")
+        entries.append(f"style = {lua_string(str(props.get('style', 'TILE') or 'TILE').upper())}")
+        entries.append(
+            f"icon_color = {lua_string(str(props.get('icon_color', 'DEFAULT') or 'DEFAULT').upper())}"
+        )
+        entries.append(
+            f"indicator = {lua_string(str(props.get('indicator', 'BELOW') or 'BELOW').upper())}"
+        )
+        entries.append(f"swipe = {'true' if props.get('swipe', True) else 'false'}")
+        page = _int_prop(props, "page", 1, 1)
+        entries.append(f"page = {page}")
+        state.lines.append(f"    local {var} = lvgl.TileGrid({parent}, {_table(entries)})")
     else:
         entries = _geometry(widget)
 

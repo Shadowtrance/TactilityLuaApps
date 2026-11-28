@@ -61,6 +61,8 @@ CASES: tuple[Case, ...] = (
     Case("demo-tab5-dark", None),
     Case("demo-tab5-light", None, dark=False),
     Case("demo-tab5-mono", None, mono=True),
+    # The launcher-style grid at the profile the layout formulas target.
+    Case("tile-grid-tab5", HERE / "tile_grid.luadesign.json"),
 )
 
 

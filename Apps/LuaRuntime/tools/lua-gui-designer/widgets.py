@@ -658,6 +658,39 @@ WIDGET_SPECS: tuple[WidgetSpec, ...] = (
             *FLEX_PROPS,
         ),
     ),
+    _spec(
+        "TileGrid",
+        "Tile grid",
+        "Navigation",
+        360,
+        220,
+        summary="Launcher-style paged icon grid",
+        properties=(
+            PropertySpec(
+                "items",
+                "Items (icon, name per line)",
+                "multiline",
+                "APPS, One\nFOLDER, Two\nDESCRIPTION, Three\nSETTINGS, Four",
+            ),
+            PropertySpec("style", "Style", "choice", "TILE", ("TILE", "CARD")),
+            PropertySpec(
+                "icon_color",
+                "Icon colour",
+                "choice",
+                "DEFAULT",
+                ("DEFAULT", "PRIMARY", "SECONDARY"),
+            ),
+            PropertySpec(
+                "indicator",
+                "Page dots",
+                "choice",
+                "BELOW",
+                ("BELOW", "LEFT", "RIGHT"),
+            ),
+            PropertySpec("swipe", "Swipe navigation", "bool", True),
+            PropertySpec("page", "Page (1-based)", "int", 1, minimum=1),
+        ),
+    ),
 )
 
 SPEC_BY_TYPE = {spec.type: spec for spec in WIDGET_SPECS}
