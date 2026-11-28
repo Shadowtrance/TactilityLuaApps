@@ -276,7 +276,7 @@ be read back from it unaided.
 | [x] | `tests/require.lua` | Flat, nested, dotted and cached modules, missing module and cycle |
 | [x] | `tests/json.lua` | Decode/encode, arrays, null, mixed keys, NUL, depth limit |
 | [x] | `tests/http.lua` | HTTPS GET to Open-Meteo plus JSON decoding |
-| [x] | `tests/download.lua` | HTTPS download to a file, cancellation and the result/progress shape |
+| [x] | `tests/download.lua` | HTTPS download to a file and the result/progress shape; cancel is manual |
 | [x] | `tests/app.lua` | App list (hidden apps included), running state, current app, start/stop error paths and the current-app stop guard |
 | [x] | `tests/object_api.lua` | Core sizing/margins/outline/shadow/text/transforms/states/flags/children, Arc and Spinbox |
 | [x] | `tests/widget_batch2.lua` | LED, Table, Scale, ImageButton, Chart, Calendar, Keyboard, ButtonMatrix |

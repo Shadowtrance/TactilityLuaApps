@@ -128,6 +128,11 @@ preview changed, and a deliberate change needs `--update`.
   Image, IconButton, TextButton, Table, Chart, Calendar, Keyboard, Button
   matrix, Tab view, Tile view and Tile grid. **Search widgets** filters by title or type;
   **Esc** clears it.
+
+The TileGrid preview uses the default 100% launcher icon-size and icon-spacing
+scales, matching the current device configurations. The firmware's PathBar is a
+toolbar attachment rather than a canvas widget, so it is added in code and is not
+a child in the designer tree.
 - **Table and chart data**: the Table fields are `rows`, `columns`, optional
   column widths and one `cell | cell` line per row. Chart takes a chart type, a
   point count and a comma-separated value series. Calendar edits the today/shown

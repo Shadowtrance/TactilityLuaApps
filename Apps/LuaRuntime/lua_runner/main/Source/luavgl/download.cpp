@@ -513,10 +513,8 @@ int download_cancel(lua_State* state) {
     auto* handle = static_cast<DownloadHandle*>(luaL_checkudata(state, 1, DOWNLOAD_METATABLE));
     if (handle->request != nullptr && !handle->request->finished) {
         handle->request->cancel_requested.store(true, std::memory_order_relaxed);
-        HttpClient* client = handle->request->client.load();
-        if (client != nullptr) {
-            http_client_cancel(client);
-        }
+        // The worker calls http_client_cancel() itself when it sees this flag. Calling
+        // it here races with a worker that is inside http_client_open() or cleanup.
     }
     lua_pushboolean(state, 1);
     return 1;

@@ -614,7 +614,7 @@ runtime gains something a packaged app depends on.
 - `settings.lua` — multi-key round trip, replacement, `keys`/`has`/`remove`/`clear`,
   and repeated writes after the file already exists (the FAT rename case).
 - `dialogs.lua` — native alert/input/select option validation and dismissing an alert.
-- `download.lua` — HTTPS download to a file, cancellation and the result shape.
+- `download.lua` — HTTPS download to a file and the result shape.
 - `tile_grid.lua` — launcher grid items, styles, paging and lookup.
 - `path_bar.lua` — toolbar path segments, path updates and parent lookup.
 - `audio.lua` — WAV playback through the audio stream device (skips without output).
