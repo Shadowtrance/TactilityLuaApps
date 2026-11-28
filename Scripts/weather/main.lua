@@ -33,6 +33,8 @@ if custom_name == nil or #custom_name == 0 then
 end
 
 local last_data = nil
+-- Set once the widgets exist; the chart joins the focus group only when shown.
+local focus_group = nil
 
 local function active_location()
     return { name = custom_name, latitude = custom_latitude, longitude = custom_longitude }
@@ -753,6 +755,9 @@ local function set_chart(data)
         ),
     }
     chart_card:remove_flag(lvgl.FLAG.HIDDEN)
+    if focus_group then
+        focus_group:add(chart_card)
+    end
 end
 
 local function render(data)
@@ -992,13 +997,15 @@ end)
 
 -- The app group already contains the toolbar and the tabs. Add the cards so the
 -- focus can leave the tab bar and the page scrolls to the focused card.
-local app_group = lvgl.app_group and lvgl.app_group()
-if app_group then
-    local function make_focusable(object)
+focus_group = lvgl.app_group and lvgl.app_group()
+if focus_group then
+    local function make_focusable(object, add_to_group)
         object:add_flag(lvgl.FLAG.CLICKABLE)
         object:add_flag(lvgl.FLAG.CLICK_FOCUSABLE)
         object:add_flag(lvgl.FLAG.SCROLL_ON_FOCUS)
-        app_group:add(object)
+        if add_to_group ~= false then
+            focus_group:add(object)
+        end
     end
 
     make_focusable(hero)
@@ -1006,6 +1013,8 @@ if app_group then
     for _, row in ipairs(day_rows) do
         make_focusable(row.card)
     end
+    -- Hidden until there is data; set_chart() adds it when it appears.
+    make_focusable(chart_card, false)
 end
 
 -- Toolbar actions --------------------------------------------------------------------------
