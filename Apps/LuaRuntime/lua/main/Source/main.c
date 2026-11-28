@@ -41,12 +41,12 @@
 #include <time.h>
 #include <unistd.h>
 
-/** POSIX's SDK declares mkdir(path) with a default mode; ESP-IDF uses the mode argument. */
+/** Windows' mkdir takes one argument; POSIX and ESP-IDF take a mode. */
 static void make_directory(const char* path) {
-#ifdef ESP_PLATFORM
-    mkdir(path, 0777);
-#else
+#ifdef _WIN32
     mkdir(path);
+#else
+    mkdir(path, 0777);
 #endif
 }
 
