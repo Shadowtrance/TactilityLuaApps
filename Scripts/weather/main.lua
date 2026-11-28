@@ -44,9 +44,11 @@ local display_width = tactility.display.size() or 320
 local wide = display_width >= 600
 local pad = wide and 14 or 8
 local gap = wide and 10 or 6
-local hero_icon_size = wide and 128 or 64
-local forecast_icon_size = wide and 44 or 32
-local metric_icon_size = wide and 26 or 20
+-- PNG decoding is not cached by the firmware, so keep the decoded area small:
+-- every scroll frame decodes these again.
+local hero_icon_size = wide and 96 or 64
+local forecast_icon_size = wide and 32 or 26
+local metric_icon_size = 20
 local chart_height = wide and 170 or 84
 local chart_points = wide and 24 or 12
 local forecast_days = 5
@@ -488,7 +490,7 @@ for index = 1, forecast_days do
     temperatures:add_flag(lvgl.FLAG.IGNORE_LAYOUT)
     local high = lvgl.Label(temperatures, { text = "", text_font = "small", text_color = lvgl.theme_color_primary() })
     local low = lvgl.Label(temperatures, { text = "", text_font = "small", text_color = lvgl.theme_color_secondary() })
-    day_rows[index] = { day = day, icon = icon, condition = condition, high = high, low = low }
+    day_rows[index] = { card = row, day = day, icon = icon, condition = condition, high = high, low = low }
 end
 
 -- Settings view ----------------------------------------------------------------------------
@@ -539,6 +541,7 @@ local custom_fields = lvgl.Object(settings_card, {
     bg_opa = lvgl.OPA.TRANSP,
     border_width = 0,
     min_height = 0,
+    pad_all = 0,
     w = lvgl.PCT(100),
     h = lvgl.SIZE_CONTENT,
     flex_flow = lvgl.FLEX_FLOW.COLUMN,
@@ -976,6 +979,26 @@ apply_button:on(lvgl.EVENT.CLICKED, function()
     show_page(0)
     refresh()
 end)
+
+-- Keyboard and trackball navigation ---------------------------------------------------------
+
+-- The app group already contains the toolbar and the tabs. Add the cards so the
+-- focus can leave the tab bar and the page scrolls to the focused card.
+local app_group = lvgl.app_group and lvgl.app_group()
+if app_group then
+    local function make_focusable(object)
+        object:add_flag(lvgl.FLAG.CLICKABLE)
+        object:add_flag(lvgl.FLAG.CLICK_FOCUSABLE)
+        object:add_flag(lvgl.FLAG.SCROLL_ON_FOCUS)
+        app_group:add(object)
+    end
+
+    make_focusable(hero)
+    make_focusable(metrics_card)
+    for _, row in ipairs(day_rows) do
+        make_focusable(row.card)
+    end
+end
 
 -- Toolbar actions --------------------------------------------------------------------------
 

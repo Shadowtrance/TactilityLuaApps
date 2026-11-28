@@ -430,6 +430,11 @@ group:set_default() -- let input devices use this group
 group:attach_input() -- take over keypads/encoders; previous groups are restored on close
 ```
 
+`lvgl.app_group()` returns the runner's own input group, or nil. Adding a card
+or a row to it puts the widget in the same tab order as the toolbar and tabs;
+combine it with `lvgl.FLAG.SCROLL_ON_FOCUS` on the widget so its page scrolls to
+it. The returned group is owned by the app, so it must not be deleted.
+
 The theme's keyboard focus ring is the secondary colour; enabling group editing
 switches to the primary edit ring. `group:focus()` sets `LV_STATE_FOCUSED` only,
 so add `lvgl.STATE.FOCUS_KEY` when a programmatically focused widget should show

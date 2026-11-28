@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 #include <luavgl/object_private.h>
 
+#include <lvgl/devices/keyboard.h>
+
 extern "C" {
 #include <lauxlib.h>
 }
@@ -24,7 +26,11 @@ inline constexpr auto* GROUP_METATABLE = "lvgl.Group";
 /** Registry key for the array of group handles created by this runtime. */
 char GROUPS_KEY = 0;
 
-using GroupHandle = lv_group_t*;
+/** A Lua handle to a group. The runner owns created groups, not the app group. */
+struct GroupHandle {
+    lv_group_t* group;
+    bool owned;
+};
 
 void push_groups(lua_State* state) {
     lua_pushlightuserdata(state, &GROUPS_KEY);
@@ -40,14 +46,14 @@ void push_groups(lua_State* state) {
     lua_rawset(state, LUA_REGISTRYINDEX);
 }
 
-GroupHandle check_group(lua_State* state, int index) {
-    auto** handle = static_cast<GroupHandle*>(luaL_checkudata(state, index, GROUP_METATABLE));
+lv_group_t* check_group(lua_State* state, int index) {
+    auto* handle = static_cast<GroupHandle*>(luaL_checkudata(state, index, GROUP_METATABLE));
 
-    if (*handle == nullptr) {
+    if (handle->group == nullptr) {
         luaL_error(state, "group has been deleted");
     }
 
-    return *handle;
+    return handle->group;
 }
 
 /**
@@ -92,16 +98,20 @@ void destroy_group(lv_group_t*& group) {
 }
 
 int group_gc(lua_State* state) {
-    auto** handle = static_cast<GroupHandle*>(luaL_checkudata(state, 1, GROUP_METATABLE));
-    destroy_group(*handle);
+    auto* handle = static_cast<GroupHandle*>(luaL_checkudata(state, 1, GROUP_METATABLE));
+    if (handle->owned) {
+        destroy_group(handle->group);
+    }
+    handle->group = nullptr;
     return 0;
 }
 
 int group_create(lua_State* state) {
-    auto** handle = static_cast<GroupHandle*>(lua_newuserdatauv(state, sizeof(GroupHandle), 0));
-    *handle = lv_group_create();
+    auto* handle = static_cast<GroupHandle*>(lua_newuserdatauv(state, sizeof(GroupHandle), 0));
+    handle->group = lv_group_create();
+    handle->owned = true;
 
-    if (*handle == nullptr) {
+    if (handle->group == nullptr) {
         return luaL_error(state, "failed to create group");
     }
 
@@ -282,9 +292,30 @@ int group_is_default(lua_State* state) {
 }
 
 int group_delete(lua_State* state) {
-    auto** handle = static_cast<GroupHandle*>(luaL_checkudata(state, 1, GROUP_METATABLE));
-    destroy_group(*handle);
+    auto* handle = static_cast<GroupHandle*>(luaL_checkudata(state, 1, GROUP_METATABLE));
+    if (handle->owned) {
+        destroy_group(handle->group);
+    }
+    handle->group = nullptr;
     return 0;
+}
+
+/**
+ * `lvgl.app_group()` - the runner's input group, or nil. The script may add its
+ * own widgets to it so the trackball/keyboard can reach them.
+ */
+int group_app(lua_State* state) {
+    lv_group_t* group = lvgl_keyboard_get_app_group();
+    if (group == nullptr) {
+        lua_pushnil(state);
+        return 1;
+    }
+
+    auto* handle = static_cast<GroupHandle*>(lua_newuserdatauv(state, sizeof(GroupHandle), 0));
+    handle->group = group;
+    handle->owned = false;
+    luaL_setmetatable(state, GROUP_METATABLE);
+    return 1;
 }
 
 const luaL_Reg group_methods[] = {
@@ -331,6 +362,8 @@ void luavgl_open_group(lua_State* state) {
 
     lua_pushcfunction(state, group_create);
     lua_setfield(state, -2, "Group");
+    lua_pushcfunction(state, group_app);
+    lua_setfield(state, -2, "app_group");
 }
 
 void luavgl_delete_all_groups(lua_State* state) {
@@ -344,8 +377,10 @@ void luavgl_delete_all_groups(lua_State* state) {
     for (lua_Integer i = 1; i <= count; i++) {
         lua_rawgeti(state, -1, i);
 
-        if (auto** handle = static_cast<GroupHandle*>(lua_touserdata(state, -1))) {
-            destroy_group(*handle);
+        if (auto* handle = static_cast<GroupHandle*>(lua_touserdata(state, -1))) {
+            if (handle->owned) {
+                destroy_group(handle->group);
+            }
         }
 
         lua_pop(state, 1);

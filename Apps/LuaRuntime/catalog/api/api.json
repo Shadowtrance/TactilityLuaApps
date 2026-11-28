@@ -1182,7 +1182,7 @@
           "group": "Request methods",
           "description": "Asks the worker to stop early.",
           "source": "lua_runner/main/Source/luavgl/http.cpp",
-          "line": 751
+          "line": 779
         },
         {
           "id": "tactility.http.Request:is_active",
@@ -1193,7 +1193,7 @@
           "group": "Request methods",
           "description": "True until the callback has run.",
           "source": "lua_runner/main/Source/luavgl/http.cpp",
-          "line": 761
+          "line": 789
         },
         {
           "id": "tactility.http.request",
@@ -1204,7 +1204,7 @@
           "group": "Functions",
           "description": "Starts an asynchronous request. Options are `url` (required), `method`,\n`headers`, `body`, `timeout_ms` and `max_bytes`. The callback receives\n`{ status, body, length, content_type }`, or `nil, reason` for a transport\nfailure. Up to four requests may run at once.",
           "source": "lua_runner/main/Source/luavgl/http.cpp",
-          "line": 568
+          "line": 596
         }
       ]
     },
@@ -2303,7 +2303,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 119
+          "line": 129
         },
         {
           "id": "lvgl.Group:remove",
@@ -2314,7 +2314,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 126
+          "line": 136
         },
         {
           "id": "lvgl.Group:remove_all",
@@ -2325,7 +2325,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 134
+          "line": 144
         },
         {
           "id": "lvgl.Group:focus",
@@ -2336,7 +2336,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 141
+          "line": 151
         },
         {
           "id": "lvgl.Group:focused",
@@ -2347,7 +2347,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 149
+          "line": 159
         },
         {
           "id": "lvgl.Group:next",
@@ -2358,7 +2358,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 161
+          "line": 171
         },
         {
           "id": "lvgl.Group:prev",
@@ -2369,7 +2369,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 168
+          "line": 178
         },
         {
           "id": "lvgl.Group:freeze",
@@ -2380,7 +2380,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 175
+          "line": 185
         },
         {
           "id": "lvgl.Group:editing",
@@ -2391,7 +2391,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 183
+          "line": 193
         },
         {
           "id": "lvgl.Group:set_editing",
@@ -2402,7 +2402,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 188
+          "line": 198
         },
         {
           "id": "lvgl.Group:wrap",
@@ -2413,7 +2413,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 196
+          "line": 206
         },
         {
           "id": "lvgl.Group:set_wrap",
@@ -2424,7 +2424,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 201
+          "line": 211
         },
         {
           "id": "lvgl.Group:count",
@@ -2435,7 +2435,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 209
+          "line": 219
         },
         {
           "id": "lvgl.Group:obj",
@@ -2446,7 +2446,7 @@
           "group": "Group methods",
           "description": "1-based, like every other Lua index in this binding.",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 215
+          "line": 225
         },
         {
           "id": "lvgl.Group:set_default",
@@ -2457,7 +2457,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 232
+          "line": 242
         },
         {
           "id": "lvgl.Group:is_default",
@@ -2468,7 +2468,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 279
+          "line": 289
         },
         {
           "id": "lvgl.Group:attach_input",
@@ -2479,7 +2479,7 @@
           "group": "Group methods",
           "description": "Direct keypads and encoders at this group.",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 240
+          "line": 250
         },
         {
           "id": "lvgl.Group:detach_input",
@@ -2490,7 +2490,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 272
+          "line": 282
         },
         {
           "id": "lvgl.Group:delete",
@@ -2501,7 +2501,7 @@
           "group": "Group methods",
           "description": "",
           "source": "lua_runner/main/Source/luavgl/group.cpp",
-          "line": 284
+          "line": 294
         },
         {
           "id": "lvgl.Object:set",
