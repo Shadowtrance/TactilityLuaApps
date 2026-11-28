@@ -19,6 +19,10 @@ local function run_tests()
 
     lvgl.Label(screen, { text = "Input group / focus test" })
 
+    local app_group = lvgl.app_group()
+    check(app_group ~= nil, "app group is available")
+    check(type(app_group:count()) == "number", "app group count")
+
     local group = lvgl.Group()
 
     local buttons = {}
