@@ -11,7 +11,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <string>
 
 #ifndef ESP_PLATFORM
 #include <thread>
@@ -357,31 +356,51 @@ const char* client_failure_message(HttpClientFailure failure) {
     }
 }
 
-std::string resolve_redirect(const std::string& base, const std::string& location) {
-    if (location.rfind("http://", 0) == 0 || location.rfind("https://", 0) == 0) {
-        return location;
+/**
+ * Resolves a redirect into `out`. Fixed buffers keep the C++ string library out
+ * of the runner, which has to fit in the internal RAM of the smallest devices.
+ * @return false when the target doesn't fit
+ */
+bool resolve_redirect(char* out, size_t out_size, const char* base, const char* location) {
+    if (std::strncmp(location, "http://", 7) == 0 || std::strncmp(location, "https://", 8) == 0) {
+        const int written = std::snprintf(out, out_size, "%s", location);
+        return written >= 0 && static_cast<size_t>(written) < out_size;
     }
 
-    const size_t scheme = base.find("://");
-    if (scheme == std::string::npos) {
-        return location;
-    }
-    if (location.rfind("//", 0) == 0) {
-        return base.substr(0, scheme) + ":" + location;
+    const char* scheme = std::strstr(base, "://");
+    if (scheme == nullptr) {
+        const int written = std::snprintf(out, out_size, "%s", location);
+        return written >= 0 && static_cast<size_t>(written) < out_size;
     }
 
-    const size_t host_start = scheme + 3;
-    const size_t path_start = base.find('/', host_start);
-    const std::string origin = base.substr(0, path_start == std::string::npos ? base.size() : path_start);
-    if (!location.empty() && location[0] == '/') {
-        return origin + location;
+    const int scheme_length = static_cast<int>(scheme - base);
+    if (location[0] == '/' && location[1] == '/') {
+        const int written = std::snprintf(out, out_size, "%.*s:%s", scheme_length, base, location);
+        return written >= 0 && static_cast<size_t>(written) < out_size;
     }
 
-    const size_t slash = base.rfind('/');
-    if (slash == std::string::npos || slash < host_start) {
-        return origin + "/" + location;
+    const char* host_start = scheme + 3;
+    const char* path_start = std::strchr(host_start, '/');
+    const int origin_length = static_cast<int>(path_start != nullptr ? path_start - base : std::strlen(base));
+    if (location[0] == '/') {
+        const int written = std::snprintf(out, out_size, "%.*s%s", origin_length, base, location);
+        return written >= 0 && static_cast<size_t>(written) < out_size;
     }
-    return base.substr(0, slash + 1) + location;
+
+    const char* slash = std::strrchr(base, '/');
+    if (slash == nullptr || slash < host_start) {
+        const int written = std::snprintf(out, out_size, "%.*s/%s", origin_length, base, location);
+        return written >= 0 && static_cast<size_t>(written) < out_size;
+    }
+    const int written = std::snprintf(
+        out,
+        out_size,
+        "%.*s%s",
+        static_cast<int>(slash - base + 1),
+        base,
+        location
+    );
+    return written >= 0 && static_cast<size_t>(written) < out_size;
 }
 
 /** GET with the firmware's cross-platform client, buffering the response. */
@@ -409,17 +428,21 @@ void client_worker(void* argument) {
         }
     }
 
-    std::string url = request->url;
+    constexpr size_t URL_CAPACITY = 2048;
+    char url[URL_CAPACITY];
+    const int url_length = std::snprintf(url, sizeof(url), "%s", request->url);
     bool opened = false;
 
-    if (request->error[0] == '\0') {
+    if (url_length < 0 || static_cast<size_t>(url_length) >= sizeof(url)) {
+        set_error(request, "URL is too long");
+    } else if (request->error[0] == '\0') {
         for (int redirect = 0; redirect <= 5; redirect++) {
             if (request->cancel_requested.load(std::memory_order_relaxed)) {
                 request->cancelled = true;
                 break;
             }
 
-            const error_t error = http_client_open(client, url.c_str());
+            const error_t error = http_client_open(client, url);
             if (error != ERROR_NONE) {
                 if (request->cancel_requested.load(std::memory_order_relaxed)) {
                     request->cancelled = true;
@@ -436,7 +459,12 @@ void client_worker(void* argument) {
                     set_error(request, "redirect without a location");
                     break;
                 }
-                url = resolve_redirect(url, location);
+                char next_url[URL_CAPACITY];
+                if (!resolve_redirect(next_url, sizeof(next_url), url, location)) {
+                    set_error(request, "redirect URL is too long");
+                    break;
+                }
+                std::snprintf(url, sizeof(url), "%s", next_url);
                 http_client_close(client);
                 continue;
             }

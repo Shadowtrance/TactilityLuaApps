@@ -20,3 +20,9 @@ tactility_component_register(
         ../../lua_runtime/components/lua/Include
     PRIV_REQUIRES notification-module http-module ${HTTP_REQUIRES}
 )
+
+# The runner is loaded into internal RAM on small devices (the whole ELF file is
+# allocated before it runs), so optimize for size even in a debug build.
+if (ESP_PLATFORM)
+    target_compile_options(${COMPONENT_LIB} PRIVATE -Os)
+endif ()

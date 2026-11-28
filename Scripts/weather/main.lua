@@ -4,15 +4,15 @@
 -- Weather with a paged, icon-led layout: a big "now" page, a forecast page with
 -- a temperature chart, and the settings view behind the toolbar gear. The icons
 -- are PNG assets bundled with the package, so they are not limited to the shared
--- icon font.
+-- icon font. The location comes from the built-in place search and is saved.
 
-local cities = require("lib.cities")
 local weather = require("lib.weather")
 
 local SETTINGS_NAMESPACE = "weather"
 local WEEKDAYS = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" }
-local CUSTOM_OPTION = #cities + 1
-local CUSTOM_NAME = "Custom location"
+local DEFAULT_NAME = "Amsterdam"
+local DEFAULT_LATITUDE = 52.3676
+local DEFAULT_LONGITUDE = 4.9041
 local script_directory = ... or "."
 
 -- Settings ---------------------------------------------------------------------------------
@@ -25,26 +25,17 @@ if refresh_minutes ~= 5 and refresh_minutes ~= 10 and refresh_minutes ~= 30 then
     refresh_minutes = 10
 end
 
-local city_index = math.floor(tonumber(tactility.settings.get(SETTINGS_NAMESPACE, "city", "1")) or 1)
-if city_index < 1 or city_index > #cities then
-    city_index = 1
-end
-
-local using_custom = tactility.settings.get(SETTINGS_NAMESPACE, "custom", "0") == "1"
-local custom_name = tactility.settings.get(SETTINGS_NAMESPACE, "name", CUSTOM_NAME)
-local custom_latitude = tonumber(tactility.settings.get(SETTINGS_NAMESPACE, "latitude", "52.3676")) or 52.3676
-local custom_longitude = tonumber(tactility.settings.get(SETTINGS_NAMESPACE, "longitude", "4.9041")) or 4.9041
+local custom_name = tactility.settings.get(SETTINGS_NAMESPACE, "name", DEFAULT_NAME)
+local custom_latitude = tonumber(tactility.settings.get(SETTINGS_NAMESPACE, "latitude", tostring(DEFAULT_LATITUDE))) or DEFAULT_LATITUDE
+local custom_longitude = tonumber(tactility.settings.get(SETTINGS_NAMESPACE, "longitude", tostring(DEFAULT_LONGITUDE))) or DEFAULT_LONGITUDE
 if custom_name == nil or #custom_name == 0 then
-    custom_name = CUSTOM_NAME
+    custom_name = DEFAULT_NAME
 end
 
 local last_data = nil
 
 local function active_location()
-    if using_custom then
-        return { name = custom_name, latitude = custom_latitude, longitude = custom_longitude }
-    end
-    return cities[city_index]
+    return { name = custom_name, latitude = custom_latitude, longitude = custom_longitude }
 end
 
 -- Appearance -------------------------------------------------------------------------------
@@ -477,18 +468,24 @@ for index = 1, forecast_days do
         text = "",
         text_font = "small",
         flex_grow = 1,
-        long_mode = lvgl.LONG.DOTS,
+        max_width = wide and 500 or 140,
+        long_mode = lvgl.LONG.CLIP,
     })
+    -- The temperatures are pinned to the right edge instead of relying on the
+    -- flex row to push them there, which left a gap on some themes.
     local temperatures = lvgl.Object(row, {
-    bg_opa = lvgl.OPA.TRANSP,
-    border_width = 0,
-    min_height = 0,
-    pad_all = 0,
+        bg_opa = lvgl.OPA.TRANSP,
+        border_width = 0,
+        min_height = 0,
+        pad_all = 0,
+        w = lvgl.SIZE_CONTENT,
         h = lvgl.SIZE_CONTENT,
         flex_flow = lvgl.FLEX_FLOW.COLUMN,
         flex_align = { main = lvgl.FLEX_ALIGN.CENTER, cross = lvgl.FLEX_ALIGN.END },
         pad_row = 0,
+        align = lvgl.ALIGN.RIGHT_MID,
     })
+    temperatures:add_flag(lvgl.FLAG.IGNORE_LAYOUT)
     local high = lvgl.Label(temperatures, { text = "", text_font = "small", text_color = lvgl.theme_color_primary() })
     local low = lvgl.Label(temperatures, { text = "", text_font = "small", text_color = lvgl.theme_color_secondary() })
     day_rows[index] = { day = day, icon = icon, condition = condition, high = high, low = low }
@@ -510,13 +507,7 @@ local location_title = lvgl.Label(settings_card, {
     text_color = lvgl.theme_color_primary(),
 })
 
-local city_names = {}
-for index, city in ipairs(cities) do
-    city_names[index] = city.name
-end
-city_names[CUSTOM_OPTION] = CUSTOM_NAME
-
-local city_dropdown = lvgl.Dropdown(settings_card, { options = city_names, w = lvgl.PCT(100) })
+local field_label_width = wide and 150 or 82
 
 local search_row = lvgl.Object(settings_card, {
     bg_opa = lvgl.OPA.TRANSP,
@@ -554,51 +545,25 @@ local custom_fields = lvgl.Object(settings_card, {
     pad_row = wide and 8 or 4,
 })
 
-local name_row = lvgl.Object(custom_fields, {
-    bg_opa = lvgl.OPA.TRANSP,
-    border_width = 0,
-    min_height = 0,
-    pad_all = 0,
-    w = lvgl.PCT(100),
-    h = lvgl.SIZE_CONTENT,
-    flex_flow = lvgl.FLEX_FLOW.ROW,
-    flex_align = { main = lvgl.FLEX_ALIGN.SPACE_BETWEEN, cross = lvgl.FLEX_ALIGN.CENTER },
-})
-lvgl.Label(name_row, { text = "Name", text_font = "small" })
-local name_field = lvgl.TextArea(name_row, { w = lvgl.PCT(55), one_line = true, text = custom_name })
+local function make_field_row(caption, text)
+    local row = lvgl.Object(custom_fields, {
+        bg_opa = lvgl.OPA.TRANSP,
+        border_width = 0,
+        min_height = 0,
+        pad_all = 0,
+        w = lvgl.PCT(100),
+        h = lvgl.SIZE_CONTENT,
+        flex_flow = lvgl.FLEX_FLOW.ROW,
+        flex_align = { main = lvgl.FLEX_ALIGN.START, cross = lvgl.FLEX_ALIGN.CENTER },
+        pad_column = gap,
+    })
+    lvgl.Label(row, { text = caption, text_font = "small", w = field_label_width })
+    return lvgl.TextArea(row, { flex_grow = 1, one_line = true, text = text })
+end
 
-local latitude_row = lvgl.Object(custom_fields, {
-    bg_opa = lvgl.OPA.TRANSP,
-    border_width = 0,
-    min_height = 0,
-    w = lvgl.PCT(100),
-    h = lvgl.SIZE_CONTENT,
-    flex_flow = lvgl.FLEX_FLOW.ROW,
-    flex_align = { main = lvgl.FLEX_ALIGN.SPACE_BETWEEN, cross = lvgl.FLEX_ALIGN.CENTER },
-})
-lvgl.Label(latitude_row, { text = "Latitude", text_font = "small" })
-local latitude_field = lvgl.TextArea(latitude_row, {
-    w = lvgl.PCT(55),
-    one_line = true,
-    text = string.format("%.4f", custom_latitude),
-})
-
-local longitude_row = lvgl.Object(custom_fields, {
-    bg_opa = lvgl.OPA.TRANSP,
-    border_width = 0,
-    min_height = 0,
-    pad_all = 0,
-    w = lvgl.PCT(100),
-    h = lvgl.SIZE_CONTENT,
-    flex_flow = lvgl.FLEX_FLOW.ROW,
-    flex_align = { main = lvgl.FLEX_ALIGN.SPACE_BETWEEN, cross = lvgl.FLEX_ALIGN.CENTER },
-})
-lvgl.Label(longitude_row, { text = "Longitude", text_font = "small" })
-local longitude_field = lvgl.TextArea(longitude_row, {
-    w = lvgl.PCT(55),
-    one_line = true,
-    text = string.format("%.4f", custom_longitude),
-})
+local name_field = make_field_row("Name", custom_name)
+local latitude_field = make_field_row("Latitude", string.format("%.4f", custom_latitude))
+local longitude_field = make_field_row("Longitude", string.format("%.4f", custom_longitude))
 
 local display_title = lvgl.Label(settings_card, {
     text = "Units and refresh",
@@ -614,12 +579,13 @@ local units_row = lvgl.Object(settings_card, {
     w = lvgl.PCT(100),
     h = lvgl.SIZE_CONTENT,
     flex_flow = lvgl.FLEX_FLOW.ROW,
-    flex_align = { main = lvgl.FLEX_ALIGN.SPACE_BETWEEN, cross = lvgl.FLEX_ALIGN.CENTER },
+    flex_align = { main = lvgl.FLEX_ALIGN.START, cross = lvgl.FLEX_ALIGN.CENTER },
+    pad_column = gap,
 })
-lvgl.Label(units_row, { text = "Units", text_font = "small" })
+lvgl.Label(units_row, { text = "Units", text_font = "small", w = field_label_width })
 local units_dropdown = lvgl.Dropdown(units_row, {
     options = { "Celsius", "Fahrenheit" },
-    w = lvgl.PCT(55),
+    flex_grow = 1,
 })
 units_dropdown:set{ value = unit == "F" and 2 or 1 }
 
@@ -631,12 +597,13 @@ local interval_row = lvgl.Object(settings_card, {
     w = lvgl.PCT(100),
     h = lvgl.SIZE_CONTENT,
     flex_flow = lvgl.FLEX_FLOW.ROW,
-    flex_align = { main = lvgl.FLEX_ALIGN.SPACE_BETWEEN, cross = lvgl.FLEX_ALIGN.CENTER },
+    flex_align = { main = lvgl.FLEX_ALIGN.START, cross = lvgl.FLEX_ALIGN.CENTER },
+    pad_column = gap,
 })
-lvgl.Label(interval_row, { text = "Refresh every", text_font = "small" })
+lvgl.Label(interval_row, { text = "Refresh every", text_font = "small", w = field_label_width })
 local interval_dropdown = lvgl.Dropdown(interval_row, {
     options = { "5 minutes", "10 minutes", "30 minutes" },
-    w = lvgl.PCT(55),
+    flex_grow = 1,
 })
 interval_dropdown:set{ value = refresh_minutes == 5 and 1 or (refresh_minutes == 30 and 3 or 2) }
 
@@ -830,27 +797,14 @@ end
 
 -- Settings view behaviour ------------------------------------------------------------------
 
-local function show_custom_fields(visible)
-    if visible then
-        custom_fields:remove_flag(lvgl.FLAG.HIDDEN)
-    else
-        custom_fields:add_flag(lvgl.FLAG.HIDDEN)
-        if keyboard then
-            keyboard:add_flag(lvgl.FLAG.HIDDEN)
-        end
-    end
-end
-
 local function sync_settings_view()
-    city_dropdown:set{ value = using_custom and CUSTOM_OPTION or city_index }
     name_field:set{ text = custom_name }
-    latitude_field:set{ text = string.format("%.4f", using_custom and custom_latitude or cities[city_index].latitude) }
-    longitude_field:set{ text = string.format("%.4f", using_custom and custom_longitude or cities[city_index].longitude) }
+    latitude_field:set{ text = string.format("%.4f", custom_latitude) }
+    longitude_field:set{ text = string.format("%.4f", custom_longitude) }
     search_field:set{ text = "" }
     units_dropdown:set{ value = unit == "F" and 2 or 1 }
     interval_dropdown:set{ value = refresh_minutes == 5 and 1 or (refresh_minutes == 30 and 3 or 2) }
     settings_status:set{ text = "" }
-    show_custom_fields(using_custom)
 end
 
 local settings_visible = false
@@ -922,15 +876,6 @@ end
 
 -- Settings controls ------------------------------------------------------------------------
 
-city_dropdown:on(lvgl.EVENT.VALUE_CHANGED, function()
-    local selected = city_dropdown:value()
-    show_custom_fields(selected == CUSTOM_OPTION)
-    if selected ~= CUSTOM_OPTION then
-        latitude_field:set{ text = string.format("%.4f", cities[selected].latitude) }
-        longitude_field:set{ text = string.format("%.4f", cities[selected].longitude) }
-    end
-end)
-
 local function bind_keyboard(field)
     return function()
         if keyboard then
@@ -972,8 +917,6 @@ search_button:on(lvgl.EVENT.CLICKED, function()
         custom_latitude = result.latitude
         custom_longitude = result.longitude
 
-        city_dropdown:set{ value = CUSTOM_OPTION }
-        show_custom_fields(true)
         name_field:set{ text = custom_name }
         latitude_field:set{ text = string.format("%.4f", custom_latitude) }
         longitude_field:set{ text = string.format("%.4f", custom_longitude) }
@@ -1007,38 +950,27 @@ interval_dropdown:on(lvgl.EVENT.VALUE_CHANGED, function()
 end)
 
 apply_button:on(lvgl.EVENT.CLICKED, function()
-    local selected = city_dropdown:value()
-
-    if selected == CUSTOM_OPTION then
-        local latitude = tonumber(latitude_field:text())
-        local longitude = tonumber(longitude_field:text())
-        if latitude == nil or latitude < -90 or latitude > 90 then
-            settings_status:set{ text = "Latitude must be between -90 and 90", text_color = 0xff6b6b }
-            return
-        end
-        if longitude == nil or longitude < -180 or longitude > 180 then
-            settings_status:set{ text = "Longitude must be between -180 and 180", text_color = 0xff6b6b }
-            return
-        end
-
-        using_custom = true
-        custom_latitude = latitude
-        custom_longitude = longitude
-        local name = name_field:text()
-        if name == nil or #name == 0 then
-            name = CUSTOM_NAME
-        end
-        custom_name = name
-        tactility.settings.set(SETTINGS_NAMESPACE, "custom", "1")
-        tactility.settings.set(SETTINGS_NAMESPACE, "name", custom_name)
-        tactility.settings.set(SETTINGS_NAMESPACE, "latitude", string.format("%.6f", latitude))
-        tactility.settings.set(SETTINGS_NAMESPACE, "longitude", string.format("%.6f", longitude))
-    else
-        using_custom = false
-        city_index = selected
-        tactility.settings.set(SETTINGS_NAMESPACE, "custom", "0")
-        tactility.settings.set(SETTINGS_NAMESPACE, "city", tostring(selected))
+    local latitude = tonumber(latitude_field:text())
+    local longitude = tonumber(longitude_field:text())
+    if latitude == nil or latitude < -90 or latitude > 90 then
+        settings_status:set{ text = "Latitude must be between -90 and 90", text_color = 0xff6b6b }
+        return
     end
+    if longitude == nil or longitude < -180 or longitude > 180 then
+        settings_status:set{ text = "Longitude must be between -180 and 180", text_color = 0xff6b6b }
+        return
+    end
+
+    custom_latitude = latitude
+    custom_longitude = longitude
+    local name = name_field:text()
+    if name == nil or #name == 0 then
+        name = DEFAULT_NAME
+    end
+    custom_name = name
+    tactility.settings.set(SETTINGS_NAMESPACE, "name", custom_name)
+    tactility.settings.set(SETTINGS_NAMESPACE, "latitude", string.format("%.6f", latitude))
+    tactility.settings.set(SETTINGS_NAMESPACE, "longitude", string.format("%.6f", longitude))
 
     toggle_settings()
     show_page(0)
@@ -1060,4 +992,5 @@ __weather_refresh_timer = lvgl.Timer{
 }
 
 refresh()
+
 
