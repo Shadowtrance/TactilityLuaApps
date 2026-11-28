@@ -603,7 +603,11 @@ extern "C" error_t luavgl_bindings_open(struct LuaRuntime* runtime, lv_obj_t* ro
     return ERROR_NONE;
 }
 
+extern "C" void luavgl_clear_bin_images(lua_State* state);
+
 extern "C" void luavgl_bindings_close(struct LuaRuntime* runtime) {
     runner_toolbar = nullptr;
-    luavgl_detach_all(static_cast<lua_State*>(lua_runtime_get_state(runtime)));
+    auto* state = static_cast<lua_State*>(lua_runtime_get_state(runtime));
+    luavgl_clear_bin_images(state);
+    luavgl_detach_all(state);
 }

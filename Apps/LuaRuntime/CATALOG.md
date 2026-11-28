@@ -223,6 +223,7 @@ be read back from it unaided.
 | [~] | Music player | audio + `fs` | WAV playback in place; MP3 decoder next |
 | [x] | Weather | `Scripts/weather`: `require`, HTTP, JSON, Material tabs, bundled weather icons and temperature digits, 24-hour chart, geocoding/custom location, units/interval | Packaged example; Now/Forecast/Settings |
 | [ ] | App hub / installs | `http` + app lifecycle | Bigger scope |
+| [ ] | Shared runner | [catalog/shared-runner.md](catalog/shared-runner.md) | One runner per platform instead of one per script package |
 | [-] | Camera / Doom | camera / heavy port | Not a Lua demo target |
 
 ## 6. Companion and editor

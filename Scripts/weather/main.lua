@@ -72,8 +72,23 @@ local function asset_path(relative)
     return path
 end
 
+-- The firmware has no decoded-image cache, so a PNG is decoded again on every
+-- scroll frame. The .bin assets are LVGL RGB565A8 images; reading one into a Lua
+-- string (Lua's heap prefers PSRAM) lets the binding draw from memory instead.
+local bin_cache = {}
+
+local function bin_source(relative)
+    local cached = bin_cache[relative]
+    if cached ~= nil then
+        return cached
+    end
+    local data = tactility.fs.read(asset_path(relative))
+    bin_cache[relative] = data
+    return data
+end
+
 local function icon_source(base, size)
-    return asset_path("weather/" .. base .. "-" .. size .. ".png")
+    return bin_source("weather/" .. base .. "-" .. size .. ".bin")
 end
 
 -- Temperatures are drawn with digit images instead of a scaled label: LVGL's
@@ -82,7 +97,7 @@ end
 local temp_font_size = wide and 64 or 40
 
 local function digit_source(name)
-    return asset_path("temp/" .. name .. "-" .. temp_font_size .. ".png")
+    return bin_source("temp/" .. name .. "-" .. temp_font_size .. ".bin")
 end
 
 local function weather_icon(code, is_day)
@@ -296,10 +311,10 @@ local temperature_row = lvgl.Object(hero_row, {
     scrollbar_mode = lvgl.SCROLLBAR.OFF,
 })
 
-local sign_slot = lvgl.Image(temperature_row, { src = digit_source("minus") })
-local tens_slot = lvgl.Image(temperature_row, { src = digit_source("0") })
-local ones_slot = lvgl.Image(temperature_row, { src = digit_source("0") })
-local degree_slot = lvgl.Image(temperature_row, { src = digit_source("degree") })
+local sign_slot = lvgl.Image(temperature_row, { bin = digit_source("minus") })
+local tens_slot = lvgl.Image(temperature_row, { bin = digit_source("0") })
+local ones_slot = lvgl.Image(temperature_row, { bin = digit_source("0") })
+local degree_slot = lvgl.Image(temperature_row, { bin = digit_source("degree") })
 sign_slot:add_flag(lvgl.FLAG.HIDDEN)
 tens_slot:add_flag(lvgl.FLAG.HIDDEN)
 
@@ -309,21 +324,21 @@ local function show_temperature(text)
     local digits = (negative and text:sub(2) or text):match("^(%d+)") or "0"
 
     if negative then
-        sign_slot:set{ src = digit_source("minus") }
+        sign_slot:set{ bin = digit_source("minus") }
         sign_slot:remove_flag(lvgl.FLAG.HIDDEN)
     else
         sign_slot:add_flag(lvgl.FLAG.HIDDEN)
     end
 
     if #digits > 1 then
-        tens_slot:set{ src = digit_source(digits:sub(1, 1)) }
+        tens_slot:set{ bin = digit_source(digits:sub(1, 1)) }
         tens_slot:remove_flag(lvgl.FLAG.HIDDEN)
     else
         tens_slot:add_flag(lvgl.FLAG.HIDDEN)
     end
 
-    ones_slot:set{ src = digit_source(digits:sub(-1)) }
-    degree_slot:set{ src = digit_source("degree") }
+    ones_slot:set{ bin = digit_source(digits:sub(-1)) }
+    degree_slot:set{ bin = digit_source("degree") }
 end
 
 local condition_row = lvgl.Object(hero, {
@@ -391,7 +406,7 @@ local function make_metric_row(parent, icon, caption)
         min_height = 0,
         scrollbar_mode = lvgl.SCROLLBAR.OFF,
     })
-    lvgl.Image(row, { w = metric_icon_size, h = metric_icon_size, src = icon })
+    lvgl.Image(row, { w = metric_icon_size, h = metric_icon_size, bin = icon })
     lvgl.Label(row, { text = caption, text_font = "small", flex_grow = 1 })
     local value = lvgl.Label(row, {
         text = "--",
@@ -769,7 +784,7 @@ local function render(data)
     city_label:set{ text = active_location().name }
     show_temperature(format_temperature(current.temperature_2m))
     condition_label:set{ text = weather.condition(current.weather_code) }
-    current_icon:set{ src = icon_source(weather_icon(current.weather_code, current.is_day), hero_icon_size) }
+    current_icon:set{ bin = icon_source(weather_icon(current.weather_code, current.is_day), hero_icon_size) }
 
     feels_label:set{ text = "Feels like " .. format_temperature(current.apparent_temperature) }
     if today_max ~= nil then
@@ -796,7 +811,7 @@ local function render(data)
 
         if time and code and maximum and minimum then
             row.day:set{ text = index == 1 and "Today" or weekday(time) }
-            row.icon:set{ src = icon_source(weather_icon(code, 1), forecast_icon_size) }
+            row.icon:set{ bin = icon_source(weather_icon(code, 1), forecast_icon_size) }
             row.condition:set{ text = weather.condition(code) }
             row.high:set{ text = format_temperature(maximum) }
             row.low:set{ text = format_temperature(minimum) }

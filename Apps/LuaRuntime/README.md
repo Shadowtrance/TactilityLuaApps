@@ -96,6 +96,12 @@ resulting absolute path, which the bindings prefix with LVGL's `A:` drive. PNG
 files decode through the firmware's lodepng decoder; SVG icons do not decode on
 device.
 
+`image:set{ bin = data }` takes an LVGL `.bin` image (RGB565A8) that is already
+in a Lua string, e.g. from `tactility.fs.read(path)`, and points the image at
+that memory. The string stays referenced and the decoded descriptor is cached,
+so repeated draws do not decode anything. This is the option for firmware builds
+without a decoded-image cache.
+
 The same package can be created without a PC: **Export** in the editor asks for
 an app name and builds/installs the tar on the device.
 

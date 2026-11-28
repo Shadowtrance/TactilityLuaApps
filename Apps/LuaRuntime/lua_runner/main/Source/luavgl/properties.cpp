@@ -333,6 +333,86 @@ void set_source(lua_State* state, lv_obj_t* object, int index) {
     lv_image_set_src(object, luavgl_lvgl_path(state, index));
 }
 
+/**
+ * Memory image cache: `bin = <string>` where the string holds an LVGL .bin image
+ * (header + RGB565A8 pixels). The firmware has no decoded-image cache, so loading
+ * the pixels once into Lua's (PSRAM-preferring) heap turns scrolling into memory
+ * blits instead of a PNG decode per frame. Descriptors and the strings they point
+ * into are cached for the runtime's lifetime.
+ */
+constexpr size_t BIN_IMAGE_CACHE_MAX = 64;
+
+struct BinImage {
+    lv_image_dsc_t descriptor;
+    int string_ref;
+    const void* key;
+};
+
+BinImage bin_images[BIN_IMAGE_CACHE_MAX];
+size_t bin_image_count = 0;
+
+/** @return the cached descriptor, or nullptr when the data is not a valid .bin image */
+lv_image_dsc_t* bin_image(lua_State* state, int index, const char* data, size_t size) {
+    const void* key = data;
+    for (size_t i = 0; i < bin_image_count; i++) {
+        if (bin_images[i].key == key) {
+            return &bin_images[i].descriptor;
+        }
+    }
+
+    if (bin_image_count >= BIN_IMAGE_CACHE_MAX || size < sizeof(lv_image_header_t)) {
+        return nullptr;
+    }
+
+    lv_image_header_t header;
+    std::memcpy(&header, data, sizeof(header));
+    if (header.magic != LV_IMAGE_HEADER_MAGIC || header.cf != LV_COLOR_FORMAT_RGB565A8) {
+        return nullptr;
+    }
+
+    const size_t stride = header.stride != 0 ? header.stride : static_cast<size_t>(header.w) * 2;
+    const size_t expected = stride * header.h + static_cast<size_t>(header.w) * header.h;
+    if (size - sizeof(header) < expected) {
+        return nullptr;
+    }
+
+    BinImage& entry = bin_images[bin_image_count];
+    entry.descriptor = {};
+    entry.descriptor.header = header;
+    entry.descriptor.data_size = static_cast<uint32_t>(size - sizeof(header));
+    entry.descriptor.data = reinterpret_cast<const uint8_t*>(data) + sizeof(header);
+    entry.key = key;
+
+    // Anchor the string so the Lua collector cannot free the pixels.
+    lua_pushvalue(state, index);
+    entry.string_ref = luaL_ref(state, LUA_REGISTRYINDEX);
+    bin_image_count++;
+
+    return &entry.descriptor;
+}
+
+void set_bin(lua_State* state, lv_obj_t* object, int index) {
+    if (!lv_obj_check_type(object, &lv_image_class)) {
+        luaL_error(state, "bin only applies to images");
+    }
+
+    size_t size = 0;
+    const char* data = luaL_checklstring(state, index, &size);
+    auto* descriptor = bin_image(state, index, data, size);
+    if (descriptor == nullptr) {
+        luaL_error(state, "bin is not a valid LVGL RGB565A8 image");
+    }
+    lv_image_set_src(object, descriptor);
+}
+
+extern "C" void luavgl_clear_bin_images(lua_State* state) {
+    for (size_t i = 0; i < bin_image_count; i++) {
+        luaL_unref(state, LUA_REGISTRYINDEX, bin_images[i].string_ref);
+        bin_images[i] = {};
+    }
+    bin_image_count = 0;
+}
+
 // Batch 2 widgets ---------------------------------------------------------------------------
 
 /**
@@ -1158,6 +1238,7 @@ constexpr Property PROPERTIES[] = {
     { "bg_grad_color", set_bg_grad_color },
     { "bg_grad_dir", set_bg_grad_dir },
     { "bg_opa", set_bg_opa },
+    { "bin", set_bin },
     { "border_color", set_border_color },
     { "border_opa", set_border_opa },
     { "border_side", set_border_side },
