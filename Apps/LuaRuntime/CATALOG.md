@@ -150,7 +150,7 @@ test that proves it.
 | [ ] | `gps` | — | GPS viewer clone |
 | [ ] | `bluetooth` | — | |
 | [ ] | `location` | — | Maps clone |
-| [x] | `http` | Async worker task, ESP-IDF client + cert bundle, `request` handle; cross-platform streaming `download` with progress and redirects | `tests/http.lua`, `tests/download.lua`, Weather app |
+| [x] | `http` | Async worker task; GET without a body on the cross-platform `http_client` (certificate, redirects) and ESP-IDF for other methods; `request` handle; streaming `download` with progress | `tests/http.lua`, `tests/download.lua`, Weather app, simulator |
 | [ ] | `crypt` | — | |
 | [x] | `cjson` | `tactility.json.decode/encode`, null sentinel, 512 KB/64 depth | `tests/json.lua` |
 | [ ] | `binfont` | — | Custom fonts |
@@ -221,7 +221,7 @@ be read back from it unaided.
 | [ ] | GPS viewer | `gps` + UI | Needs GPS capability |
 | [ ] | IMU viewer | `device`/sensor API | Needs sensor capability |
 | [~] | Music player | audio + `fs` | WAV playback in place; MP3 decoder next |
-| [x] | Weather | `Scripts/weather`: `require`, HTTP, JSON, toolbar actions, geocoding/custom location, units/interval | Packaged example; 4 days on short screens |
+| [x] | Weather | `Scripts/weather`: `require`, HTTP, JSON, Material tabs, bundled weather icons and temperature digits, 24-hour chart, geocoding/custom location, units/interval | Packaged example; Now/Forecast/Settings |
 | [ ] | App hub / installs | `http` + app lifecycle | Bigger scope |
 | [-] | Camera / Doom | camera / heavy port | Not a Lua demo target |
 

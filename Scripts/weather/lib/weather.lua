@@ -96,6 +96,7 @@ local function url_for(city)
         "?latitude=%.4f&longitude=%.4f" ..
         "&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m" ..
         "&daily=weather_code,temperature_2m_max,temperature_2m_min" ..
+        "&hourly=temperature_2m" ..
         "&timezone=auto&forecast_days=5",
         city.latitude,
         city.longitude

@@ -48,13 +48,16 @@ Status: partially implemented (2026-11-21)
   fields keep their position. Input/output is capped at 512 KB, nesting at 64
   levels, and failures return `nil, reason`. Verified with `tests/json.lua`.
 - `tactility.http.request(options, callback)` is asynchronous: a worker task
-  performs the request with the ESP-IDF HTTP client and certificate bundle, and
-  the runner's app loop delivers the callback with the LVGL lock held. Options are
-  `url`, `method`, `headers`, `body`, `timeout_ms` and `max_bytes`; the response is
+  performs the request and the runner's app loop delivers the callback with the
+  LVGL lock held. Options are `url`, `method`, `headers`, `body`, `timeout_ms`,
+  `max_bytes` and `certificate`; the response is
   `{ status, body, length, content_type }`. A received error status is still a
   response; transport failures pass `nil, reason`. Up to four requests can be
-  active, request bodies are capped at 64 KB and responses at 1 MB. ESP32 only; the
-  simulator returns an error. Verified with `tests/http.lua` and the Weather app.
+  active, request bodies are capped at 64 KB and responses at 1 MB. A GET without
+  a body uses the firmware's cross-platform `http_client` with certificate
+  verification and up to five redirects, so it works in the simulator too; other
+  methods (and requests with a body) use the ESP-IDF client and are ESP-only.
+  Verified with `tests/http.lua`, the Weather app and the simulator.
 - `tactility.http.download(options, callback)` streams a GET to `path` on a worker
   task using the firmware's cross-platform `http_client`, so it also works in the
   simulator. It verifies the platform's roots or `options.certificate`, follows up

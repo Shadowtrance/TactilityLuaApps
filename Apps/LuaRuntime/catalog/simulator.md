@@ -90,8 +90,10 @@ open an example. The simulator's script folder is `/mnt/lua` by default.
 
 The firmware's `http-module` has POSIX implementations of the streaming client
 and download API, so `tactility.http.download` works in the simulator (including
-HTTPS and redirects). `tactility.http.request` is still ESP-only: it uses the
-ESP-IDF HTTP client directly, and the simulator returns an error for it.
+HTTPS and redirects). `tactility.http.request` uses the same client for GET
+requests without a body, so the Weather example fetches a live forecast in the
+simulator. Other methods, and requests with a body, still use the ESP-IDF client
+and return an error in the simulator.
 
 If the same checkout was previously built for `linux-x86_64` on Windows, remove
 the CMake cache before building in WSL. CMake rejects a cache generated for a

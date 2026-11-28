@@ -1182,7 +1182,7 @@
           "group": "Request methods",
           "description": "Asks the worker to stop early.",
           "source": "lua_runner/main/Source/luavgl/http.cpp",
-          "line": 518
+          "line": 751
         },
         {
           "id": "tactility.http.Request:is_active",
@@ -1193,7 +1193,7 @@
           "group": "Request methods",
           "description": "True until the callback has run.",
           "source": "lua_runner/main/Source/luavgl/http.cpp",
-          "line": 528
+          "line": 761
         },
         {
           "id": "tactility.http.request",
@@ -1204,7 +1204,7 @@
           "group": "Functions",
           "description": "Starts an asynchronous request. Options are `url` (required), `method`,\n`headers`, `body`, `timeout_ms` and `max_bytes`. The callback receives\n`{ status, body, length, content_type }`, or `nil, reason` for a transport\nfailure. Up to four requests may run at once.",
           "source": "lua_runner/main/Source/luavgl/http.cpp",
-          "line": 358
+          "line": 568
         }
       ]
     },

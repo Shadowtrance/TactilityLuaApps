@@ -1,9 +1,10 @@
--- @version 0.1.0
--- @code 1
+-- @version 0.2.0
+-- @code 2
 --
--- A complete network app: multi-file modules, an asynchronous Open-Meteo request,
--- JSON decoding, a real toolbar action for settings, and a settings view for the
--- location (presets or custom coordinates), units and refresh interval.
+-- Weather with a paged, icon-led layout: a big "now" page, a forecast page with
+-- a temperature chart, and the settings view behind the toolbar gear. The icons
+-- are PNG assets bundled with the package, so they are not limited to the shared
+-- icon font.
 
 local cities = require("lib.cities")
 local weather = require("lib.weather")
@@ -12,6 +13,7 @@ local SETTINGS_NAMESPACE = "weather"
 local WEEKDAYS = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" }
 local CUSTOM_OPTION = #cities + 1
 local CUSTOM_NAME = "Custom location"
+local script_directory = ... or "."
 
 -- Settings ---------------------------------------------------------------------------------
 
@@ -45,119 +47,468 @@ local function active_location()
     return cities[city_index]
 end
 
+-- Appearance -------------------------------------------------------------------------------
+
+local display_width = tactility.display.size() or 320
+local wide = display_width >= 600
+local pad = wide and 14 or 8
+local gap = wide and 10 or 6
+local hero_icon_size = wide and 128 or 64
+local forecast_icon_size = wide and 44 or 32
+local metric_icon_size = wide and 26 or 20
+local chart_height = wide and 170 or 84
+local chart_points = wide and 24 or 12
+local forecast_days = 5
+
+local asset_cache = {}
+
+local function asset_path(relative)
+    local cached = asset_cache[relative]
+    if cached ~= nil then
+        return cached
+    end
+
+    -- `...` is the package root for an installed app (assets live in lua/assets/)
+    -- and the script's folder when the script runs from a directory (assets/).
+    local packaged = script_directory .. "/lua/assets/" .. relative
+    local uninstalled = script_directory .. "/assets/" .. relative
+    local path = tactility.fs.exists(packaged) and packaged or uninstalled
+    asset_cache[relative] = path
+    return path
+end
+
+local function icon_source(base, size)
+    return asset_path("weather/" .. base .. "-" .. size .. ".png")
+end
+
+-- Temperatures are drawn with digit images instead of a scaled label: LVGL's
+-- transform scale renders through an offscreen layer, which costs memory and
+-- draws outside the label's layout box, so a label cannot carry a big number.
+local temp_font_size = wide and 64 or 40
+
+local function digit_source(name)
+    return asset_path("temp/" .. name .. "-" .. temp_font_size .. ".png")
+end
+
+local function weather_icon(code, is_day)
+    code = tonumber(code) or 0
+    local day = is_day ~= 0
+    if code == 0 then
+        return day and "sun" or "moon"
+    end
+    if code <= 2 then
+        return day and "partly_cloudy" or "partly_cloudy_night"
+    end
+    if code == 3 then
+        return "cloud"
+    end
+    if code == 45 or code == 48 then
+        return "fog"
+    end
+    if code >= 51 and code <= 57 then
+        return "drizzle"
+    end
+    if code >= 61 and code <= 67 then
+        return "rain"
+    end
+    if code >= 71 and code <= 77 then
+        return "snow"
+    end
+    if code >= 80 and code <= 82 then
+        return "rain"
+    end
+    if code >= 85 and code <= 86 then
+        return "snow"
+    end
+    if code >= 95 then
+        return "thunder"
+    end
+    return "cloud"
+end
+
 -- Views ------------------------------------------------------------------------------------
 
 local root = lvgl.root()
-root:set{ flex_flow = lvgl.FLEX_FLOW.COLUMN, pad_all = lvgl.theme_lerp(6, 14) }
-root:add_flag(lvgl.FLAG.SCROLLABLE)
+root:set{
+    w = lvgl.PCT(100),
+    h = lvgl.PCT(100),
+    flex_flow = lvgl.FLEX_FLOW.COLUMN,
+    pad_all = pad,
+    pad_row = 0,
+}
 
 local main_view = lvgl.Object(root, {
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
     w = lvgl.PCT(100),
-    h = lvgl.SIZE_CONTENT,
+    h = lvgl.PCT(100),
     flex_flow = lvgl.FLEX_FLOW.COLUMN,
-    pad_row = lvgl.theme_lerp(4, 10),
+    pad_row = gap,
 })
 
 local settings_view = lvgl.Object(root, {
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+    pad_all = 0,
     w = lvgl.PCT(100),
-    h = lvgl.SIZE_CONTENT,
+    h = lvgl.PCT(100),
     flex_flow = lvgl.FLEX_FLOW.COLUMN,
-    pad_row = lvgl.theme_lerp(4, 10),
+    pad_row = gap,
 })
 settings_view:add_flag(lvgl.FLAG.HIDDEN)
+settings_view:add_flag(lvgl.FLAG.SCROLLABLE)
 
--- Main view ---------------------------------------------------------------------------------
+-- Pages ------------------------------------------------------------------------------------
 
-local location_label = lvgl.Label(main_view, { text = "--", text_font = "large" })
+local tabs = lvgl.Tabs(main_view, {
+    w = lvgl.PCT(100),
+    mode = lvgl.TABS_MODE.FIXED,
+})
+tabs:add_tab("Now")
+tabs:add_tab("Forecast")
 
-local current_card = lvgl.Card(main_view, {
+local now_tile = lvgl.Object(main_view, {
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+    w = lvgl.PCT(100),
+    flex_grow = 1,
+    pad_all = 0,
+    pad_row = gap,
+    flex_flow = lvgl.FLEX_FLOW.COLUMN,
+    scroll_dir = lvgl.DIR.VER,
+    scrollbar_mode = lvgl.SCROLLBAR.OFF,
+})
+now_tile:add_flag(lvgl.FLAG.SCROLLABLE)
+local forecast_tile = lvgl.Object(main_view, {
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+    w = lvgl.PCT(100),
+    flex_grow = 1,
+    pad_all = 0,
+    pad_row = gap,
+    flex_flow = lvgl.FLEX_FLOW.COLUMN,
+    scroll_dir = lvgl.DIR.VER,
+    scrollbar_mode = lvgl.SCROLLBAR.OFF,
+})
+forecast_tile:add_flag(lvgl.FLAG.SCROLLABLE)
+forecast_tile:add_flag(lvgl.FLAG.HIDDEN)
+
+tabs:on(lvgl.EVENT.VALUE_CHANGED, function()
+    local selected = tabs:selected()
+    if selected == 1 then
+        now_tile:remove_flag(lvgl.FLAG.HIDDEN)
+        forecast_tile:add_flag(lvgl.FLAG.HIDDEN)
+    else
+        now_tile:add_flag(lvgl.FLAG.HIDDEN)
+        forecast_tile:remove_flag(lvgl.FLAG.HIDDEN)
+    end
+end)
+
+-- Now page ---------------------------------------------------------------------------------
+
+local hero = lvgl.Card(now_tile, {
     w = lvgl.PCT(100),
     h = lvgl.SIZE_CONTENT,
-    pad_all = lvgl.theme_lerp(8, 16),
+    pad_all = wide and 14 or 6,
     flex_flow = lvgl.FLEX_FLOW.COLUMN,
+    pad_row = wide and 10 or 4,
+    scrollbar_mode = lvgl.SCROLLBAR.OFF,
 })
 
-local current_row = lvgl.Object(current_card, {
+local hero_top = lvgl.Object(hero, {
     w = lvgl.PCT(100),
     h = lvgl.SIZE_CONTENT,
+    pad_all = 0,
     flex_flow = lvgl.FLEX_FLOW.ROW,
     flex_align = { main = lvgl.FLEX_ALIGN.SPACE_BETWEEN, cross = lvgl.FLEX_ALIGN.CENTER },
+    pad_column = gap,
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+    scrollbar_mode = lvgl.SCROLLBAR.OFF,
 })
 
-local temperature_label = lvgl.Label(current_row, {
-    text = "--°",
-    text_font = "large",
-    text_color = lvgl.theme_color_primary(),
-})
+local city_label = lvgl.Label(hero_top, { text = "--", text_font = "large" })
 
-local current_details = lvgl.Object(current_row, {
+local update_row = lvgl.Object(hero_top, {
     h = lvgl.SIZE_CONTENT,
     flex_grow = 1,
-    flex_flow = lvgl.FLEX_FLOW.COLUMN,
-    flex_align = { main = lvgl.FLEX_ALIGN.CENTER, cross = lvgl.FLEX_ALIGN.END },
+    flex_flow = lvgl.FLEX_FLOW.ROW,
+    flex_align = { main = lvgl.FLEX_ALIGN.END, cross = lvgl.FLEX_ALIGN.CENTER },
+    pad_column = 6,
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+    pad_all = 0,
+    scrollbar_mode = lvgl.SCROLLBAR.OFF,
 })
 
-local condition_label = lvgl.Label(current_details, {
-    text = "Waiting for data",
-    w = lvgl.PCT(100),
-    text_align = lvgl.TEXT_ALIGN.RIGHT,
+local spinner = lvgl.Spinner(update_row, {
+    w = wide and 24 or 16,
+    h = wide and 24 or 16,
 })
+spinner:add_flag(lvgl.FLAG.HIDDEN)
 
-local detail_label = lvgl.Label(current_details, {
+local updated_label = lvgl.Label(update_row, {
     text = "",
     text_font = "small",
-    w = lvgl.PCT(100),
-    long_mode = lvgl.LONG.WRAP,
+    text_color = lvgl.theme_color_secondary(),
+    max_width = wide and 360 or 150,
+    long_mode = lvgl.LONG.DOTS,
     text_align = lvgl.TEXT_ALIGN.RIGHT,
 })
 
-local display_width, display_height = tactility.display.size()
-local forecast_days = (display_height and display_height < 400) and 4 or 5
-
-local forecast_card = lvgl.Card(main_view, {
+local hero_row = lvgl.Object(hero, {
     w = lvgl.PCT(100),
     h = lvgl.SIZE_CONTENT,
-    pad_all = lvgl.theme_lerp(8, 16),
-    flex_flow = lvgl.FLEX_FLOW.COLUMN,
-    pad_row = lvgl.theme_lerp(2, 6),
+    pad_all = 0,
+    flex_flow = lvgl.FLEX_FLOW.ROW,
+    flex_align = { main = lvgl.FLEX_ALIGN.CENTER, cross = lvgl.FLEX_ALIGN.CENTER },
+    pad_column = wide and 32 or 10,
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+    scrollbar_mode = lvgl.SCROLLBAR.OFF,
 })
 
-lvgl.Label(forecast_card, { text = "Next " .. forecast_days .. " days", text_font = "small" })
+local current_icon = lvgl.Image(hero_row, {
+    w = hero_icon_size,
+    h = hero_icon_size,
+})
 
-local forecast_rows = {}
-for index = 1, forecast_days do
-    local row = lvgl.Object(forecast_card, {
-        w = lvgl.PCT(100),
-        h = lvgl.SIZE_CONTENT,
-        flex_flow = lvgl.FLEX_FLOW.ROW,
-        flex_align = { main = lvgl.FLEX_ALIGN.SPACE_BETWEEN, cross = lvgl.FLEX_ALIGN.CENTER },
-    })
-    forecast_rows[index] = {
-        day = lvgl.Label(row, { text = "", text_font = "small", w = lvgl.PCT(22) }),
-        condition = lvgl.Label(row, {
-            text = "",
-            text_font = "small",
-            w = lvgl.PCT(50),
-            long_mode = lvgl.LONG.DOTS,
-        }),
-        temperatures = lvgl.Label(row, {
-            text = "",
-            text_font = "small",
-            w = lvgl.PCT(28),
-            text_align = lvgl.TEXT_ALIGN.RIGHT,
-        }),
-    }
+local temperature_row = lvgl.Object(hero_row, {
+    h = lvgl.SIZE_CONTENT,
+    flex_grow = 1,
+    pad_all = 0,
+    pad_column = 1,
+    flex_flow = lvgl.FLEX_FLOW.ROW,
+    flex_align = { main = lvgl.FLEX_ALIGN.END, cross = lvgl.FLEX_ALIGN.CENTER },
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+    scrollbar_mode = lvgl.SCROLLBAR.OFF,
+})
+
+local sign_slot = lvgl.Image(temperature_row, { src = digit_source("minus") })
+local tens_slot = lvgl.Image(temperature_row, { src = digit_source("0") })
+local ones_slot = lvgl.Image(temperature_row, { src = digit_source("0") })
+local degree_slot = lvgl.Image(temperature_row, { src = digit_source("degree") })
+sign_slot:add_flag(lvgl.FLAG.HIDDEN)
+tens_slot:add_flag(lvgl.FLAG.HIDDEN)
+
+-- Shows a temperature like "-7°" by sourcing one digit image per character.
+local function show_temperature(text)
+    local negative = text:sub(1, 1) == "-"
+    local digits = (negative and text:sub(2) or text):match("^(%d+)") or "0"
+
+    if negative then
+        sign_slot:set{ src = digit_source("minus") }
+        sign_slot:remove_flag(lvgl.FLAG.HIDDEN)
+    else
+        sign_slot:add_flag(lvgl.FLAG.HIDDEN)
+    end
+
+    if #digits > 1 then
+        tens_slot:set{ src = digit_source(digits:sub(1, 1)) }
+        tens_slot:remove_flag(lvgl.FLAG.HIDDEN)
+    else
+        tens_slot:add_flag(lvgl.FLAG.HIDDEN)
+    end
+
+    ones_slot:set{ src = digit_source(digits:sub(-1)) }
+    degree_slot:set{ src = digit_source("degree") }
 end
 
-local status_label = lvgl.Label(main_view, {
+local condition_row = lvgl.Object(hero, {
+    w = lvgl.PCT(100),
+    h = lvgl.SIZE_CONTENT,
+    pad_all = 0,
+    flex_flow = lvgl.FLEX_FLOW.ROW,
+    flex_align = { main = lvgl.FLEX_ALIGN.SPACE_BETWEEN, cross = lvgl.FLEX_ALIGN.CENTER },
+    pad_column = gap,
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+    scrollbar_mode = lvgl.SCROLLBAR.OFF,
+})
+
+local condition_label = lvgl.Label(condition_row, {
+    text = "Waiting for data",
+    text_font = "default",
+    long_mode = lvgl.LONG.WRAP,
+    flex_grow = 1,
+})
+
+local feels_label = lvgl.Label(condition_row, {
     text = "",
+    text_font = "small",
+    text_color = lvgl.theme_color_secondary(),
+    long_mode = lvgl.LONG.DOTS,
+})
+
+local details_row = lvgl.Object(hero, {
+    w = lvgl.PCT(100),
+    h = lvgl.SIZE_CONTENT,
+    pad_all = 0,
+    flex_flow = lvgl.FLEX_FLOW.ROW,
+    flex_align = { main = lvgl.FLEX_ALIGN.SPACE_BETWEEN, cross = lvgl.FLEX_ALIGN.CENTER },
+    pad_column = gap,
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+    scrollbar_mode = lvgl.SCROLLBAR.OFF,
+})
+
+local high_label = lvgl.Label(details_row, { text = "", text_font = "small" })
+local low_label = lvgl.Label(details_row, { text = "", text_font = "small" })
+
+local metrics_card = lvgl.Card(now_tile, {
+    w = lvgl.PCT(100),
+    h = lvgl.SIZE_CONTENT,
+    pad_all = wide and 10 or 8,
+    pad_row = wide and 6 or 4,
+    flex_flow = lvgl.FLEX_FLOW.COLUMN,
+    scrollbar_mode = lvgl.SCROLLBAR.OFF,
+})
+
+local function make_metric_row(parent, icon, caption)
+    local row = lvgl.Object(parent, {
+        w = lvgl.PCT(100),
+        h = lvgl.SIZE_CONTENT,
+        pad_all = 0,
+        flex_flow = lvgl.FLEX_FLOW.ROW,
+        flex_align = { main = lvgl.FLEX_ALIGN.START, cross = lvgl.FLEX_ALIGN.CENTER },
+        pad_column = wide and 10 or 6,
+        bg_opa = lvgl.OPA.TRANSP,
+        border_width = 0,
+        min_height = 0,
+        scrollbar_mode = lvgl.SCROLLBAR.OFF,
+    })
+    lvgl.Image(row, { w = metric_icon_size, h = metric_icon_size, src = icon })
+    lvgl.Label(row, { text = caption, text_font = "small", flex_grow = 1 })
+    local value = lvgl.Label(row, {
+        text = "--",
+        text_font = wide and "default" or "small",
+        text_color = lvgl.theme_color_primary(),
+    })
+    return { value = value }
+end
+
+local humidity_metric = make_metric_row(metrics_card, icon_source("humidity", metric_icon_size), "Humidity")
+local wind_metric = make_metric_row(metrics_card, icon_source("wind", metric_icon_size), "Wind")
+local precipitation_metric = make_metric_row(
+    metrics_card,
+    icon_source("precipitation", metric_icon_size),
+    "Precipitation"
+)
+
+-- Forecast page ----------------------------------------------------------------------------
+
+local forecast_title = lvgl.Label(forecast_tile, {
+    text = forecast_days .. "-day forecast",
     text_font = "small",
     text_color = lvgl.theme_color_secondary(),
 })
 
+local chart_card = lvgl.Card(forecast_tile, {
+    w = lvgl.PCT(100),
+    h = chart_height,
+    pad_all = wide and 14 or 6,
+    flex_flow = lvgl.FLEX_FLOW.COLUMN,
+    pad_row = 2,
+})
+chart_card:add_flag(lvgl.FLAG.HIDDEN)
+
+local chart_header = lvgl.Object(chart_card, {
+    w = lvgl.PCT(100),
+    h = lvgl.SIZE_CONTENT,
+    pad_all = 0,
+    flex_flow = lvgl.FLEX_FLOW.ROW,
+    flex_align = { main = lvgl.FLEX_ALIGN.SPACE_BETWEEN, cross = lvgl.FLEX_ALIGN.CENTER },
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+})
+
+local chart_title = lvgl.Label(chart_header, {
+    text = "Temperature, next " .. chart_points .. " hours",
+    text_font = "small",
+    text_color = lvgl.theme_color_secondary(),
+})
+
+local chart_range = lvgl.Label(chart_header, {
+    text = "",
+    text_font = "small",
+    text_color = lvgl.theme_color_primary(),
+})
+
+local chart = lvgl.Chart(chart_card, {
+    w = lvgl.PCT(100),
+    flex_grow = 1,
+    chart_type = lvgl.CHART_TYPE.LINE,
+    point_count = chart_points,
+    div_lines = { h = 2, v = 3 },
+    axis_range = { min = 0, max = 1 },
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    scrollbar_mode = lvgl.SCROLLBAR.OFF,
+})
+local chart_series = chart:add_series(lvgl.theme_color_primary())
+
+local day_rows = {}
+for index = 1, forecast_days do
+    local row = lvgl.Card(forecast_tile, {
+        w = lvgl.PCT(100),
+        h = lvgl.SIZE_CONTENT,
+        min_height = 0,
+        pad_all = wide and 10 or 5,
+        flex_flow = lvgl.FLEX_FLOW.ROW,
+        flex_align = { main = lvgl.FLEX_ALIGN.START, cross = lvgl.FLEX_ALIGN.CENTER },
+        pad_column = gap,
+        scrollbar_mode = lvgl.SCROLLBAR.OFF,
+    })
+    local day = lvgl.Label(row, { text = "", text_font = "small", w = wide and 100 or 44 })
+    local icon = lvgl.Image(row, { w = forecast_icon_size, h = forecast_icon_size })
+    local condition = lvgl.Label(row, {
+        text = "",
+        text_font = "small",
+        flex_grow = 1,
+        long_mode = lvgl.LONG.DOTS,
+    })
+    local temperatures = lvgl.Object(row, {
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+    pad_all = 0,
+        h = lvgl.SIZE_CONTENT,
+        flex_flow = lvgl.FLEX_FLOW.COLUMN,
+        flex_align = { main = lvgl.FLEX_ALIGN.CENTER, cross = lvgl.FLEX_ALIGN.END },
+        pad_row = 0,
+    })
+    local high = lvgl.Label(temperatures, { text = "", text_font = "small", text_color = lvgl.theme_color_primary() })
+    local low = lvgl.Label(temperatures, { text = "", text_font = "small", text_color = lvgl.theme_color_secondary() })
+    day_rows[index] = { day = day, icon = icon, condition = condition, high = high, low = low }
+end
+
 -- Settings view ----------------------------------------------------------------------------
 
-local settings_title = lvgl.Label(settings_view, { text = "Location and display", text_font = "small" })
+local settings_card = lvgl.Card(settings_view, {
+    w = lvgl.PCT(100),
+    h = lvgl.SIZE_CONTENT,
+    pad_all = pad,
+    flex_flow = lvgl.FLEX_FLOW.COLUMN,
+    pad_row = gap,
+})
+
+local location_title = lvgl.Label(settings_card, {
+    text = "Location",
+    text_font = "small",
+    text_color = lvgl.theme_color_primary(),
+})
 
 local city_names = {}
 for index, city in ipairs(cities) do
@@ -165,14 +516,18 @@ for index, city in ipairs(cities) do
 end
 city_names[CUSTOM_OPTION] = CUSTOM_NAME
 
-local city_dropdown = lvgl.Dropdown(settings_view, { options = city_names, w = lvgl.PCT(100) })
+local city_dropdown = lvgl.Dropdown(settings_card, { options = city_names, w = lvgl.PCT(100) })
 
-local search_row = lvgl.Object(settings_view, {
+local search_row = lvgl.Object(settings_card, {
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+    pad_all = 0,
     w = lvgl.PCT(100),
     h = lvgl.SIZE_CONTENT,
     flex_flow = lvgl.FLEX_FLOW.ROW,
     flex_align = { main = lvgl.FLEX_ALIGN.SPACE_BETWEEN, cross = lvgl.FLEX_ALIGN.CENTER },
-    pad_column = lvgl.theme_lerp(4, 8),
+    pad_column = gap,
 })
 
 local search_field = lvgl.TextArea(search_row, {
@@ -183,32 +538,39 @@ local search_field = lvgl.TextArea(search_row, {
 
 local search_button = lvgl.Button(search_row, {
     w = lvgl.SIZE_CONTENT,
-    h = lvgl.theme_lerp(34, 44),
-    pad_all = lvgl.theme_lerp(8, 12),
+    h = lvgl.SIZE_CONTENT,
+    flex_flow = lvgl.FLEX_FLOW.ROW,
+    flex_align = { main = lvgl.FLEX_ALIGN.CENTER, cross = lvgl.FLEX_ALIGN.CENTER },
 })
-lvgl.Label(search_button, { text = "Search", text_font = "small" })
+lvgl.Label(search_button, { text = "Search" })
 
-local custom_fields = lvgl.Object(settings_view, {
+local custom_fields = lvgl.Object(settings_card, {
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
     w = lvgl.PCT(100),
     h = lvgl.SIZE_CONTENT,
     flex_flow = lvgl.FLEX_FLOW.COLUMN,
-    pad_row = lvgl.theme_lerp(2, 6),
+    pad_row = wide and 8 or 4,
 })
 
 local name_row = lvgl.Object(custom_fields, {
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+    pad_all = 0,
     w = lvgl.PCT(100),
     h = lvgl.SIZE_CONTENT,
     flex_flow = lvgl.FLEX_FLOW.ROW,
     flex_align = { main = lvgl.FLEX_ALIGN.SPACE_BETWEEN, cross = lvgl.FLEX_ALIGN.CENTER },
 })
 lvgl.Label(name_row, { text = "Name", text_font = "small" })
-local name_field = lvgl.TextArea(name_row, {
-    w = lvgl.PCT(55),
-    one_line = true,
-    text = custom_name,
-})
+local name_field = lvgl.TextArea(name_row, { w = lvgl.PCT(55), one_line = true, text = custom_name })
 
 local latitude_row = lvgl.Object(custom_fields, {
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
     w = lvgl.PCT(100),
     h = lvgl.SIZE_CONTENT,
     flex_flow = lvgl.FLEX_FLOW.ROW,
@@ -222,6 +584,10 @@ local latitude_field = lvgl.TextArea(latitude_row, {
 })
 
 local longitude_row = lvgl.Object(custom_fields, {
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+    pad_all = 0,
     w = lvgl.PCT(100),
     h = lvgl.SIZE_CONTENT,
     flex_flow = lvgl.FLEX_FLOW.ROW,
@@ -232,6 +598,72 @@ local longitude_field = lvgl.TextArea(longitude_row, {
     w = lvgl.PCT(55),
     one_line = true,
     text = string.format("%.4f", custom_longitude),
+})
+
+local display_title = lvgl.Label(settings_card, {
+    text = "Units and refresh",
+    text_font = "small",
+    text_color = lvgl.theme_color_primary(),
+})
+
+local units_row = lvgl.Object(settings_card, {
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+    pad_all = 0,
+    w = lvgl.PCT(100),
+    h = lvgl.SIZE_CONTENT,
+    flex_flow = lvgl.FLEX_FLOW.ROW,
+    flex_align = { main = lvgl.FLEX_ALIGN.SPACE_BETWEEN, cross = lvgl.FLEX_ALIGN.CENTER },
+})
+lvgl.Label(units_row, { text = "Units", text_font = "small" })
+local units_dropdown = lvgl.Dropdown(units_row, {
+    options = { "Celsius", "Fahrenheit" },
+    w = lvgl.PCT(55),
+})
+units_dropdown:set{ value = unit == "F" and 2 or 1 }
+
+local interval_row = lvgl.Object(settings_card, {
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+    pad_all = 0,
+    w = lvgl.PCT(100),
+    h = lvgl.SIZE_CONTENT,
+    flex_flow = lvgl.FLEX_FLOW.ROW,
+    flex_align = { main = lvgl.FLEX_ALIGN.SPACE_BETWEEN, cross = lvgl.FLEX_ALIGN.CENTER },
+})
+lvgl.Label(interval_row, { text = "Refresh every", text_font = "small" })
+local interval_dropdown = lvgl.Dropdown(interval_row, {
+    options = { "5 minutes", "10 minutes", "30 minutes" },
+    w = lvgl.PCT(55),
+})
+interval_dropdown:set{ value = refresh_minutes == 5 and 1 or (refresh_minutes == 30 and 3 or 2) }
+
+local apply_row = lvgl.Object(settings_card, {
+    bg_opa = lvgl.OPA.TRANSP,
+    border_width = 0,
+    min_height = 0,
+    pad_all = 0,
+    w = lvgl.PCT(100),
+    h = lvgl.SIZE_CONTENT,
+    flex_flow = lvgl.FLEX_FLOW.ROW,
+    flex_align = { main = lvgl.FLEX_ALIGN.END, cross = lvgl.FLEX_ALIGN.CENTER },
+})
+local apply_button = lvgl.Button(apply_row, {
+    w = lvgl.PCT(100),
+    h = lvgl.SIZE_CONTENT,
+    flex_flow = lvgl.FLEX_FLOW.ROW,
+    flex_align = { main = lvgl.FLEX_ALIGN.CENTER, cross = lvgl.FLEX_ALIGN.CENTER },
+})
+lvgl.Label(apply_button, { text = "Apply" })
+
+local settings_status = lvgl.Label(settings_card, {
+    text = "",
+    text_font = "small",
+    text_color = 0xff6b6b,
+    w = lvgl.PCT(100),
+    long_mode = lvgl.LONG.WRAP,
 })
 
 -- The on-screen keyboard is only for touch-only devices; a hardware keyboard makes
@@ -246,63 +678,22 @@ if not hardware_keyboard then
     keyboard:add_flag(lvgl.FLAG.HIDDEN)
 end
 
-local units_row = lvgl.Object(settings_view, {
-    w = lvgl.PCT(100),
-    h = lvgl.SIZE_CONTENT,
-    flex_flow = lvgl.FLEX_FLOW.ROW,
-    flex_align = { main = lvgl.FLEX_ALIGN.SPACE_BETWEEN, cross = lvgl.FLEX_ALIGN.CENTER },
-})
-lvgl.Label(units_row, { text = "Units", text_font = "small" })
-local units_dropdown = lvgl.Dropdown(units_row, {
-    options = { "Celsius", "Fahrenheit" },
-    w = lvgl.PCT(55),
-})
-units_dropdown:set{ value = unit == "F" and 2 or 1 }
-
-local interval_row = lvgl.Object(settings_view, {
-    w = lvgl.PCT(100),
-    h = lvgl.SIZE_CONTENT,
-    flex_flow = lvgl.FLEX_FLOW.ROW,
-    flex_align = { main = lvgl.FLEX_ALIGN.SPACE_BETWEEN, cross = lvgl.FLEX_ALIGN.CENTER },
-})
-lvgl.Label(interval_row, { text = "Refresh every", text_font = "small" })
-local interval_dropdown = lvgl.Dropdown(interval_row, {
-    options = { "5 minutes", "10 minutes", "30 minutes" },
-    w = lvgl.PCT(55),
-})
-interval_dropdown:set{ value = refresh_minutes == 5 and 1 or (refresh_minutes == 30 and 3 or 2) }
-
-local apply_row = lvgl.Object(settings_view, {
-    w = lvgl.PCT(100),
-    h = lvgl.SIZE_CONTENT,
-    flex_flow = lvgl.FLEX_FLOW.ROW,
-    flex_align = { main = lvgl.FLEX_ALIGN.END, cross = lvgl.FLEX_ALIGN.CENTER },
-})
-local apply_button = lvgl.Button(apply_row, {
-    w = lvgl.SIZE_CONTENT,
-    h = lvgl.theme_lerp(34, 44),
-    pad_all = lvgl.theme_lerp(8, 14),
-})
-lvgl.Label(apply_button, { text = "Apply", text_font = "small" })
-
-local settings_status = lvgl.Label(settings_view, {
-    text = "",
-    text_font = "small",
-    text_color = 0xff6b6b,
-})
-
 -- Formatting -------------------------------------------------------------------------------
 
 local function round(value)
     return math.floor((tonumber(value) or 0) + 0.5)
 end
 
-local function format_temperature(celsius)
+local function convert_temperature(celsius)
     local value = tonumber(celsius) or 0
     if unit == "F" then
         value = value * 9 / 5 + 32
     end
-    return string.format("%d°", round(value))
+    return value
+end
+
+local function format_temperature(celsius)
+    return string.format("%d°", round(convert_temperature(celsius)))
 end
 
 local function format_wind(speed)
@@ -329,44 +720,112 @@ local function weekday(iso_date)
     return (broken and WEEKDAYS[broken.wday]) or iso_date
 end
 
-local function update_status(text, color)
-    status_label:set{ text = text, text_color = color or lvgl.theme_color_secondary() }
+local function set_updated(text, color)
+    updated_label:set{ text = text, text_color = color or lvgl.theme_color_secondary() }
+end
+
+local function set_chart(data)
+    local hourly = data.hourly
+    if not hourly or not hourly.time or not hourly.temperature_2m then
+        chart_card:add_flag(lvgl.FLAG.HIDDEN)
+        return
+    end
+
+    local current_hour = (data.current and data.current.time or ""):sub(1, 13)
+    local start = 1
+    for index, timestamp in ipairs(hourly.time) do
+        if timestamp:sub(1, 13) >= current_hour then
+            start = index
+            break
+        end
+    end
+
+    local values = {}
+    local minimum = nil
+    local maximum = nil
+    local last = math.min(#hourly.temperature_2m, start + chart_points - 1)
+    for index = start, last do
+        local value = tonumber(hourly.temperature_2m[index])
+        if value ~= nil then
+            value = convert_temperature(value)
+            values[#values + 1] = round(value)
+            minimum = minimum == nil and value or math.min(minimum, value)
+            maximum = maximum == nil and value or math.max(maximum, value)
+        end
+    end
+
+    if #values < 2 or minimum == nil then
+        chart_card:add_flag(lvgl.FLAG.HIDDEN)
+        return
+    end
+
+    local low = math.floor(minimum - 2)
+    local high = math.ceil(maximum + 2)
+    if high - low < 4 then
+        high = low + 4
+    end
+    chart:set{ axis_range = { min = low, max = high } }
+    chart:set_values(chart_series, values)
+    chart:refresh()
+    chart_range:set{
+        text = string.format(
+            "Low %s   High %s",
+            format_temperature(minimum),
+            format_temperature(maximum)
+        ),
+    }
+    chart_card:remove_flag(lvgl.FLAG.HIDDEN)
 end
 
 local function render(data)
     local current = data.current
+    local today_max = data.daily and data.daily.temperature_2m_max and data.daily.temperature_2m_max[1]
+    local today_min = data.daily and data.daily.temperature_2m_min and data.daily.temperature_2m_min[1]
     local wind, wind_unit = format_wind(current.wind_speed_10m)
-    temperature_label:set{ text = format_temperature(current.temperature_2m) }
+
+    city_label:set{ text = active_location().name }
+    show_temperature(format_temperature(current.temperature_2m))
     condition_label:set{ text = weather.condition(current.weather_code) }
-    detail_label:set{
-        text = string.format(
-            "Feels %s\nHumidity %d%%   Wind %d %s",
-            format_temperature(current.apparent_temperature),
-            round(current.relative_humidity_2m),
-            wind,
-            wind_unit
-        ),
-    }
+    current_icon:set{ src = icon_source(weather_icon(current.weather_code, current.is_day), hero_icon_size) }
+
+    feels_label:set{ text = "Feels like " .. format_temperature(current.apparent_temperature) }
+    if today_max ~= nil then
+        high_label:set{ text = "High " .. format_temperature(today_max) }
+    else
+        high_label:set{ text = "" }
+    end
+    if today_min ~= nil then
+        low_label:set{ text = "Low " .. format_temperature(today_min) }
+    else
+        low_label:set{ text = "" }
+    end
+
+    humidity_metric.value:set{ text = string.format("%d%%", round(current.relative_humidity_2m)) }
+    wind_metric.value:set{ text = string.format("%d %s", wind, wind_unit) }
+    precipitation_metric.value:set{ text = string.format("%.1f mm", tonumber(current.precipitation) or 0) }
 
     for index = 1, forecast_days do
-        local row = forecast_rows[index]
+        local row = day_rows[index]
         local time = data.daily.time and data.daily.time[index]
         local code = data.daily.weather_code and data.daily.weather_code[index]
         local maximum = data.daily.temperature_2m_max and data.daily.temperature_2m_max[index]
         local minimum = data.daily.temperature_2m_min and data.daily.temperature_2m_min[index]
 
         if time and code and maximum and minimum then
-            row.day:set{ text = weekday(time) }
+            row.day:set{ text = index == 1 and "Today" or weekday(time) }
+            row.icon:set{ src = icon_source(weather_icon(code, 1), forecast_icon_size) }
             row.condition:set{ text = weather.condition(code) }
-            row.temperatures:set{
-                text = string.format("%s / %s", format_temperature(maximum), format_temperature(minimum)),
-            }
+            row.high:set{ text = format_temperature(maximum) }
+            row.low:set{ text = format_temperature(minimum) }
         else
             row.day:set{ text = "—" }
             row.condition:set{ text = "" }
-            row.temperatures:set{ text = "" }
+            row.high:set{ text = "" }
+            row.low:set{ text = "" }
         end
     end
+
+    set_chart(data)
 end
 
 -- Settings view behaviour ------------------------------------------------------------------
@@ -412,6 +871,20 @@ local function toggle_settings()
     end
 end
 
+local function show_page(index)
+    if settings_visible then
+        toggle_settings()
+    end
+    if index == 0 then
+        now_tile:remove_flag(lvgl.FLAG.HIDDEN)
+        forecast_tile:add_flag(lvgl.FLAG.HIDDEN)
+    else
+        now_tile:add_flag(lvgl.FLAG.HIDDEN)
+        forecast_tile:remove_flag(lvgl.FLAG.HIDDEN)
+    end
+    tabs:set_selected(index + 1)
+end
+
 -- Refresh flow -----------------------------------------------------------------------------
 
 local generation = 0
@@ -420,17 +893,18 @@ local function refresh()
     generation = generation + 1
     local current_generation = generation
     local location = active_location()
-    location_label:set{ text = location.name }
-
-    update_status("Updating " .. location.name .. "...")
+    city_label:set{ text = location.name }
+    set_updated("Updating...")
+    spinner:remove_flag(lvgl.FLAG.HIDDEN)
 
     weather.fetch(location, function(data, error)
         if current_generation ~= generation then
-            return -- a newer city or refresh won
+            return
         end
 
+        spinner:add_flag(lvgl.FLAG.HIDDEN)
         if data == nil then
-            update_status("Offline: " .. tostring(error), 0xff6b6b)
+            set_updated("Offline: " .. tostring(error), 0xff6b6b)
             return
         end
 
@@ -439,9 +913,9 @@ local function refresh()
         local now = tactility.time.now()
         if now then
             local broken = tactility.time.date(now)
-            update_status(string.format("Updated %02d:%02d", broken.hour, broken.min))
+            set_updated(string.format("Updated %02d:%02d", broken.hour, broken.min))
         else
-            update_status("Updated just now")
+            set_updated("Updated just now")
         end
     end)
 end
@@ -567,6 +1041,7 @@ apply_button:on(lvgl.EVENT.CLICKED, function()
     end
 
     toggle_settings()
+    show_page(0)
     refresh()
 end)
 
@@ -585,3 +1060,4 @@ __weather_refresh_timer = lvgl.Timer{
 }
 
 refresh()
+

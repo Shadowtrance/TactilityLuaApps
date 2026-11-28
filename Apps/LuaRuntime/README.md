@@ -133,10 +133,11 @@ The editor still edits one file at a time; this is the runtime side, and a
 multi-file browser is the next editor step.
 
 `Scripts/weather` is a complete packaged example: `main.lua` plus two modules,
-Open-Meteo over `tactility.http`, `tactility.json` for the payload, toolbar
-refresh/settings actions, a place search (Open-Meteo geocoder) with custom
-coordinates and a name, Celsius/Fahrenheit, a refresh interval, saved settings
-and a 4/5-day forecast that adapts to the screen height.
+Open-Meteo over `tactility.http`, `tactility.json` for the payload, Material
+tabs for the current conditions and the forecast, bundled weather icons and
+temperature digits, a 24-hour temperature chart, a 5-day forecast, a place
+search (Open-Meteo geocoder) with custom coordinates and a name,
+Celsius/Fahrenheit, a refresh interval and saved settings.
 
 `tactility.settings` keeps each app's values in that app's user-data directory:
 `<data>/appdata/<app id>/<namespace>.properties`. A packaged app therefore owns
@@ -277,7 +278,10 @@ LVGL lock held, so it may update widgets. `response` is
 `{ status, body, length, content_type }`; a received 4xx/5xx is still a response,
 while transport failures pass `nil, reason`. Up to four requests may be active,
 request bodies are capped at 64 KB and responses at `max_bytes` (1 MB hard limit).
-This is an ESP32 feature; the simulator returns an error.
+A GET without a body uses the firmware's cross-platform client with certificate
+verification and up to five redirects, so it also works in the simulator. Other
+methods (and requests with a body) stay on the ESP-IDF client and are ESP-only.
+`options.certificate` supplies a PEM certificate for either path.
 
 `tactility.json.decode(text)` and `tactility.json.encode(value)` map JSON to Lua
 tables and back. Arrays are 1-based, objects are string-keyed, and JSON `null` is

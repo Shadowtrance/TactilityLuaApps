@@ -3,12 +3,19 @@
 
 #include <lua/runtime.h>
 
+#include <http/client.h>
+
 #include <tactility/log.h>
 
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string>
+
+#ifndef ESP_PLATFORM
+#include <thread>
+#endif
 
 extern "C" {
 #include <lauxlib.h>
@@ -29,8 +36,9 @@ extern "C" {
  * handed to the callback by the runner's app loop, with the LVGL lock held, so a
  * callback can update widgets.
  *
- * This is an ESP32 feature. The simulator has no TLS stack or HTTP client, so the
- * binding exists there but request() returns an error.
+ * GET requests without a body use the firmware's cross-platform `http_client`,
+ * so they also work in the simulator. Other methods stay on the ESP-IDF client
+ * and are ESP-only.
  */
 
 namespace {
@@ -49,6 +57,7 @@ constexpr size_t CONTENT_TYPE_LENGTH = 96;
 
 #ifdef ESP_PLATFORM
 constexpr uint32_t WORKER_STACK_BYTES = 12288;
+constexpr uint32_t GET_WORKER_STACK_BYTES = 16384;
 constexpr UBaseType_t WORKER_PRIORITY = 5;
 #endif
 
@@ -69,6 +78,7 @@ struct HttpRequest {
     char* method;
     char* request_body;
     size_t request_body_length;
+    char* certificate;
     HttpHeader headers[MAX_HEADERS];
     int header_count;
     int timeout_ms;
@@ -111,6 +121,7 @@ void free_request(HttpRequest* request) {
     std::free(request->url);
     std::free(request->method);
     std::free(request->request_body);
+    std::free(request->certificate);
     for (int i = 0; i < request->header_count; i++) {
         std::free(request->headers[i].name);
         std::free(request->headers[i].value);
@@ -180,6 +191,12 @@ void abandon_request(HttpRequest* request) {
     request->abandoned = true;
 }
 
+void set_error(HttpRequest* request, const char* message) {
+    if (request->error[0] == '\0') {
+        std::snprintf(request->error, sizeof(request->error), "%s", message);
+    }
+}
+
 #ifdef ESP_PLATFORM
 esp_http_client_method_t method_from_string(const char* method) {
     if (std::strcmp(method, "POST") == 0) return HTTP_METHOD_POST;
@@ -188,12 +205,6 @@ esp_http_client_method_t method_from_string(const char* method) {
     if (std::strcmp(method, "DELETE") == 0) return HTTP_METHOD_DELETE;
     if (std::strcmp(method, "HEAD") == 0) return HTTP_METHOD_HEAD;
     return HTTP_METHOD_GET;
-}
-
-void set_error(HttpRequest* request, const char* message) {
-    if (request->error[0] == '\0') {
-        std::snprintf(request->error, sizeof(request->error), "%s", message);
-    }
 }
 
 void worker(void* argument) {
@@ -333,6 +344,205 @@ void worker(void* argument) {
 }
 #endif
 
+const char* client_failure_message(HttpClientFailure failure) {
+    switch (failure) {
+        case HTTP_CLIENT_FAILURE_URL: return "invalid URL";
+        case HTTP_CLIENT_FAILURE_CONNECT: return "could not connect";
+        case HTTP_CLIENT_FAILURE_CERTIFICATE: return "certificate verification failed";
+        case HTTP_CLIENT_FAILURE_PROTOCOL: return "invalid response";
+        case HTTP_CLIENT_FAILURE_CANCELLED: return "cancelled";
+        case HTTP_CLIENT_FAILURE_MEMORY: return "out of memory";
+        case HTTP_CLIENT_FAILURE_NOT_OPEN: return "no open response";
+        default: return "request failed";
+    }
+}
+
+std::string resolve_redirect(const std::string& base, const std::string& location) {
+    if (location.rfind("http://", 0) == 0 || location.rfind("https://", 0) == 0) {
+        return location;
+    }
+
+    const size_t scheme = base.find("://");
+    if (scheme == std::string::npos) {
+        return location;
+    }
+    if (location.rfind("//", 0) == 0) {
+        return base.substr(0, scheme) + ":" + location;
+    }
+
+    const size_t host_start = scheme + 3;
+    const size_t path_start = base.find('/', host_start);
+    const std::string origin = base.substr(0, path_start == std::string::npos ? base.size() : path_start);
+    if (!location.empty() && location[0] == '/') {
+        return origin + location;
+    }
+
+    const size_t slash = base.rfind('/');
+    if (slash == std::string::npos || slash < host_start) {
+        return origin + "/" + location;
+    }
+    return base.substr(0, slash + 1) + location;
+}
+
+/** GET with the firmware's cross-platform client, buffering the response. */
+void client_worker(void* argument) {
+    auto* request = static_cast<HttpRequest*>(argument);
+
+    HttpClient* client = http_client_alloc();
+    if (client == nullptr) {
+        set_error(request, "out of memory");
+        request->done.store(true, std::memory_order_release);
+#ifdef ESP_PLATFORM
+        vTaskDelete(nullptr);
+#endif
+        return;
+    }
+
+    http_client_set_timeout(client, static_cast<uint32_t>(request->timeout_ms));
+    if (request->certificate != nullptr) {
+        http_client_set_certificate(client, request->certificate);
+    }
+    for (int index = 0; index < request->header_count; index++) {
+        if (http_client_set_header(client, request->headers[index].name, request->headers[index].value) != ERROR_NONE) {
+            set_error(request, "invalid request header");
+            break;
+        }
+    }
+
+    std::string url = request->url;
+    bool opened = false;
+
+    if (request->error[0] == '\0') {
+        for (int redirect = 0; redirect <= 5; redirect++) {
+            if (request->cancel_requested.load(std::memory_order_relaxed)) {
+                request->cancelled = true;
+                break;
+            }
+
+            const error_t error = http_client_open(client, url.c_str());
+            if (error != ERROR_NONE) {
+                if (request->cancel_requested.load(std::memory_order_relaxed)) {
+                    request->cancelled = true;
+                } else {
+                    set_error(request, client_failure_message(http_client_get_failure(client)));
+                }
+                break;
+            }
+
+            const int status = http_client_get_status_code(client);
+            if (status >= 300 && status < 400) {
+                const char* location = http_client_get_header(client, "location");
+                if (location == nullptr || location[0] == '\0') {
+                    set_error(request, "redirect without a location");
+                    break;
+                }
+                url = resolve_redirect(url, location);
+                http_client_close(client);
+                continue;
+            }
+
+            request->status = status;
+            const int64_t content_length = http_client_get_content_length(client);
+            if (content_length > 0 && static_cast<size_t>(content_length) > request->max_response) {
+                set_error(request, "response is larger than max_bytes");
+                break;
+            }
+
+            const char* content_type = http_client_get_header(client, "content-type");
+            if (content_type != nullptr) {
+                std::snprintf(request->content_type, sizeof(request->content_type), "%s", content_type);
+            }
+
+            size_t capacity = content_length > 0
+                ? static_cast<size_t>(content_length)
+                : 4096;
+            if (capacity > request->max_response) {
+                capacity = request->max_response;
+            }
+            if (capacity < 256) {
+                capacity = 256;
+            }
+
+            char* body = static_cast<char*>(std::malloc(capacity + 1));
+            size_t length = 0;
+            bool ok = body != nullptr;
+            if (!ok) {
+                set_error(request, "out of memory");
+            }
+
+            while (ok) {
+                if (request->cancel_requested.load(std::memory_order_relaxed)) {
+                    request->cancelled = true;
+                    http_client_cancel(client);
+                    ok = false;
+                    break;
+                }
+
+                char chunk[1024];
+                const int read = http_client_read(client, chunk, sizeof(chunk));
+                if (read < 0) {
+                    if (request->cancel_requested.load(std::memory_order_relaxed)) {
+                        request->cancelled = true;
+                    } else {
+                        set_error(request, "could not read the response body");
+                    }
+                    ok = false;
+                    break;
+                }
+                if (read == 0) {
+                    break;
+                }
+
+                if (length + static_cast<size_t>(read) > request->max_response) {
+                    set_error(request, "response is larger than max_bytes");
+                    ok = false;
+                    break;
+                }
+
+                if (length + static_cast<size_t>(read) > capacity) {
+                    size_t next = capacity * 2;
+                    if (next > request->max_response) {
+                        next = request->max_response;
+                    }
+                    char* grown = static_cast<char*>(std::realloc(body, next + 1));
+                    if (grown == nullptr) {
+                        set_error(request, "out of memory");
+                        ok = false;
+                        break;
+                    }
+                    body = grown;
+                    capacity = next;
+                }
+
+                std::memcpy(body + length, chunk, static_cast<size_t>(read));
+                length += static_cast<size_t>(read);
+            }
+
+            if (ok && !request->cancelled) {
+                body[length] = '\0';
+                request->response_body = body;
+                request->response_length = length;
+            } else {
+                std::free(body);
+            }
+
+            opened = true;
+            break;
+        }
+    }
+
+    if (!opened && request->error[0] == '\0' && !request->cancelled) {
+        set_error(request, "request failed");
+    }
+
+    http_client_close(client);
+    http_client_free(client);
+    request->done.store(true, std::memory_order_release);
+#ifdef ESP_PLATFORM
+    vTaskDelete(nullptr);
+#endif
+}
+
 void push_response(lua_State* state, const HttpRequest* request) {
     lua_createtable(state, 0, 4);
     lua_pushinteger(state, request->status);
@@ -428,6 +638,17 @@ int http_request(lua_State* state) {
     }
     lua_pop(state, 1);
 
+    lua_getfield(state, 1, "certificate");
+    if (lua_isstring(state, -1)) {
+        request->certificate = copy_string(lua_tostring(state, -1));
+        if (request->certificate == nullptr) {
+            lua_pop(state, 1);
+            free_request(request);
+            return push_failure(state, "out of memory");
+        }
+    }
+    lua_pop(state, 1);
+
     lua_getfield(state, 1, "headers");
     if (lua_istable(state, -1)) {
         lua_pushnil(state);
@@ -470,13 +691,25 @@ int http_request(lua_State* state) {
     lua_pop(state, 1);
 
 #ifdef ESP_PLATFORM
-    if (xTaskCreate(worker, "lua_http", WORKER_STACK_BYTES, request, WORKER_PRIORITY, nullptr) != pdPASS) {
+    const bool use_client = std::strcmp(request->method, "GET") == 0 && request->request_body_length == 0;
+    const bool started = use_client
+        ? xTaskCreate(client_worker, "lua_http_get", GET_WORKER_STACK_BYTES, request, WORKER_PRIORITY, nullptr) == pdPASS
+        : xTaskCreate(worker, "lua_http", WORKER_STACK_BYTES, request, WORKER_PRIORITY, nullptr) == pdPASS;
+    if (!started) {
         release_request(request);
         return push_failure(state, "could not start the HTTP task");
     }
 #else
-    release_request(request);
-    return push_failure(state, "HTTP is not available in the simulator");
+    if (std::strcmp(request->method, "GET") != 0 || request->request_body_length != 0) {
+        release_request(request);
+        return push_failure(state, "only GET is available in the simulator");
+    }
+    try {
+        std::thread(client_worker, request).detach();
+    } catch (...) {
+        release_request(request);
+        return push_failure(state, "could not start the HTTP thread");
+    }
 #endif
 
     return 1;
