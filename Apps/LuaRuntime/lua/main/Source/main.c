@@ -41,15 +41,6 @@
 #include <time.h>
 #include <unistd.h>
 
-/** Windows' mkdir takes one argument; POSIX and ESP-IDF take a mode. */
-static void make_directory(const char* path) {
-#ifdef _WIN32
-    mkdir(path);
-#else
-    mkdir(path, 0777);
-#endif
-}
-
 /*
  * Lua companion: a themed script browser and editor.
  *
@@ -254,7 +245,7 @@ static void save_script_dir(const char* path) {
     char* separator = strrchr(directory, '/');
     if (separator != NULL) {
         *separator = '\0';
-        make_directory(directory);
+        mkdir(directory, 0777);
     }
 
     FILE* file = fopen(config_path, "w");
@@ -771,7 +762,7 @@ static void export_app_job(void* argument) {
         snprintf(message, sizeof(message), "Export failed: path too long");
         goto finish;
     }
-    make_directory(temp_dir);
+    mkdir(temp_dir, 0777);
 
     static char manifest[1024];
     snprintf(
@@ -946,7 +937,7 @@ static bool save_example_copy(struct Context* context) {
         return false;
     }
 
-    make_directory(context->script_dir);
+    mkdir(context->script_dir, 0777);
 
     const char* name = file_name(context->current_path);
     size_t stem_length = strlen(name);
@@ -1140,7 +1131,7 @@ static void create_new_script(struct Context* context, const char* requested_nam
         return;
     }
 
-    make_directory(context->script_dir);
+    mkdir(context->script_dir, 0777);
 
     struct ScriptEntry script = { 0 };
     const int path_length = snprintf(script.path, sizeof(script.path), "%s/%s.lua", context->script_dir, name);

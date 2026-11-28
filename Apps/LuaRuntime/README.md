@@ -304,6 +304,17 @@ detached when the script closes. `keyboard:set_textarea(field)` binds an on-scre
 keyboard to a text field, which the Weather settings view uses for custom
 coordinates.
 
+`lvgl.TileGrid` is the firmware's launcher-style paged grid: pass `items` with
+`id`, `name` and an optional `icon`/`highlighted`/`checked`, and optionally
+`on_clicked`, `on_long_pressed` and `on_page_changed`. `set_items()`, `set_style()`,
+`set_icon_color()`, `next_page()`, `previous_page()`, `page()`, `find_tile()` and
+`tiles()` cover the rest.
+
+`lvgl.PathBar(toolbar, { path = ..., on_pressed = ..., on_rebuilt = ... })` puts
+the firmware's path segments in the runner toolbar. `set_path()`,
+`focus_parent_segment()` and `parent_segment()` update and inspect it; the
+callback receives the pressed path and whether a key triggered it.
+
 `tactility.ui.alert`, `tactility.ui.input` and `tactility.ui.select` show the
 firmware's own modal dialogs, and `tactility.fs.pick_file`/`pick_files`/`pick_folder`
 show its native file picker. Both return a handle with `dismiss()`/`cancel()` and
@@ -598,6 +609,8 @@ runtime gains something a packaged app depends on.
   and repeated writes after the file already exists (the FAT rename case).
 - `dialogs.lua` — native alert/input/select option validation and dismissing an alert.
 - `download.lua` — HTTPS download to a file, cancellation and the result shape.
+- `tile_grid.lua` — launcher grid items, styles, paging and lookup.
+- `path_bar.lua` — toolbar path segments, path updates and parent lookup.
 - `raw.lua` — `tactility.raw.call` symbol lookup and missing-symbol error.
 
 Run the whole suite on connected devices (serial + development server):

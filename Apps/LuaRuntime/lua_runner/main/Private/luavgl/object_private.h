@@ -65,6 +65,29 @@ void luavgl_add_event_methods(lua_State* state);
 /** Adds value()/text()/is_checked()/set_checked() to the object method table on top. */
 void luavgl_add_widget_methods(lua_State* state);
 
+/** Tile grid constructor and methods (tile_grid.cpp). */
+int luavgl_widget_tile_grid(lua_State* state);
+int luavgl_tile_grid_set_items(lua_State* state);
+int luavgl_tile_grid_set_style(lua_State* state);
+int luavgl_tile_grid_set_icon_color(lua_State* state);
+int luavgl_tile_grid_next_page(lua_State* state);
+int luavgl_tile_grid_previous_page(lua_State* state);
+int luavgl_tile_grid_page(lua_State* state);
+int luavgl_tile_grid_find_tile(lua_State* state);
+int luavgl_tile_grid_tiles(lua_State* state);
+
+/** Cancels queued tile-grid callbacks and detaches every request. Called from luavgl_detach_all(). */
+void luavgl_delete_all_tile_grids(lua_State* state);
+
+/** Path bar constructor and methods (path_bar.cpp). */
+int luavgl_widget_path_bar(lua_State* state);
+int luavgl_path_bar_set_path(lua_State* state);
+int luavgl_path_bar_focus_parent(lua_State* state);
+int luavgl_path_bar_parent_segment(lua_State* state);
+
+/** Cancels queued path-bar callbacks and detaches every request. Called from luavgl_detach_all(). */
+void luavgl_delete_all_path_bars(lua_State* state);
+
 /** Adds the widget constructors to the `lvgl` table on top of the stack. */
 void luavgl_open_widgets(lua_State* state);
 

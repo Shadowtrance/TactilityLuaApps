@@ -68,7 +68,9 @@ test that proves it.
 | [x] | `Chart`, `Calendar` | Batch 2 display widgets |
 | [x] | `Keyboard`, `ButtonMatrix` | Batch 2 input widgets |
 | [x] | `Tabview`, `Tileview` | Composite widgets with page/tile helpers |
-| [ ] | `TileGrid`, `PathBar`, `Files` | New firmware widgets; Lua bindings and designer support planned |
+| [x] | `TileGrid` | Launcher-style paged icon grid; items, style/icon colour, paging and click/page callbacks | `tests/tile_grid.lua` |
+| [x] | `PathBar` | Toolbar path segments, path updates, parent focus | `tests/path_bar.lua` |
+| [ ] | `Files` | New firmware widget; binding and designer support planned |
 | [x] | Widget exclusion policy | Only 9.6 widgets that are enabled and not deprecated |
 | [x] | `set{}` property dispatcher | 115 properties; see table below |
 | [x] | Object states/flags/children | `add_state`, `remove_state`, `has_state`, `child_count`, `child` |
@@ -279,6 +281,8 @@ be read back from it unaided.
 | [x] | `tests/object_api.lua` | Core sizing/margins/outline/shadow/text/transforms/states/flags/children, Arc and Spinbox |
 | [x] | `tests/widget_batch2.lua` | LED, Table, Scale, ImageButton, Chart, Calendar, Keyboard, ButtonMatrix |
 | [x] | `tests/widget_batch3.lua` | Tabview, Tileview |
+| [x] | `tests/tile_grid.lua` | TileGrid items, styles, paging and lookup |
+| [x] | `tests/path_bar.lua` | PathBar segments, set_path and parent lookup |
 | [x] | `tests/assets.lua` | Install-directory argument, PNG asset in `Image` and `ImageButton` |
 | [x] | `tests/group.lua` | Input group count/order, focus next/prev/freeze, wrap/edit/default |
 | [x] | `tests/animation.lua` | x/value/colour animations, stop, path constants, target deletion |

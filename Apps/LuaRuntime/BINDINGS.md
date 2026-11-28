@@ -91,6 +91,16 @@ Status: partially implemented (2026-11-21)
   `tactility.ui.dismiss()` closes the visible dialog. Results are delivered by
   the runner's app loop with the LVGL lock held. Verified with `tests/dialogs.lua`
   and `tests/picker.lua`; the interactive flows are manual.
+- `lvgl.TileGrid` wraps the firmware's launcher-style paged grid. Items are
+  `{ id, name, icon?, highlighted?, checked? }`; `set_items`, `set_style`,
+  `set_icon_color`, `next_page`, `previous_page`, `page`, `find_tile` and `tiles`
+  are available, with `on_clicked`/`on_long_pressed`/`on_page_changed` queued
+  through `lv_async_call`. Verified with `tests/tile_grid.lua`.
+- `lvgl.PathBar(toolbar, options)` puts the firmware's path segments in the
+  runner toolbar. Options are `path`, `on_pressed(path, from_keys)` and
+  `on_rebuilt`; `set_path`, `focus_parent_segment` and `parent_segment` update and
+  inspect it. Callbacks are queued through `lv_async_call`. Verified with
+  `tests/path_bar.lua`.
 - `tactility.notification` is hand-written: `send{...}`, `list`, `get`,
   `dismiss`, `dismiss_all`, `dismiss_non_sticky` and `count`, with `SEVERITY`
   and `SOURCE` constants. The runner adds `subscribe(callback)` and `EVENT`:

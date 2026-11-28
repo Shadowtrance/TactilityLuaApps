@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-28T11:39:23",
+  "generated_at": "2026-11-28T11:50:08",
   "sdk": "C:\\Users\\teron\\.tactility\\sdk\\0.8.0-dev\\platform-esp32p4\\TactilitySDK",
   "firmware": "C:\\Users\\teron\\espidf-projects\\TactilityWork",
   "sdk_version": "0.8.0-dev",
@@ -11050,6 +11050,38 @@
     },
     {
       "module": "lvgl-module",
+      "name": "lvgl_path_bar_create",
+      "status": "bound",
+      "header": "lvgl/widgets/path_bar.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_path_bar_focus_parent_segment",
+      "status": "bound",
+      "header": "lvgl/widgets/path_bar.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_path_bar_get_parent_segment",
+      "status": "bound",
+      "header": "lvgl/widgets/path_bar.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_path_bar_set_path",
+      "status": "bound",
+      "header": "lvgl/widgets/path_bar.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
       "name": "lvgl_sliderbox_create",
       "status": "bound",
       "header": "lvgl/widgets/sliderbox.h",
@@ -11237,6 +11269,86 @@
       "name": "lvgl_theme_is_mono",
       "status": "bound",
       "header": "lvgl/theme.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_add_item",
+      "status": "bound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_create",
+      "status": "bound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_find_tile",
+      "status": "bound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_get_page",
+      "status": "bound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_get_tiles",
+      "status": "bound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_next_page",
+      "status": "bound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_previous_page",
+      "status": "bound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_request_repopulate",
+      "status": "bound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_set_icon_color",
+      "status": "bound",
+      "header": "lvgl/widgets/tile_grid.h",
+      "source": "export",
+      "note": ""
+    },
+    {
+      "module": "lvgl-module",
+      "name": "lvgl_tile_grid_set_style",
+      "status": "bound",
+      "header": "lvgl/widgets/tile_grid.h",
       "source": "export",
       "note": ""
     },
@@ -13706,38 +13818,6 @@
     },
     {
       "module": "lvgl-module",
-      "name": "lvgl_path_bar_create",
-      "status": "unbound",
-      "header": "lvgl/widgets/path_bar.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
-      "name": "lvgl_path_bar_focus_parent_segment",
-      "status": "unbound",
-      "header": "lvgl/widgets/path_bar.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
-      "name": "lvgl_path_bar_get_parent_segment",
-      "status": "unbound",
-      "header": "lvgl/widgets/path_bar.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
-      "name": "lvgl_path_bar_set_path",
-      "status": "unbound",
-      "header": "lvgl/widgets/path_bar.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
       "name": "lvgl_pointer_add",
       "status": "unbound",
       "header": "lvgl/devices/pointer.h",
@@ -14106,39 +14186,7 @@
     },
     {
       "module": "lvgl-module",
-      "name": "lvgl_tile_grid_add_item",
-      "status": "unbound",
-      "header": "lvgl/widgets/tile_grid.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
-      "name": "lvgl_tile_grid_create",
-      "status": "unbound",
-      "header": "lvgl/widgets/tile_grid.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
-      "name": "lvgl_tile_grid_find_tile",
-      "status": "unbound",
-      "header": "lvgl/widgets/tile_grid.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
       "name": "lvgl_tile_grid_get_card_icon_size",
-      "status": "unbound",
-      "header": "lvgl/widgets/tile_grid.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
-      "name": "lvgl_tile_grid_get_page",
       "status": "unbound",
       "header": "lvgl/widgets/tile_grid.h",
       "source": "export",
@@ -14162,30 +14210,6 @@
     },
     {
       "module": "lvgl-module",
-      "name": "lvgl_tile_grid_get_tiles",
-      "status": "unbound",
-      "header": "lvgl/widgets/tile_grid.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
-      "name": "lvgl_tile_grid_next_page",
-      "status": "unbound",
-      "header": "lvgl/widgets/tile_grid.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
-      "name": "lvgl_tile_grid_previous_page",
-      "status": "unbound",
-      "header": "lvgl/widgets/tile_grid.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
       "name": "lvgl_tile_grid_replace_empty_fallback",
       "status": "unbound",
       "header": "lvgl/widgets/tile_grid.h",
@@ -14194,31 +14218,7 @@
     },
     {
       "module": "lvgl-module",
-      "name": "lvgl_tile_grid_request_repopulate",
-      "status": "unbound",
-      "header": "lvgl/widgets/tile_grid.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
       "name": "lvgl_tile_grid_request_repopulate_selecting_first",
-      "status": "unbound",
-      "header": "lvgl/widgets/tile_grid.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
-      "name": "lvgl_tile_grid_set_icon_color",
-      "status": "unbound",
-      "header": "lvgl/widgets/tile_grid.h",
-      "source": "export",
-      "note": ""
-    },
-    {
-      "module": "lvgl-module",
-      "name": "lvgl_tile_grid_set_style",
       "status": "unbound",
       "header": "lvgl/widgets/tile_grid.h",
       "source": "export",

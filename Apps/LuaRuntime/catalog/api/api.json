@@ -1,6 +1,6 @@
 {
   "title": "Tactility Lua API",
-  "entry_count": 659,
+  "entry_count": 672,
   "modules": [
     {
       "name": "tactility.app",
@@ -2970,6 +2970,127 @@
           "line": 751
         },
         {
+          "id": "lvgl.Widget:set_items",
+          "name": "set_items",
+          "owner": "lvgl.Widget",
+          "kind": "method",
+          "signature": "lvgl.Widget:set_items(...)",
+          "group": "Widget methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/tile_grid.cpp",
+          "line": 545
+        },
+        {
+          "id": "lvgl.Widget:set_style",
+          "name": "set_style",
+          "owner": "lvgl.Widget",
+          "kind": "method",
+          "signature": "lvgl.Widget:set_style(...)",
+          "group": "Widget methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/tile_grid.cpp",
+          "line": 562
+        },
+        {
+          "id": "lvgl.Widget:set_icon_color",
+          "name": "set_icon_color",
+          "owner": "lvgl.Widget",
+          "kind": "method",
+          "signature": "lvgl.Widget:set_icon_color(...)",
+          "group": "Widget methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/tile_grid.cpp",
+          "line": 583
+        },
+        {
+          "id": "lvgl.Widget:next_page",
+          "name": "next_page",
+          "owner": "lvgl.Widget",
+          "kind": "method",
+          "signature": "lvgl.Widget:next_page(...)",
+          "group": "Widget methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/tile_grid.cpp",
+          "line": 603
+        },
+        {
+          "id": "lvgl.Widget:previous_page",
+          "name": "previous_page",
+          "owner": "lvgl.Widget",
+          "kind": "method",
+          "signature": "lvgl.Widget:previous_page(...)",
+          "group": "Widget methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/tile_grid.cpp",
+          "line": 609
+        },
+        {
+          "id": "lvgl.Widget:page",
+          "name": "page",
+          "owner": "lvgl.Widget",
+          "kind": "method",
+          "signature": "lvgl.Widget:page(...)",
+          "group": "Widget methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/tile_grid.cpp",
+          "line": 615
+        },
+        {
+          "id": "lvgl.Widget:find_tile",
+          "name": "find_tile",
+          "owner": "lvgl.Widget",
+          "kind": "method",
+          "signature": "lvgl.Widget:find_tile(...)",
+          "group": "Widget methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/tile_grid.cpp",
+          "line": 620
+        },
+        {
+          "id": "lvgl.Widget:tiles",
+          "name": "tiles",
+          "owner": "lvgl.Widget",
+          "kind": "method",
+          "signature": "lvgl.Widget:tiles(...)",
+          "group": "Widget methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/tile_grid.cpp",
+          "line": 632
+        },
+        {
+          "id": "lvgl.Widget:set_path",
+          "name": "set_path",
+          "owner": "lvgl.Widget",
+          "kind": "method",
+          "signature": "lvgl.Widget:set_path(...)",
+          "group": "Widget methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/path_bar.cpp",
+          "line": 280
+        },
+        {
+          "id": "lvgl.Widget:focus_parent_segment",
+          "name": "focus_parent_segment",
+          "owner": "lvgl.Widget",
+          "kind": "method",
+          "signature": "lvgl.Widget:focus_parent_segment(...)",
+          "group": "Widget methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/path_bar.cpp",
+          "line": 288
+        },
+        {
+          "id": "lvgl.Widget:parent_segment",
+          "name": "parent_segment",
+          "owner": "lvgl.Widget",
+          "kind": "method",
+          "signature": "lvgl.Widget:parent_segment(...)",
+          "group": "Widget methods",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/path_bar.cpp",
+          "line": 294
+        },
+        {
           "id": "lvgl.Widget:cursor",
           "name": "cursor",
           "owner": "lvgl.Widget",
@@ -4046,6 +4167,28 @@
           "description": "Material 3 tabs: the bar only; the app swaps the pane itself on VALUE_CHANGED.",
           "source": "lua_runner/main/Source/luavgl/widgets.cpp",
           "line": 324
+        },
+        {
+          "id": "lvgl.TileGrid",
+          "name": "TileGrid",
+          "owner": "lvgl",
+          "kind": "constructor",
+          "signature": "lvgl.TileGrid{...}",
+          "group": "Constructors",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/tile_grid.cpp",
+          "line": 437
+        },
+        {
+          "id": "lvgl.PathBar",
+          "name": "PathBar",
+          "owner": "lvgl",
+          "kind": "constructor",
+          "signature": "lvgl.PathBar{...}",
+          "group": "Constructors",
+          "description": "",
+          "source": "lua_runner/main/Source/luavgl/path_bar.cpp",
+          "line": 221
         },
         {
           "id": "lvgl.Statusline",

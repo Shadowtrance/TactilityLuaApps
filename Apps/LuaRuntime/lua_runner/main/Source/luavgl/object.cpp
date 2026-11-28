@@ -602,6 +602,8 @@ void luavgl_detach_all(lua_State* state) {
     luavgl_delete_all_pickers(state);
     luavgl_delete_all_dialogs(state);
     luavgl_delete_all_http(state);
+    luavgl_delete_all_tile_grids(state);
+    luavgl_delete_all_path_bars(state);
 
     // Timers first: they have no widget to anchor them, so nothing else would ever notice
     // them still running against a freed state.
